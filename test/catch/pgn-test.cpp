@@ -65,7 +65,7 @@ TEST_CASE("pgn")
         {
             data_field<pgns::vehicle_electrical_power_1> data;
             typedef spn::traits<spns::battery_potential> traits_type;
-            constexpr embr::units::millivolts<int> v1{25000};
+            constexpr embr::units::millivolts<uint16_t> v1{25000};
             constexpr unit_type<spns::battery_potential> v2{v1};
 
             data.battery_potential(500);

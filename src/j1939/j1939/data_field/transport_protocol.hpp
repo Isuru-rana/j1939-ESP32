@@ -20,11 +20,11 @@ namespace spn {
 
 
 // [1] Section 5.10.3
-template <class TContainer>
-struct data_field<pgns::tp_cm, TContainer> :
-    internal::data_field_base<TContainer>
+template <class Container>
+struct data_field<pgns::tp_cm, Container> :
+    internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
     ESTD_CPP_FORWARDING_CTOR(data_field)
 
@@ -108,11 +108,11 @@ struct data_field<pgns::tp_cm, TContainer> :
 };
 
 
-template <class TContainer>
-struct data_field<pgns::tp_dt, TContainer> :
-    internal::data_field_base<TContainer>
+template <class Container>
+struct data_field<pgns::tp_dt, Container> :
+    internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
     struct d
     {
