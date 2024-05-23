@@ -32,6 +32,8 @@ public:
     {
         IDLE,
         RECEIVING,
+        SENDING_ABORT,
+        SENT_ABORT,
 
         // Originator node states
         ORIGINATOR_SENDING_RTS,
@@ -57,6 +59,8 @@ public:
     };
 
     using time_point = unsigned;
+
+    time_point last_event_;
 
 private:
     states state_ = IDLE;
@@ -105,8 +109,16 @@ private:
             current_sequence_{0},
             responder_address_{responder_address}
         {}
+
+        bool resequence_requested() const
+        {
+            return current_payload_ == nullptr && current_sequence_ > 0;
+        }
+
+        uint8_t current_sequence() const { return current_sequence_; }
     };
 
+    // DEBT: Default constructor seems a little ornery
     estd::internal::variant_storage<
         preamble,
         responder_established,

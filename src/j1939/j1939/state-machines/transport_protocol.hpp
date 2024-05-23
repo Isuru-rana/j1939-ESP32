@@ -60,6 +60,19 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p)
         case ORIGINATOR_SENT_DT:
             switch(p.control())
             {
+                // Handshake stuff, kind of an intermediate ack and occasionally re-requesting
+                // already-sent packets
+                case modes::cts:
+                    if(p.to_send() != originator().current_sequence_ + 1)
+                    {
+                        // resend/retransmit time
+                        // We double duty this pointer as a flag to indicate a retransmit is requested
+                        originator().current_payload_ = nullptr;
+                        originator().current_sequence_ = p.to_send().value();
+                    }
+                    state_ = ORIGINATOR_RECEIVED_CTS;
+                    break;
+
                 case modes::ack:
                     // We could check here if we truly sent out everything we wanted to
                     state_ = ORIGINATOR_RECEIVED_EOM_ACK;
@@ -106,9 +119,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p)
             if(seq == expected_seq)
             {
                 state_ = RESPONDER_RECEIVING_DT;
-                const uint8_t* data = p.packetized_data();
-                estd::copy_n(data, 7, established().current_dt_.packetized_data());
-                established().current_dt_.sequence_number(expected_seq);
+                established().current_dt_ = p.payload();
             }
             else
             {
@@ -158,7 +169,7 @@ bool transport_protocol::process_outgoing(Transport& t, time_point)
             cm.control(pdu<pgns::tp_cm>::rts);
             // DEBT: Consider doing the namespace, non-class enum trick -- though for
             // addresses, it's a minor edge case to explicitly say null_address like this
-            cm.destination_address((uint8_t)addresses::null_address);
+            cm.destination_address(uint8_t(addresses::null_address));
             cm.source_address(self_address_);
 
             traits::send(t, cm);
@@ -173,6 +184,8 @@ bool transport_protocol::process_outgoing(Transport& t, time_point)
 
             p.control(modes::cts);
             p.destination_address(established().originator_.source_address());
+            p.source_address(self_address_);
+            p.to_send(1);
 
             //state_ = RESPONDER_SENDING_CTS;
             traits::send(t, p);
