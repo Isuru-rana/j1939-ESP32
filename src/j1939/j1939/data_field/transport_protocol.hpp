@@ -28,7 +28,7 @@ struct data_field<pgns::tp_cm, Container> :
 
     ESTD_CPP_FORWARDING_CTOR(data_field)
 
-    enum mode
+    enum modes
     {
         rts = 16,           ///< Destination Specific Request To Send [1] 5.10.3.1
         cts = 17,           ///< Destination Specific Clear To Send

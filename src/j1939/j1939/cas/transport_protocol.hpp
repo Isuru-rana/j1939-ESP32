@@ -6,8 +6,11 @@
  *
  * 1. J1939-21 (DEC2006)
  */
+#pragma once
+
 #include "../ca.h"
 #include "../data_field/transport_protocol.hpp"
+#include "../state-machines/transport_protocol.hpp"
 
 #include <estd/internal/streambuf.h>
 
