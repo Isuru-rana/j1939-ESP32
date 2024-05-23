@@ -17,6 +17,9 @@ struct helper
     const uint8_t orig_sa = 1, recv_sa = 2;
     transport_protocol tp_orig, tp_recv;
 
+    // Theory being CA/state machine should not get confused by its own traffic,
+    // plus we auto aggregate to both for convenience
+
     template <class Transport>
     unsigned incoming(Transport& t, const typename Transport::frame& f)
     {
@@ -28,6 +31,12 @@ struct helper
         processed += process_incoming(tp_recv, t, f, ctx{0, recv_sa});
 
         return processed;
+    }
+
+    template <class Transport>
+    void outgoing(Transport&)
+    {
+
     }
 };
 
@@ -52,6 +61,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             REQUIRE(t.receive(&frame));
 
+            // FIX: invoker doesn't run as expected
             //REQUIRE(h.incoming(t, frame) == 1);
 
             REQUIRE(process_incoming(tp_orig, t, frame, ctx) == false); // A formality.  orig should noop here

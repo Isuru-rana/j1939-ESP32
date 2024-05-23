@@ -43,14 +43,14 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                 {
                     state_ = RESPONDER_RECEIVED_BAM;
                     established().init(p);
-                    break;
+                    return true;
                 }
 
                 case modes::rts:
                 {
                     state_ = RESPONDER_RECEIVED_RTS;
                     established().init(p);
-                    break;
+                    return true;
                 }
 
                 // RTS & BAM is the only valid message for this to receive when idle
@@ -75,12 +75,12 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                         originator().current_sequence_ = p.to_send().value();
                     }
                     state_ = ORIGINATOR_RECEIVED_CTS;
-                    break;
+                    return true;
 
                 case modes::ack:
                     // We could check here if we truly sent out everything we wanted to
                     state_ = ORIGINATOR_RECEIVED_EOM_ACK;
-                    break;
+                    return true;
 
                 default:    break;
             }
@@ -91,7 +91,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
             {
                 case modes::cts:
                     state_ = ORIGINATOR_RECEIVED_CTS;
-                    break;
+                    return true;
 
                 default:    break;
             }
@@ -138,7 +138,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
                 state_ = RESPONDER_SENDING_ABORT;
             }
 
-            break;
+            return true;
         }
 
         default: break;
