@@ -24,15 +24,18 @@ inline void transport_protocol::responder_established::init(const pdu<pgns::tp_c
 }
 
 template <class Transport>
-bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p)
+bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p, const context& ctx)
 {
-    if(p.destination_address() != self_address_)
+    if(p.destination_address() != ctx.self_address &&
+        p.control() != modes::bam)
         return false;
 
     switch(state_)
     {
         case IDLE:
         {
+            last_event_ = ctx.current;
+
             switch(p.control())
             {
                 // NOTE: Won't get here yet due to self_address_ filter
@@ -52,6 +55,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p)
 
                 // RTS & BAM is the only valid message for this to receive when idle
                 default:
+                    state_ = WARN;
                     break;
             }
             break;
@@ -100,13 +104,21 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p)
 }
 
 template <class Transport>
-bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p)
+bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
+    const context& ctx)
 {
-    if(p.destination_address() != self_address_)
+    bool bam = established().bam() && role() == ROLE_RESPONDER;
+
+    if(p.destination_address() != ctx.self_address && !bam)
         return false;
 
     switch(state_)
     {
+        // Warnings, soft as they are, auto reset back to IDLE
+        case WARN:
+            state_ = IDLE;
+            break;
+
         case IDLE:
             break;
 
@@ -137,7 +149,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p)
 
 
 template <class Transport>
-bool transport_protocol::process_outgoing(Transport& t, time_point)
+bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
 {
     using traits = transport_traits<Transport>;
 
@@ -151,7 +163,7 @@ bool transport_protocol::process_outgoing(Transport& t, time_point)
 
             estd::copy_n(originator().current_payload_, 7, dt.packetized_data());
             dt.sequence_number(seq);
-            dt.source_address(self_address_);
+            dt.source_address(ctx.self_address);
             dt.destination_address(originator().responder_address_);
 
             traits::send(t, dt);
@@ -170,7 +182,7 @@ bool transport_protocol::process_outgoing(Transport& t, time_point)
             // DEBT: Consider doing the namespace, non-class enum trick -- though for
             // addresses, it's a minor edge case to explicitly say null_address like this
             cm.destination_address(uint8_t(addresses::null_address));
-            cm.source_address(self_address_);
+            cm.source_address(ctx.self_address);
 
             traits::send(t, cm);
 
@@ -184,7 +196,7 @@ bool transport_protocol::process_outgoing(Transport& t, time_point)
 
             p.control(modes::cts);
             p.destination_address(established().originator_.source_address());
-            p.source_address(self_address_);
+            p.source_address(ctx.self_address);
             p.to_send(1);
 
             //state_ = RESPONDER_SENDING_CTS;
@@ -206,11 +218,12 @@ inline bool transport_protocol::process_time(time_point)
 }
  */
 
-inline void transport_protocol::initiate_originator(uint16_t sz)
+inline void transport_protocol::initiate_originator(uint16_t sz, const context& ctx)
 {
     state_ = ORIGINATOR_SENDING_RTS;
+    storage_.emplace<originator_state>(sz, ctx.self_address);
     // FIX: Pass in proper dest address
-    storage_.emplace<originator_state>(sz, self_address_);
+    //originator().responder_address_ =
 }
 
 inline void transport_protocol::mark_dt_received()
@@ -220,6 +233,27 @@ inline void transport_protocol::mark_dt_received()
 #endif
 
     state_ = RESPONDER_RECEIVED_DT;
+}
+
+// DEBT: A little clumsy.  Might be better to track role explicitly and rework state machine
+// into a 2 way sending/receiving/sent, etc and ack, cts, rts, etc.
+inline auto transport_protocol::role() const -> roles
+{
+    switch(state_)
+    {
+        case ORIGINATOR_RECEIVED_CTS:
+        case ORIGINATOR_SENDING_BAM:
+        case ORIGINATOR_SENDING_DT:
+        case ORIGINATOR_SENT_DT:
+            return ROLE_ORIGINATOR;
+
+        case RESPONDER_RECEIVED_DT:
+        case RESPONDER_RECEIVING_DT:
+        case RESPONDER_SENT_CTS:
+            return ROLE_RESPONDER;
+
+        default:    return ROLE_UNINITIALIZED;
+    }
 }
 
 }}}}

@@ -19,25 +19,27 @@
 
 namespace embr { namespace j1939 {
 
+// DEBT: Although CA is an obvious category for these process_incoming helpers, they have
+// a bigger scope than that
 
-template <class TTransport, class TImpl, class TContext>
-inline bool process_incoming(TImpl& impl, TTransport& t, const typename TTransport::frame& f, TContext& context)
+template <class Transport, class Impl, class Context>
+inline bool process_incoming(Impl& impl, Transport& t, const typename Transport::frame& f, Context& context)
 {
-    internal::app_state<TTransport, TImpl, TContext> state{t, impl, context};
+    internal::app_state<Transport, Impl, Context> state{t, impl, context};
 
     return process_incoming(state, f);
 }
 
-template <class TTransport, class TImpl>
-inline bool process_incoming(TImpl& impl, TTransport& t, const typename TTransport::frame& f)
+template <class Transport, class Impl>
+inline bool process_incoming(Impl& impl, Transport& t, const typename Transport::frame& f)
 {
-    internal::app_state<TTransport, TImpl, estd::monostate> state{t, impl};
+    internal::app_state<Transport, Impl, estd::monostate> state{t, impl};
 
     return process_incoming(state, f);
 }
 
-template <class TTransport, class TImpl>
-bool controller_application<TTransport, TImpl>::process_incoming(transport_type& t, const frame_type& f)
+template <class Transport, class Impl>
+bool controller_application<Transport, Impl>::process_incoming(transport_type& t, const frame_type& f)
 {
     return j1939::process_incoming(impl(), t, f);
 }

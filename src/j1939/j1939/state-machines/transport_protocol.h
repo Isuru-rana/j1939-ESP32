@@ -28,9 +28,59 @@ namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 class transport_protocol : public impl::controller_application_base
 {
 public:
+    enum roles
+    {
+        ROLE_UNINITIALIZED,
+        ROLE_ORIGINATOR,
+        ROLE_RESPONDER
+    };
+
+    enum frame_errors
+    {
+        FRAME_NOMINAL,  // A-OK
+        // Generic
+        FRAME_ERROR,
+        FRAME_TIMEOUT,
+        FRAME_WARN,
+        FRAME_INVALID_STATE
+    };
+
+    // EXPERIMENTAL, not used
+    enum frame_states
+    {
+        FRAME_IDLE,
+        FRAME_RECEIVING,
+        FRAME_RECEIVED,
+        FRAME_SENDING,
+        FRAME_SENT
+    };
+
+    // EXPERIMENTAL, not used
+    enum frame_types
+    {
+        FRAME_CTS,
+        FRAME_RTS,
+        FRAME_ACK,
+        FRAME_ABORT,
+
+        FRAME_DT,
+    };
+
+    // EXPERIMENTAL, not used - consider eventually merging with embr service
+    // architecture
+    struct frame_tracker
+    {
+        roles role_ : 4;
+        frame_states state_ : 4;
+        frame_types type_ : 4;
+        frame_errors error_ : 4;
+    };
+
     enum states
     {
         IDLE,
+        // Invalid state observed, but occurred at a time which doesn't hurt us
+        WARN,
         RECEIVING,
         SENDING_ABORT,
         SENT_ABORT,
@@ -45,6 +95,7 @@ public:
         ORIGINATOR_SENDING_DT,
         ORIGINATOR_SENT_DT,
         ORIGINATOR_RECEIVED_EOM_ACK,
+        ORIGINATOR_ERROR,
 
         // Responder node states
         RESPONDER_RECEIVED_RTS,
@@ -56,18 +107,25 @@ public:
         RESPONDER_SENT_EOM_ACK,
         RESPONDER_SENDING_ABORT,
         RESPONDER_SENT_ABORT,
+        RESPONDER_ERROR,
     };
 
     using time_point = unsigned;
 
     time_point last_event_;
 
+    struct context
+    {
+        const time_point current;
+        const uint8_t self_address;
+    };
+
 private:
     states state_ = IDLE;
 
     // DEBT: Would prefer this to come in via transport or some pseudo global thing
     // or perhaps only pass in traffic matched to global or our address in the first place
-    uint8_t self_address_ = uint8_t(addresses::null_address);
+    //uint8_t self_address_ = uint8_t(addresses::null_address);
 
     struct preamble
     {
@@ -93,6 +151,11 @@ private:
         uint16_t remaining_bytes() const
         {
             return originator_.total_size().value() - received_bytes();
+        }
+
+        bool bam() const
+        {
+            return originator_.destination_address() == uint8_t(addresses::global);
         }
     };
 
@@ -165,6 +228,8 @@ public:
 public:
     constexpr states state() const { return state_; }
 
+    roles role() const;
+
     ///
     /// @return
     /// @remarks last pdu<tp_dt> passed in to process_incoming must still be in scope
@@ -191,24 +256,24 @@ public:
     }
 
     template <class Transport, pgns pgn>
-    static constexpr bool process_incoming(Transport& t, pdu<pgn> p) { return false; }
+    static constexpr bool process_incoming(Transport& t, pdu<pgn> p, context) { return false; }
 
     // Using dispatcher methodology
     template <class Transport>
-    bool process_incoming(Transport&, const pdu<pgns::tp_cm>&);
+    bool process_incoming(Transport&, const pdu<pgns::tp_cm>&, const context&);
 
     // Using dispatcher methodology
     template <class Transport>
-    bool process_incoming(Transport&, const pdu<pgns::tp_dt>&);
+    bool process_incoming(Transport&, const pdu<pgns::tp_dt>&, const context&);
 
     // Combining time-bound operations since they are likely send related anyway
     template <class Transport>
-    bool process_outgoing(Transport&, time_point);
+    bool process_outgoing(Transport&, const context&);
 
     //bool process_time(time_point);
 
     // Indicates state machine should kick into originator mode
-    void initiate_originator(uint16_t sz);
+    void initiate_originator(uint16_t sz, const context&);
 
     // Indicate we've consumed the latest DT chunk
     void mark_dt_received();

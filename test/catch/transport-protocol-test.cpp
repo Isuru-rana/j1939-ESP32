@@ -17,22 +17,23 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
     SECTION("core")
     {
+        transport_protocol::context ctx{0, uint8_t(addresses::null_address)};
         transport_protocol tp_orig, tp_recv;
         constexpr unsigned sz = sizeof(test::test_str2) - 1;    // Zapping null terminator
 
         {
-            tp_orig.initiate_originator(sz);
-            tp_orig.process_outgoing(t, 0);
+            tp_orig.initiate_originator(sz, ctx);
+            tp_orig.process_outgoing(t, ctx);
 
             REQUIRE(t.receive(&frame));
 
-            process_incoming(tp_recv, t, frame);
+            process_incoming(tp_recv, t, frame, ctx);
 
-            tp_recv.process_outgoing(t, 0);
+            tp_recv.process_outgoing(t, ctx);
 
             REQUIRE(t.receive(&frame));
 
-            process_incoming(tp_orig, t, frame);
+            process_incoming(tp_orig, t, frame, ctx);
 
             REQUIRE(tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_CTS);
         }
@@ -41,11 +42,11 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         {
             tp_orig.payload((uint8_t*)test::test_str2);
-            tp_orig.process_outgoing(t, 0);
+            tp_orig.process_outgoing(t, ctx);
 
             REQUIRE(t.receive(&frame));
 
-            process_incoming(tp_recv, t, frame);
+            process_incoming(tp_recv, t, frame, ctx);
 
             REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
 
@@ -62,11 +63,11 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         {
             tp_orig.payload((uint8_t*)test::test_str2 + 7);
-            tp_orig.process_outgoing(t, 0);
+            tp_orig.process_outgoing(t, ctx);
 
             REQUIRE(t.receive(&frame));
 
-            process_incoming(tp_recv, t, frame);
+            process_incoming(tp_recv, t, frame, ctx);
 
             REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
 
