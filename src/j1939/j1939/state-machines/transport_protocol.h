@@ -273,7 +273,7 @@ public:
     //bool process_time(time_point);
 
     // Indicates state machine should kick into originator mode
-    void initiate_originator(uint16_t sz, const context&);
+    void initiate_originator(uint16_t sz, const context&, uint8_t responder_address);
 
     // Indicate we've consumed the latest DT chunk
     void mark_dt_received();

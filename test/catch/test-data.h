@@ -119,7 +119,7 @@ void setup_agricultural_planter(embr::j1939::NAME<TContainer>& n,
 }
 
 static constexpr const char test_str1[] { "hi2u" };
-static constexpr const char test_str2[] { "abcdefghijklmnopqrstuvwxyz" };
+static constexpr const char test_str2[] { "0123456789ABCDEF" };
 
 }
 

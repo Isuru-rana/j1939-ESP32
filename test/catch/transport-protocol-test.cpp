@@ -20,11 +20,11 @@ struct helper
     // Theory being CA/state machine should not get confused by its own traffic,
     // plus we auto aggregate to both for convenience
 
+    using ctx = transport_protocol::context;
+
     template <class Transport>
     unsigned incoming(Transport& t, const typename Transport::frame& f)
     {
-        // Almost there, && context makes it mad
-        using ctx = transport_protocol::context;
         unsigned processed = 0;
 
         processed += process_incoming(tp_orig, t, f, ctx{0, orig_sa});
@@ -34,9 +34,27 @@ struct helper
     }
 
     template <class Transport>
-    void outgoing(Transport&)
+    unsigned outgoing(Transport& t)
     {
+        unsigned processed = 0;
 
+        processed += tp_orig.process_outgoing(t, ctx{0, orig_sa});
+        processed += tp_recv.process_outgoing(t, ctx{0, recv_sa});
+
+        return processed;
+    }
+
+    // Performs outgoing phase first, then expects one message present at transport,
+    // then performs incoming phase
+    // NOTE: Will need a diff version of this with frame* at some point
+    template <class Transport>
+    void cycle(Transport& t)
+    {
+        typename Transport::frame f;
+
+        REQUIRE(outgoing(t) == 1);
+        REQUIRE(t.receive(&f));
+        REQUIRE(incoming(t, f) == 1);
     }
 };
 
@@ -47,8 +65,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
     SECTION("core")
     {
-        const uint8_t orig_sa = 1, recv_sa = 2;
-        transport_protocol::context ctx{0, uint8_t(addresses::null_address)};
+        using ctx = transport_protocol::context;
         helper h;
         transport_protocol& tp_orig = h.tp_orig;
         transport_protocol& tp_recv = h.tp_recv;
@@ -56,23 +73,13 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         constexpr unsigned sz = sizeof(test::test_str2) - 1;    // Zapping null terminator
 
         {
-            tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)});
-            tp_orig.process_outgoing(t, ctx);
+            tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)}, h.recv_sa);
 
-            REQUIRE(t.receive(&frame));
+            h.cycle(t);
 
-            // FIX: invoker doesn't run as expected
-            //REQUIRE(h.incoming(t, frame) == 1);
-
-            REQUIRE(process_incoming(tp_orig, t, frame, ctx) == false); // A formality.  orig should noop here
-            process_incoming(tp_recv, t, frame, ctx);
             REQUIRE(tp_orig.originator().resequence_requested() == false);
 
-            tp_recv.process_outgoing(t, ctx);
-
-            REQUIRE(t.receive(&frame));
-
-            process_incoming(tp_orig, t, frame, ctx);
+            h.cycle(t);
 
             REQUIRE(tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_CTS);
         }
@@ -81,12 +88,8 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         {
             tp_orig.payload((uint8_t*)test::test_str2);
-            tp_orig.process_outgoing(t, ctx);
 
-            REQUIRE(t.receive(&frame));
-
-            REQUIRE(process_incoming(tp_orig, t, frame, ctx) == false); // A formality.  orig should noop here
-            process_incoming(tp_recv, t, frame, ctx);
+            h.cycle(t);
 
             REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
 
@@ -96,19 +99,15 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
             // FIX: It appears fixed-size string pointer doesn't work
             //estd::layer2::basic_string<char, 7, false> s{data};
             //REQUIRE(s == "abcdefg");
-            REQUIRE(memcmp(data, "abcdefg", 7) == 0);
+            REQUIRE(memcmp(data, "0123456", 7) == 0);
 
             REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVED_DT);
         }
 
         {
             tp_orig.payload((uint8_t*)test::test_str2 + 7);
-            tp_orig.process_outgoing(t, ctx);
 
-            REQUIRE(t.receive(&frame));
-
-            REQUIRE(process_incoming(tp_orig, t, frame, ctx) == false); // A formality.  orig should noop here
-            process_incoming(tp_recv, t, frame, ctx);
+            h.cycle(t);
 
             REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
 
@@ -116,7 +115,23 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             auto data = (char*)tp_recv.payload().data();
 
-            REQUIRE(memcmp(data, "hijklmn", 7) == 0);
+            REQUIRE(memcmp(data, "789ABCD", 7) == 0);
+
+            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVED_DT);
+        }
+
+        {
+            tp_orig.payload((uint8_t*)test::test_str2 + 14);
+
+            h.cycle(t);
+
+            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
+
+            //REQUIRE(tp_recv.established().remaining_bytes() == 2);
+
+            auto data = (char*)tp_recv.payload().data();
+
+            REQUIRE(memcmp(data, "EF", 2) == 0);
 
             REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVED_DT);
         }

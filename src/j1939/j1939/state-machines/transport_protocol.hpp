@@ -26,7 +26,8 @@ inline void transport_protocol::responder_established::init(const pdu<pgns::tp_c
 template <class Transport>
 bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p, const context& ctx)
 {
-    if(p.destination_address() != ctx.self_address &&
+    const uint8_t da = p.destination_address();
+    if(da != ctx.self_address &&
         p.control() != modes::bam)
         return false;
 
@@ -168,7 +169,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
 
             traits::send(t, dt);
             state_ = ORIGINATOR_SENT_DT;
-            break;
+            return true;
         }
 
         case ORIGINATOR_SENDING_RTS:
@@ -179,15 +180,13 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             cm.total_packets((sz + 7) / 7);
             cm.total_size(sz);
             cm.control(pdu<pgns::tp_cm>::rts);
-            // DEBT: Consider doing the namespace, non-class enum trick -- though for
-            // addresses, it's a minor edge case to explicitly say null_address like this
-            cm.destination_address(uint8_t(addresses::null_address));
+            cm.destination_address(originator().responder_address_);
             cm.source_address(ctx.self_address);
 
             traits::send(t, cm);
 
             state_ = ORIGINATOR_SENT_RTS;
-            break;
+            return true;
         }
 
         case RESPONDER_RECEIVED_RTS:
@@ -202,7 +201,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             //state_ = RESPONDER_SENDING_CTS;
             traits::send(t, p);
             state_ = RESPONDER_SENT_CTS;
-            break;
+            return true;
         }
 
         default: break;
@@ -218,12 +217,10 @@ inline bool transport_protocol::process_time(time_point)
 }
  */
 
-inline void transport_protocol::initiate_originator(uint16_t sz, const context& ctx)
+inline void transport_protocol::initiate_originator(uint16_t sz, const context& ctx, uint8_t dest_address)
 {
     state_ = ORIGINATOR_SENDING_RTS;
-    storage_.emplace<originator_state>(sz, ctx.self_address);
-    // FIX: Pass in proper dest address
-    //originator().responder_address_ =
+    storage_.emplace<originator_state>(sz, dest_address);
 }
 
 inline void transport_protocol::mark_dt_received()
