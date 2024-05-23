@@ -5,7 +5,6 @@
       <paths name="RPI0 GCC [remote] (60eb2818-14cc-419d-bc16-34322751c998)">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$/../../ext/embr/ext/estdlib/ext/Catch2" web="/" />
             <mapping local="$PROJECT_DIR$/../../ext/embr/ext/estdlib/src" web="/" />
             <mapping local="$PROJECT_DIR$/../../ext/embr/src" web="/" />
             <mapping local="$PROJECT_DIR$" web="/" />
@@ -17,7 +16,6 @@
       <paths name="Remote GDB Server (bb0300f7-0cc4-4d74-ac6d-8635f1029672)">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$/../../ext/embr/ext/estdlib/ext/Catch2" web="/" />
             <mapping local="$PROJECT_DIR$/../../ext/embr/ext/estdlib/src" web="/" />
             <mapping local="$PROJECT_DIR$/../../ext/embr/src" web="/" />
             <mapping local="$PROJECT_DIR$" web="/" />

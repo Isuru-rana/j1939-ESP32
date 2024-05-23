@@ -186,7 +186,7 @@ struct transport_protocol_ca : impl::controller_application<TTransport>
 
     typedef transport_traits<transport_type> _transport_traits;
 
-    using modes = pdu<pgns::tp_cm>::mode;
+    using modes = pdu<pgns::tp_cm>::modes;
 
     using connection = transport::connection;
 
@@ -305,8 +305,6 @@ struct transport_protocol_ca : impl::controller_application<TTransport>
 
     bool process_incoming(transport_type& t, const pdu<pgns::tp_cm>& p)
     {
-        // DEBT: Consolidate this enum with data_field<tp_ca>::mode
-
         switch(p.control())
         {
             case modes::bam:

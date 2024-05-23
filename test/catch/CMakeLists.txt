@@ -44,6 +44,7 @@ set(SOURCE_FILES
     slots-test.cpp
     spn-test.cpp
     transport-test.cpp
+    transport-protocol-test.cpp
     units-test.cpp
     )
 

@@ -66,13 +66,13 @@ struct data_field<pgns::tp_cm, Container> :
             { return spn::descriptor{2, 1, 8}; }
     };
 
-    inline mode control() const
+    inline modes control() const
     {
         constexpr spn::descriptor _d = d::control_byte;
-        return (mode)base_type::template get<uint8_t>(_d);
+        return modes(base_type::template get<uint8_t>(_d));
     }
 
-    void control(mode m)
+    void control(modes m)
     {
         constexpr spn::descriptor _d = d::control_byte;
         return base_type::template set<uint8_t>(_d, m);

@@ -158,7 +158,7 @@ TEST_CASE("Controller Applications")
     SECTION("transport protocol")
     {
         impl::transport_protocol_ca<decltype(t)> impl_;
-        using controls = pdu<pgns::tp_cm>::mode;
+        using controls = pdu<pgns::tp_cm>::modes;
 
         pdu<pgns::tp_cm> r;
 
