@@ -22,7 +22,8 @@ namespace embr { namespace j1939 {
 // DEBT: Although CA is an obvious category for these process_incoming helpers, they have
 // a bigger scope than that
 
-template <class Transport, class Impl, class Context>
+// NOTE: Impl::context trick is EXPERIMENTAL to help with initializer-list style trivial init
+template <class Transport, class Impl, class Context = typename Impl::context>
 inline bool process_incoming(Impl& impl, Transport& t, const typename Transport::frame& f, Context& context)
 {
     internal::app_state<Transport, Impl, Context> state{t, impl, context};

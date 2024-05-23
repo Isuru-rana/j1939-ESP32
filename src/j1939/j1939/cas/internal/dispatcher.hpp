@@ -8,12 +8,12 @@ namespace embr { namespace j1939 {
 namespace internal {
 
 // DEBT: Naming perhaps should be more of a 'request_state'
-template <class TTransport, class TImpl, class TContext>
+template <class Transport, class Impl, class Context>
 struct app_state
 {
-    TTransport& t;
-    TImpl& impl;
-    TContext& context;
+    Transport& t;
+    Impl& impl;
+    Context& context;
 
     template <pgns pgn>
     ESTD_CPP_CONSTEXPR_RET bool invoker(uint32_t id, const uint8_t* payload) const
@@ -23,11 +23,11 @@ struct app_state
 };
 
 
-template <class TTransport, class TImpl>
-struct app_state<TTransport, TImpl, estd::monostate>
+template <class Transport, class Impl>
+struct app_state<Transport, Impl, estd::monostate>
 {
-    TTransport& t;
-    TImpl& impl;
+    Transport& t;
+    Impl& impl;
 
     template <pgns pgn>
     ESTD_CPP_CONSTEXPR_RET bool invoker(uint32_t id, const uint8_t* payload) const
@@ -39,10 +39,10 @@ struct app_state<TTransport, TImpl, estd::monostate>
 
 }
 
-template <class TTransport, class TImpl, class TContext>
-bool process_incoming(internal::app_state<TTransport, TImpl, TContext> state, const typename TTransport::frame& f)
+template <class Transport, class Impl, class Context>
+bool process_incoming(internal::app_state<Transport, Impl, Context> state, const typename Transport::frame& f)
 {
-    typedef typename TTransport::frame frame_type;
+    typedef typename Transport::frame frame_type;
     typedef can::frame_traits<frame_type> frame_traits;
 
     // DEBT: Something seems off that 'id' is passed in to every case

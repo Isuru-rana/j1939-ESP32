@@ -10,6 +10,27 @@
 using namespace embr::j1939;
 using namespace embr::j1939::sm::v0;
 
+// Mainly useful for testing, not so much production though bears some resemblance
+// to aggregated CA handler
+struct helper
+{
+    const uint8_t orig_sa = 1, recv_sa = 2;
+    transport_protocol tp_orig, tp_recv;
+
+    template <class Transport>
+    unsigned incoming(Transport& t, const typename Transport::frame& f)
+    {
+        // Almost there, && context makes it mad
+        using ctx = transport_protocol::context;
+        unsigned processed = 0;
+
+        processed += process_incoming(tp_orig, t, f, ctx{0, orig_sa});
+        processed += process_incoming(tp_recv, t, f, ctx{0, recv_sa});
+
+        return processed;
+    }
+};
+
 TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 {
     embr::can::loopback_transport t;
@@ -17,17 +38,25 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
     SECTION("core")
     {
+        const uint8_t orig_sa = 1, recv_sa = 2;
         transport_protocol::context ctx{0, uint8_t(addresses::null_address)};
-        transport_protocol tp_orig, tp_recv;
+        helper h;
+        transport_protocol& tp_orig = h.tp_orig;
+        transport_protocol& tp_recv = h.tp_recv;
+
         constexpr unsigned sz = sizeof(test::test_str2) - 1;    // Zapping null terminator
 
         {
-            tp_orig.initiate_originator(sz, ctx);
+            tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)});
             tp_orig.process_outgoing(t, ctx);
 
             REQUIRE(t.receive(&frame));
 
+            //REQUIRE(h.incoming(t, frame) == 1);
+
+            REQUIRE(process_incoming(tp_orig, t, frame, ctx) == false); // A formality.  orig should noop here
             process_incoming(tp_recv, t, frame, ctx);
+            REQUIRE(tp_orig.originator().resequence_requested() == false);
 
             tp_recv.process_outgoing(t, ctx);
 
@@ -46,6 +75,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             REQUIRE(t.receive(&frame));
 
+            REQUIRE(process_incoming(tp_orig, t, frame, ctx) == false); // A formality.  orig should noop here
             process_incoming(tp_recv, t, frame, ctx);
 
             REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
@@ -67,6 +97,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             REQUIRE(t.receive(&frame));
 
+            REQUIRE(process_incoming(tp_orig, t, frame, ctx) == false); // A formality.  orig should noop here
             process_incoming(tp_recv, t, frame, ctx);
 
             REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
