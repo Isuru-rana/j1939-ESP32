@@ -40,6 +40,7 @@ public:
         ORIGINATOR_SENT_BAM,
         ORIGINATOR_WAITING_CTS,
         ORIGINATOR_RECEIVED_CTS,
+        ORIGINATOR_SENDING_DT,
         ORIGINATOR_SENT_DT,
         ORIGINATOR_RECEIVED_EOM_ACK,
 
@@ -73,14 +74,15 @@ private:
     struct responder_established
     {
         pdu<pgns::tp_cm> originator_;
-        const uint8_t* current_payload_;
-        uint8_t current_sequence_;
+        // DEBT: In theory, we could flow through the original transport frame and use a pointer
+        // to that.  In reality, we're only talking 8 bytes here
+        layer1::data_field<pgns::tp_dt> current_dt_;
 
         void init(const pdu<pgns::tp_cm>&);
 
         constexpr uint16_t received_bytes() const
         {
-            return current_sequence_ * 7;
+            return current_dt_.sequence_number() * 7;
         }
 
         // NOTE: Only valid during limited states (TBD)
@@ -90,9 +92,26 @@ private:
         }
     };
 
+    struct originator_state
+    {
+        const uint16_t total_size_;
+        const uint8_t* current_payload_;
+        uint8_t current_sequence_;
+        const uint8_t responder_address_;
+
+        constexpr explicit originator_state(uint16_t total_size, uint8_t responder_address) :
+            total_size_{total_size},
+            current_payload_{nullptr},
+            current_sequence_{0},
+            responder_address_{responder_address}
+        {}
+    };
+
     estd::internal::variant_storage<
         preamble,
-        responder_established> storage_;
+        responder_established,
+        originator_state
+        > storage_;
 
     /*
      * Union doesn't like non triviality of pdu_ object
@@ -108,10 +127,19 @@ private:
 
     using modes = pdu<pgns::tp_cm>::modes;
 
+#if UNIT_TESTING
+public:
+#endif
+
     responder_established& established()
     {
         auto v = storage_.get<responder_established>();
         return *v;
+    }
+
+    originator_state& originator()
+    {
+        return *storage_.get<originator_state>();
     }
 
     /*
@@ -135,7 +163,19 @@ public:
         assert(state_ == RESPONDER_RECEIVING_DT);
 #endif
 
-        return { established().current_payload_, 7 };
+        state_ = RESPONDER_RECEIVED_DT;
+
+        return { established().current_dt_.packetized_data(), 7 };
+    }
+
+    void payload(const uint8_t* v)
+    {
+#if FEATURE_EMBR_J1939_STRICT_STATES
+        assert(state_ == ORIGINATOR_SENT_DT || state_ == ORIGINATOR_RECEIVED_CTS);
+#endif
+
+        originator().current_payload_ = v;
+        state_ = ORIGINATOR_SENDING_DT;
     }
 
     template <class Transport, pgns pgn>
@@ -156,7 +196,7 @@ public:
     //bool process_time(time_point);
 
     // Indicates state machine should kick into originator mode
-    void initiate_originator();
+    void initiate_originator(uint16_t sz);
 
     // Indicate we've consumed the latest DT chunk
     void mark_dt_received();

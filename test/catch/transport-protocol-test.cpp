@@ -5,6 +5,8 @@
 
 #include <can/loopback.h>
 
+#include "test-data.h"
+
 using namespace embr::j1939;
 using namespace embr::j1939::sm::v0;
 
@@ -16,22 +18,16 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
     SECTION("core")
     {
         transport_protocol tp_orig, tp_recv;
-        constexpr unsigned sz = 64;
+        constexpr unsigned sz = sizeof(test::test_str2) - 1;    // Zapping null terminator
 
         {
-            pdu<pgns::tp_cm> cm;
+            tp_orig.initiate_originator(sz);
+            tp_orig.process_outgoing(t, 0);
 
-            tp_orig.initiate_originator();
+            REQUIRE(t.receive(&frame));
 
-            cm.total_packets((sz + 7) / 7);
-            cm.total_size(sz);
-            cm.control(pdu<pgns::tp_cm>::rts);
-            // DEBT: Consider doing the namespace, non-class enum trick -- though for
-            // addresses, it's a minor edge case to explicitly say null_address like this
-            cm.destination_address((uint8_t)addresses::null_address);
-            cm.source_address((uint8_t)addresses::null_address);
+            process_incoming(tp_recv, t, frame);
 
-            tp_recv.process_incoming(t, cm);
             tp_recv.process_outgoing(t, 0);
 
             REQUIRE(t.receive(&frame));
@@ -39,6 +35,48 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
             process_incoming(tp_orig, t, frame);
 
             REQUIRE(tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_CTS);
+        }
+
+        REQUIRE(t.peek() == nullptr);
+
+        {
+            tp_orig.payload((uint8_t*)test::test_str2);
+            tp_orig.process_outgoing(t, 0);
+
+            REQUIRE(t.receive(&frame));
+
+            process_incoming(tp_recv, t, frame);
+
+            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
+
+            REQUIRE(tp_recv.established().remaining_bytes() == sz - 7);
+
+            auto data = (char*)tp_recv.payload().data();
+            // FIX: It appears fixed-size string pointer doesn't work
+            //estd::layer2::basic_string<char, 7, false> s{data};
+            //REQUIRE(s == "abcdefg");
+            REQUIRE(memcmp(data, "abcdefg", 7) == 0);
+
+            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVED_DT);
+        }
+
+        {
+            tp_orig.payload((uint8_t*)test::test_str2 + 7);
+            tp_orig.process_outgoing(t, 0);
+
+            REQUIRE(t.receive(&frame));
+
+            process_incoming(tp_recv, t, frame);
+
+            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
+
+            REQUIRE(tp_recv.established().remaining_bytes() == sz - 14);
+
+            auto data = (char*)tp_recv.payload().data();
+
+            REQUIRE(memcmp(data, "hijklmn", 7) == 0);
+
+            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVED_DT);
         }
     }
 }

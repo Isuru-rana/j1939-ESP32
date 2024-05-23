@@ -134,9 +134,14 @@ struct data_field<pgns::tp_dt, Container> :
         base_type::set(d::sequence_number(), v);
     }
 
-    // DEBT: Kinda confusing two different data()
-    uint8_t* data() { return base_type::data() + 1; }
-    const uint8_t* data() const { return base_type::data() + 1; }
+    // NOTE: Don't use data() here - not only is it confusing, but compiler picks that up during
+    // specialized transport instead of proper underlying data_field_base::data
+    uint8_t* packetized_data() { return base_type::data() + 1; }
+    const uint8_t* packetized_data() const { return base_type::data() + 1; }
+
+private:
+    // Helper to catch errant uses of 'data' when we should be using packetized data
+    //uint8_t* data() { return {}; }
 };
 
 }}

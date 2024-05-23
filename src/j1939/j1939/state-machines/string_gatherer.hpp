@@ -24,7 +24,7 @@ struct string_gatherer
     void process_incoming(const data_field<pgns::tp_dt, TContainer>& d, unsigned offset = 0)
     {
         // DEBT: That old familiar ostream/string typecast
-        const value_type* data = (const value_type*)d.data();
+        const value_type* data = (const value_type*)d.packetized_data();
         unsigned max_sz = 7;    // tp_dt max payoad is 7
 
         // DEBT: Heed sequence number

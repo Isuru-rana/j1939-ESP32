@@ -23,15 +23,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1d6c0644-a5a4-48e7-98a6-c14a74e4c6a3" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../src/j1939/j1939/addresses.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/j1939/j1939/addresses.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../src/j1939/j1939/cas/transport_protocol.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/j1939/j1939/cas/transport_protocol.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../src/j1939/j1939/data_field/transport_protocol.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/j1939/j1939/data_field/transport_protocol.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/j1939/j1939/state-machines/string_gatherer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/j1939/j1939/state-machines/string_gatherer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/j1939/j1939/state-machines/transport_protocol.h" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/j1939/j1939/state-machines/transport_protocol.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../src/j1939/j1939/state-machines/transport_protocol.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/j1939/j1939/state-machines/transport_protocol.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ca-test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/ca-test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/experimental-test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/experimental-test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pdu-test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/pdu-test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test-data.h" beforeDir="false" afterPath="$PROJECT_DIR$/test-data.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/transport-protocol-test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/transport-protocol-test.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,6 +66,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.advertisement.text.has.clang-format": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "git-widget-placeholder": "alpha",
@@ -112,7 +114,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1716425998628</updated>
-      <workItem from="1716425999839" duration="9920000" />
+      <workItem from="1716425999839" duration="16475000" />
     </task>
     <servers />
   </component>
@@ -123,16 +125,5 @@
     <isAutomaticCheckingOnLaunch value="false" />
     <isAutomaticFoundErrors value="true" />
     <isAutomaticReloadCMake value="true" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/../../src/j1939/j1939/state-machines/transport_protocol.hpp</url>
-          <line>28</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

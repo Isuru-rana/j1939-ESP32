@@ -27,7 +27,7 @@ TEST_CASE("experimental")
 
         SECTION("string gatherer")
         {
-            estd::copy_n("hi2u*", 5, v1.data());
+            estd::copy_n("hi2u*", 5, v1.packetized_data());
 
             j1939::string_gatherer<estd::layer1::string<32> > sg;
 

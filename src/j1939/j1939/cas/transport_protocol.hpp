@@ -91,7 +91,7 @@ public:
 
     constexpr char_type* pbase() const
     {
-        return reinterpret_cast<char_type*>(const_cast<uint8_t*>(p.data()));
+        return reinterpret_cast<char_type*>(const_cast<uint8_t*>(p.packetized_data()));
     }
 
     char_type* pptr() const { return pbase() + pos_; }

@@ -18,9 +18,9 @@ namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 inline void transport_protocol::responder_established::init(const pdu<pgns::tp_cm>& p)
 {
     originator_ = p;
-    current_payload_ = nullptr;
+    //current_payload_ = nullptr;
     // DEBT: We don't handle out of order sequences for the time being
-    current_sequence_ = 0;
+    current_dt_.sequence_number(0);
 }
 
 template <class Transport>
@@ -97,14 +97,18 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p)
         case IDLE:
             break;
 
+        case RESPONDER_RECEIVED_DT:
         case RESPONDER_SENT_CTS:
         {
-            uint8_t seq = p.sequence_number();
+            const uint8_t seq = p.sequence_number();
+            const uint8_t expected_seq = established().current_dt_.sequence_number() + 1;
 
-            if(seq == established().current_sequence_ + 1)
+            if(seq == expected_seq)
             {
                 state_ = RESPONDER_RECEIVING_DT;
-                established().current_payload_ = p.data() + 1;
+                const uint8_t* data = p.packetized_data();
+                estd::copy_n(data, 7, established().current_dt_.packetized_data());
+                established().current_dt_.sequence_number(expected_seq);
             }
             else
             {
@@ -128,6 +132,41 @@ bool transport_protocol::process_outgoing(Transport& t, time_point)
 
     switch(state_)
     {
+        case ORIGINATOR_SENDING_DT:
+        {
+            pdu<pgns::tp_dt> dt;
+
+            uint8_t seq = ++originator().current_sequence_;
+
+            estd::copy_n(originator().current_payload_, 7, dt.packetized_data());
+            dt.sequence_number(seq);
+            dt.source_address(self_address_);
+            dt.destination_address(originator().responder_address_);
+
+            traits::send(t, dt);
+            state_ = ORIGINATOR_SENT_DT;
+            break;
+        }
+
+        case ORIGINATOR_SENDING_RTS:
+        {
+            pdu<pgns::tp_cm> cm;
+            const uint16_t& sz = originator().total_size_;
+
+            cm.total_packets((sz + 7) / 7);
+            cm.total_size(sz);
+            cm.control(pdu<pgns::tp_cm>::rts);
+            // DEBT: Consider doing the namespace, non-class enum trick -- though for
+            // addresses, it's a minor edge case to explicitly say null_address like this
+            cm.destination_address((uint8_t)addresses::null_address);
+            cm.source_address(self_address_);
+
+            traits::send(t, cm);
+
+            state_ = ORIGINATOR_SENT_RTS;
+            break;
+        }
+
         case RESPONDER_RECEIVED_RTS:
         {
             pdu<pgns::tp_cm> p;
@@ -154,10 +193,11 @@ inline bool transport_protocol::process_time(time_point)
 }
  */
 
-inline void transport_protocol::initiate_originator()
+inline void transport_protocol::initiate_originator(uint16_t sz)
 {
-    //state_ = ORIGINATOR_SENDING_RTS;
-    state_ = ORIGINATOR_SENT_RTS;
+    state_ = ORIGINATOR_SENDING_RTS;
+    // FIX: Pass in proper dest address
+    storage_.emplace<originator_state>(sz, self_address_);
 }
 
 inline void transport_protocol::mark_dt_received()

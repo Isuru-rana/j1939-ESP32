@@ -12,6 +12,7 @@
 #include <j1939/data_field/oel.hpp>
 #include <j1939/data_field/network.hpp>
 #include <j1939/data_field/time.hpp>
+#include <j1939/data_field/transport_protocol.hpp>
 #include <j1939/data_field/vep1.hpp>
 #include <j1939/data_field/vep2.hpp>
 #include <j1939/data_field/vep3.hpp>
@@ -124,6 +125,14 @@ TEST_CASE("pdu")
         //embr::units::years<uint16_t> y(1996);
 
         //p.year(y);
+    }
+    SECTION("transport protocol data transfer")
+    {
+        pdu<pgns::tp_dt> p;
+
+        p.sequence_number(1);
+
+        REQUIRE(p.sequence_number() == 1);
     }
     SECTION("commanded_address")
     {
