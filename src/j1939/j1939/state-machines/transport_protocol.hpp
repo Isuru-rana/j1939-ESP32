@@ -204,6 +204,25 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             return true;
         }
 
+        // Kind of a special case, picks up state set in payload retrieval and transitions
+        // to end phase if all packets received.  Might want to put this elsewhere
+        case RESPONDER_RECEIVED_DT:
+            if(established().last_one())
+            {
+                pdu<pgns::tp_cm> p = established().originator_;
+
+                p.control(modes::ack);
+                p.destination_address(established().originator_.source_address());
+                p.source_address(ctx.self_address);
+
+                traits::send(t, p);
+
+                state_ = RESPONDER_SENT_EOM_ACK;
+                return true;
+            }
+            break;
+
+
         default: break;
     }
 

@@ -142,15 +142,26 @@ private:
 
         void init(const pdu<pgns::tp_cm>&);
 
+        // NOTE: Doesn't account for last packet
         constexpr uint16_t received_bytes() const
         {
             return current_dt_.sequence_number() * 7;
         }
 
-        // NOTE: Only valid during limited states (TBD)
+        constexpr bool last_one() const
+        {
+            return current_dt_.sequence_number() == originator_.total_packets().value();
+        }
+
+        // NOTE: Only valid during limited states, and never goes to 0
+        // (that's up to you to figure out)
         uint16_t remaining_bytes() const
         {
-            return originator_.total_size().value() - received_bytes();
+            const uint16_t total = originator_.total_size().value();
+            if(last_one())
+                return total % 7;
+            else
+                return total - received_bytes();
         }
 
         bool bam() const

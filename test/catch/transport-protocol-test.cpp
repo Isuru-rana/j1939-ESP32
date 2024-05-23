@@ -56,6 +56,19 @@ struct helper
         REQUIRE(t.receive(&f));
         REQUIRE(incoming(t, f) == 1);
     }
+
+    void verify_incoming_payload(const uint8_t* expected, unsigned expected_sz)
+    {
+        REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
+
+        auto data = (char*)tp_recv.payload().data();
+        // FIX: It appears fixed-size string pointer doesn't work
+        //estd::layer2::basic_string<char, 7, false> s{data};
+        //REQUIRE(s == "abcdefg");
+        REQUIRE(memcmp(data, expected, expected_sz) == 0);
+
+        REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVED_DT);
+    }
 };
 
 TEST_CASE("transport protocol (J1939-21 Section 5.10)")
@@ -91,17 +104,9 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             h.cycle(t);
 
-            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
-
             REQUIRE(tp_recv.established().remaining_bytes() == sz - 7);
 
-            auto data = (char*)tp_recv.payload().data();
-            // FIX: It appears fixed-size string pointer doesn't work
-            //estd::layer2::basic_string<char, 7, false> s{data};
-            //REQUIRE(s == "abcdefg");
-            REQUIRE(memcmp(data, "0123456", 7) == 0);
-
-            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVED_DT);
+            h.verify_incoming_payload((const uint8_t *)"0123456", 7);
         }
 
         {
@@ -109,15 +114,9 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             h.cycle(t);
 
-            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
-
             REQUIRE(tp_recv.established().remaining_bytes() == sz - 14);
 
-            auto data = (char*)tp_recv.payload().data();
-
-            REQUIRE(memcmp(data, "789ABCD", 7) == 0);
-
-            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVED_DT);
+            h.verify_incoming_payload((const uint8_t *)"789ABCD", 7);
         }
 
         {
@@ -125,15 +124,16 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             h.cycle(t);
 
-            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
+            REQUIRE(tp_recv.established().remaining_bytes() == 2);
 
-            //REQUIRE(tp_recv.established().remaining_bytes() == 2);
-
-            auto data = (char*)tp_recv.payload().data();
-
-            REQUIRE(memcmp(data, "EF", 2) == 0);
-
-            REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVED_DT);
+            h.verify_incoming_payload((const uint8_t *)"EF", 2);
         }
+
+        // Reached end/ack area
+
+        h.cycle(t);
+
+        REQUIRE(h.tp_recv.state() == transport_protocol::RESPONDER_SENT_EOM_ACK);
+        REQUIRE(h.tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_EOM_ACK);
     }
 }
