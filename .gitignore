@@ -34,6 +34,8 @@
 # CLion, CMake
 build/
 cmake-*/
+# CLion likes to check this in.  However, it is rife with machine-specific settings
+**/.idea/misc.xml
 
 # Qt Creator
 build-*/
