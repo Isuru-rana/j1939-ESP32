@@ -35,6 +35,7 @@ public:
     {
         // all in ms
 
+        static constexpr unsigned bam = 50;         // DEBT: Would be better if this was configurable
         static constexpr unsigned Tr = 200;
         static constexpr unsigned Th = 500;
         static constexpr unsigned T1 = 750;
@@ -118,6 +119,8 @@ public:
         RESPONDER_RECEIVED_BAM,
         RESPONDER_SENDING_CTS,
         RESPONDER_SENT_CTS,
+        RESPONDER_SENDING_CTS_HOLD,
+        RESPONDER_SENT_CTS_HOLD,
         RESPONDER_RECEIVING_DT,
         RESPONDER_RECEIVED_DT,
         RESPONDER_SENT_EOM_ACK,
@@ -163,7 +166,8 @@ private:
     // responder established connections state
     struct responder_established
     {
-        // NOTE: We permit modification of 'max_packets' here
+        // NOTE: We permit modification of 'max_packets' here specifically on responder
+        // side.  '0' / hold is handled via RESPONDER_SENT_CTS_HOLD
         pdu<pgns::tp_cm> originator_;
         // DEBT: In theory, we could flow through the original transport frame and use a pointer
         // to that.  In reality, we're only talking 8 bytes here
@@ -198,19 +202,26 @@ private:
         {
             return originator_.destination_address() == uint8_t(addresses::global);
         }
+
+        // Requested pgn
+        j1939::pgns pgn() const { return (j1939::pgns)originator_.payload().pgn(); }
+
+        uint8_t max_packets() const { return originator_.max_packets(); }
     };
 
     struct originator_state
     {
         const uint8_t* current_payload_;
+        const uint32_t pgn_;
         const uint16_t total_size_;
         uint8_t current_sequence_;
         uint8_t max_packets_per_cts_;   // Can be adjusted down by CTS message
         uint8_t current_packet_per_cts_;
         const uint8_t responder_address_;
 
-        constexpr explicit originator_state(uint16_t total_size, uint8_t responder_address) :
+        constexpr explicit originator_state(uint16_t total_size, uint8_t responder_address, uint32_t pgn) :
             current_payload_{nullptr},
+            pgn_{pgn},
             total_size_{total_size},
             current_sequence_{0},
             max_packets_per_cts_{0xFF},
@@ -223,7 +234,22 @@ private:
             return current_payload_ == nullptr && current_sequence_ > 0;
         }
 
+        bool hold_requested() const
+        {
+            return max_packets_per_cts_ == 0;
+        }
+
+        // DEBT: Shrink this down when we get to the very end of the line.  For now we
+        // do a (usually harmless) read buffer overrun.  Obviously a no no, but unlikely
+        // to cause any immediate problems
+        uint16_t payload_size() const
+        {
+            return 7;
+        }
+
         uint8_t current_sequence() const { return current_sequence_; }
+
+        bool bam() const { return responder_address_ == 0xFF; }
     };
 
     // DEBT: Default constructor seems a little ornery
@@ -262,6 +288,9 @@ public:
         return *storage_.get<originator_state>();
     }
 
+    // For responder role only, requests that a CTS of 0 can_send (hold) emit
+    void request_hold();
+
     /*
      * DEBT: something goes wrong with const get on variant_storage
     const responder_established& established() const
@@ -269,6 +298,8 @@ public:
         const auto v = storage_.get<responder_established>();
         return *v;
     }   */
+
+    void prep_cts(pdu<pgns::tp_cm>&, const context&);
 
 public:
     constexpr states state() const { return state_; }
@@ -318,10 +349,12 @@ public:
     //bool process_time(time_point);
 
     // Indicates state machine should kick into originator mode
-    void initiate_originator(uint16_t sz, const context&, uint8_t responder_address);
+    void initiate_originator(uint16_t sz, const context&, uint8_t responder_address, uint32_t pgn);
 
     // Indicate we've consumed the latest DT chunk
     void mark_dt_received();
+
+    time_point next_event() const;
 };
 
 }}}}
