@@ -123,6 +123,7 @@ public:
         RESPONDER_SENT_CTS_HOLD,
         RESPONDER_RECEIVING_DT,
         RESPONDER_RECEIVED_DT,
+        RESPONDER_SENDING_EOM_ACK,
         RESPONDER_SENT_EOM_ACK,
         RESPONDER_SENDING_ABORT,
         RESPONDER_SENT_ABORT,
@@ -277,10 +278,9 @@ private:
 public:
 #endif
 
-    responder_established& established()
+    responder_established& responder()
     {
-        auto v = storage_.get<responder_established>();
-        return *v;
+        return *storage_.get<responder_established>();
     }
 
     originator_state& originator()
@@ -291,13 +291,15 @@ public:
     // For responder role only, requests that a CTS of 0 can_send (hold) emit
     void request_hold();
 
-    /*
-     * DEBT: something goes wrong with const get on variant_storage
-    const responder_established& established() const
+    const responder_established& responder() const
     {
-        const auto v = storage_.get<responder_established>();
-        return *v;
-    }   */
+        return *storage_.get<responder_established>();
+    }
+
+    const originator_state& originator() const
+    {
+        return *storage_.get<originator_state>();
+    }
 
     void prep_cts(pdu<pgns::tp_cm>&, const context&);
 
@@ -318,7 +320,8 @@ public:
 
         state_ = RESPONDER_RECEIVED_DT;
 
-        return { established().current_dt_.packetized_data(), 7 };
+        // DEBT: Un-hardcode 7
+        return { responder().current_dt_.packetized_data(), 7 };
     }
 
     void payload(const uint8_t* v)

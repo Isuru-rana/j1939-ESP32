@@ -43,14 +43,14 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                 case modes::bam:
                 {
                     state_ = RESPONDER_RECEIVED_BAM;
-                    established().init(p);
+                    responder().init(p);
                     return true;
                 }
 
                 case modes::rts:
                 {
                     state_ = RESPONDER_RECEIVED_RTS;
-                    established().init(p);
+                    responder().init(p);
                     return true;
                 }
 
@@ -112,7 +112,7 @@ template <class Transport>
 bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
     const context& ctx)
 {
-    bool bam = established().bam() && role() == ROLE_RESPONDER;
+    bool bam = responder().bam() && role() == ROLE_RESPONDER;
 
     if(p.destination_address() != ctx.self_address && !bam)
         return false;
@@ -138,12 +138,12 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
         case RESPONDER_SENT_CTS:
         {
             const uint8_t seq = p.sequence_number();
-            const uint8_t expected_seq = established().current_dt_.sequence_number() + 1;
+            const uint8_t expected_seq = responder().current_dt_.sequence_number() + 1;
 
             if(seq == expected_seq)
             {
                 state_ = RESPONDER_RECEIVING_DT;
-                established().current_dt_ = p.payload();
+                responder().current_dt_ = p.payload();
             }
             else
             {
@@ -162,12 +162,12 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
 
 inline void transport_protocol::prep_cts(pdu<pgns::tp_cm>& cm, const context& ctx)
 {
-    cm.destination_address(established().originator_.source_address());
+    cm.destination_address(responder().originator_.source_address());
     cm.source_address(ctx.self_address);
     cm.control(modes::cts);
-    cm.to_send(established().current_dt_.sequence_number());
-    //uint32_t pgn = established().pgn();
-    uint32_t pgn = established().originator_.payload().pgn();
+    cm.to_send(responder().current_dt_.sequence_number());
+    //uint32_t pgn = responder().pgn();
+    uint32_t pgn = responder().originator_.payload().pgn();
     cm.payload().pgn(pgn);
 }
 
@@ -252,7 +252,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
 
             prep_cts(p, ctx);
 
-            p.can_send(established().max_packets());
+            p.can_send(responder().max_packets());
 
             traits::send(t, p);
             state_ = RESPONDER_SENT_CTS;
@@ -275,12 +275,12 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
         // Kind of a special case, picks up state set in payload retrieval and transitions
         // to end phase if all packets received.  Might want to put this elsewhere
         case RESPONDER_RECEIVED_DT:
-            if(established().last_one())
+            if(responder().last_one())
             {
-                pdu<pgns::tp_cm> p = established().originator_;
+                pdu<pgns::tp_cm> p = responder().originator_;
 
                 p.control(modes::ack);
-                p.destination_address(established().originator_.source_address());
+                p.destination_address(responder().originator_.source_address());
                 p.source_address(ctx.self_address);
 
                 traits::send(t, p);
@@ -288,9 +288,26 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 state_ = RESPONDER_SENT_EOM_ACK;
                 return true;
             }
+
+            // +++ Timeout code
+            if(elapsed(ctx, timeouts::T1))
+            {
+                state_ = RESPONDER_TIMEOUT;
+            }
+            // ---
             break;
 
+        //case RESPONDER_SENDING_EOM_ACK:
+        //    break;
+
         // +++ Timeouts
+
+        case RESPONDER_SENT_CTS_HOLD:
+            if(elapsed(ctx, timeouts::Th))
+            {
+                state_ = RESPONDER_TIMEOUT;
+            }
+            break;
 
         case RESPONDER_SENT_CTS:
             // [1] Section 5.12.3
@@ -375,18 +392,24 @@ inline auto transport_protocol::next_event() const -> time_point
 {
     switch(state_)
     {
+        case ORIGINATOR_SENT_RTS:
+            return last_event_ + timeouts::T3;
+
         case ORIGINATOR_SENT_BAM:
             return last_event_ + timeouts::bam;
 
-        // No waiting
+        // If not BAM, no waiting
         case ORIGINATOR_SENT_DT:
-            // TODO: For BAM we need to do like above, but due to variant const DEBT
-            // we are a little bit prohibited
-            return last_event_;
+            return last_event_ + (originator().bam() ? timeouts::bam : 0);
+
+        case RESPONDER_SENT_CTS_HOLD:
+            return last_event_ + timeouts::Th;
 
         case RESPONDER_SENT_CTS:
-            // TODO: For hold CTS, timeout is Th
             return last_event_ + timeouts::T2;
+
+        case RESPONDER_RECEIVED_DT:
+            return last_event_ + timeouts::T1;
 
         default: return 0;
     }

@@ -113,7 +113,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             h.cycle(t, 100);
 
-            REQUIRE(tp_recv.established().remaining_bytes() == sz - 7);
+            REQUIRE(tp_recv.responder().remaining_bytes() == sz - 7);
 
             h.verify_incoming_payload((const uint8_t *)"0123456", 7);
         }
@@ -123,7 +123,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             h.cycle(t, 150);
 
-            REQUIRE(tp_recv.established().remaining_bytes() == sz - 14);
+            REQUIRE(tp_recv.responder().remaining_bytes() == sz - 14);
 
             h.verify_incoming_payload((const uint8_t *)"789ABCD", 7);
         }
@@ -133,7 +133,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             h.cycle(t, 200);
 
-            REQUIRE(tp_recv.established().remaining_bytes() == 2);
+            REQUIRE(tp_recv.responder().remaining_bytes() == 2);
 
             h.verify_incoming_payload((const uint8_t *)"EF", 2);
         }
