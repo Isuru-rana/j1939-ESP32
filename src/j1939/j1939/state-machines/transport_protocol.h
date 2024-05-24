@@ -18,6 +18,7 @@
 
 
 #define FEATURE_EMBR_J1939_STRICT_STATES 1
+#define FEATURE_EMBR_J1939_STRICT_PROTOCOL 1
 
 // DEBT: I am so sure I did this before.  Can't seem to find it though
 
@@ -131,6 +132,11 @@ public:
         RESPONDER_ERROR,
     };
 
+    enum errors
+    {
+        ORIGINATOR_ERROR_MISMATCHED_PGM
+    };
+
     using time_point = unsigned;
     using duration = unsigned;
 
@@ -165,7 +171,7 @@ private:
     };
 
     // responder established connections state
-    struct responder_established
+    struct responder_state
     {
         // NOTE: We permit modification of 'max_packets' here specifically on responder
         // side.  '0' / hold is handled via RESPONDER_SENT_CTS_HOLD
@@ -177,10 +183,22 @@ private:
 
         void init(const pdu<pgns::tp_cm>&);
 
+        // Always represents last received sequence number
+        constexpr uint8_t seq() const
+        {
+            return current_dt_.sequence_number();
+        }
+
+        // While in RESPONDER_RECEIVING_DT, this is your guy
+        constexpr uint16_t receiving_bytes() const
+        {
+            return (seq() - 1) * 7;
+        }
+
         // NOTE: Doesn't account for last packet
         constexpr uint16_t received_bytes() const
         {
-            return current_dt_.sequence_number() * 7;
+            return seq() * 7;
         }
 
         constexpr bool last_one() const
@@ -212,7 +230,11 @@ private:
 
     struct originator_state
     {
-        const uint8_t* current_payload_;
+        union
+        {
+            const uint8_t* current_payload_;
+            errors error_;
+        };
         const uint32_t pgn_;
         const uint16_t total_size_;
         uint8_t current_sequence_;
@@ -229,6 +251,11 @@ private:
             current_packet_per_cts_{0},
             responder_address_{responder_address}
         {}
+
+        uint16_t current_position() const
+        {
+            return current_sequence_ * 7;
+        }
 
         bool resequence_requested() const
         {
@@ -256,7 +283,7 @@ private:
     // DEBT: Default constructor seems a little ornery
     estd::internal::variant_storage<
         preamble,
-        responder_established,
+        responder_state,
         originator_state
         > storage_;
 
@@ -269,7 +296,7 @@ private:
         // Active during:
         // RESPONDER_RECEIVED_RTS, RESPONDER_RECEIVED_BAM
         // RESPONDER_SENT_CTS, RESPONDER_RECEIVING_DT
-        responder_established established_;
+        responder_state established_;
     };  */
 
     using modes = pdu<pgns::tp_cm>::modes;
@@ -278,9 +305,9 @@ private:
 public:
 #endif
 
-    responder_established& responder()
+    responder_state& responder()
     {
-        return *storage_.get<responder_established>();
+        return *storage_.get<responder_state>();
     }
 
     originator_state& originator()
@@ -291,9 +318,9 @@ public:
     // For responder role only, requests that a CTS of 0 can_send (hold) emit
     void request_hold();
 
-    const responder_established& responder() const
+    const responder_state& responder() const
     {
-        return *storage_.get<responder_established>();
+        return *storage_.get<responder_state>();
     }
 
     const originator_state& originator() const
@@ -308,6 +335,12 @@ public:
 
     roles role() const;
 
+    // DEBT: Poor naming, only applies to responder mode
+    bool payload_present()
+    {
+        return state_ == RESPONDER_RECEIVING_DT;
+    }
+
     ///
     /// @return
     /// @remarks last pdu<tp_dt> passed in to process_incoming must still be in scope
@@ -315,7 +348,7 @@ public:
     estd::span<const uint8_t> payload()
     {
 #if FEATURE_EMBR_J1939_STRICT_STATES
-        assert(state_ == RESPONDER_RECEIVING_DT);
+        assert(payload_present());
 #endif
 
         state_ = RESPONDER_RECEIVED_DT;
@@ -324,10 +357,16 @@ public:
         return { responder().current_dt_.packetized_data(), 7 };
     }
 
+    // DEBT: Poor naming, only applies to originator mode
+    bool ready_for_payload() const
+    {
+        return state_ == ORIGINATOR_SENT_DT || state_ == ORIGINATOR_RECEIVED_CTS;
+    }
+
     void payload(const uint8_t* v)
     {
 #if FEATURE_EMBR_J1939_STRICT_STATES
-        assert(state_ == ORIGINATOR_SENT_DT || state_ == ORIGINATOR_RECEIVED_CTS);
+        assert(ready_for_payload());
 #endif
 
         originator().current_payload_ = v;

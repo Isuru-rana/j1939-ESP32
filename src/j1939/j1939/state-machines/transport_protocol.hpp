@@ -15,7 +15,7 @@
 
 namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 
-inline void transport_protocol::responder_established::init(const pdu<pgns::tp_cm>& p)
+inline void transport_protocol::responder_state::init(const pdu<pgns::tp_cm>& p)
 {
     originator_ = p;
     //current_payload_ = nullptr;
@@ -67,6 +67,13 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
         }
 
         case ORIGINATOR_SENT_DT:
+#if FEATURE_EMBR_J1939_STRICT_PROTOCOL
+            if(originator().pgn_ != p.payload().pgn())
+            {
+                state_ = ORIGINATOR_ERROR;
+                originator().error_ = ORIGINATOR_ERROR_MISMATCHED_PGM;
+            }
+#endif
             switch(p.control())
             {
                 // Handshake stuff, kind of an intermediate ack and occasionally re-requesting
@@ -138,7 +145,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
         case RESPONDER_SENT_CTS:
         {
             const uint8_t seq = p.sequence_number();
-            const uint8_t expected_seq = responder().current_dt_.sequence_number() + 1;
+            const uint8_t expected_seq = responder().seq() + 1;
 
             if(seq == expected_seq)
             {
@@ -165,7 +172,7 @@ inline void transport_protocol::prep_cts(pdu<pgns::tp_cm>& cm, const context& ct
     cm.destination_address(responder().originator_.source_address());
     cm.source_address(ctx.self_address);
     cm.control(modes::cts);
-    cm.to_send(responder().current_dt_.sequence_number());
+    cm.to_send(responder().seq() + 1);
     //uint32_t pgn = responder().pgn();
     uint32_t pgn = responder().originator_.payload().pgn();
     cm.payload().pgn(pgn);
@@ -292,6 +299,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             // +++ Timeout code
             if(elapsed(ctx, timeouts::T1))
             {
+                // TODO: I think we may want to issue another CTS here?
                 state_ = RESPONDER_TIMEOUT;
             }
             // ---

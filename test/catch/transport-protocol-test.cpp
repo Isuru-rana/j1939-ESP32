@@ -77,31 +77,83 @@ struct helper
     }
 };
 
+// Feeds outgoing (originator) state machine
+class feeder
+{
+    const uint8_t* data_;
+    transport_protocol& tp_;
+
+public:
+    feeder(transport_protocol& tp, const uint8_t* data) :
+        data_{data},
+        tp_{tp}
+    {}
+
+    bool process()
+    {
+        if(tp_.ready_for_payload())
+        {
+            const uint16_t pos = tp_.originator().current_position();
+            tp_.payload(data_ + pos);
+            return true;
+        }
+
+        return false;
+    }
+};
+
+
+// Feeds incoming (responder) data from state machine
+class recv_feeder
+{
+    uint8_t* data_;
+    transport_protocol& tp_;
+
+public:
+    recv_feeder(transport_protocol& tp, uint8_t* data) :
+        data_{data},
+        tp_{tp}
+    {}
+
+    bool process()
+    {
+        if(tp_.payload_present())
+        {
+            const uint16_t pos = tp_.responder().receiving_bytes();
+            auto data = tp_.payload();
+
+            std::copy(data.begin(), data.end(), data_ + pos);
+            return true;
+        }
+
+        return false;
+    }
+};
+
+
 TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 {
     embr::can::loopback_transport t;
     //embr::can::loopback_transport::frame frame;
+    helper h;
+    feeder feed(h.tp_orig, (uint8_t*)test::test_str2);
+    constexpr unsigned sz = sizeof(test::test_str2) - 1;    // Zapping null terminator
 
     SECTION("core")
     {
         //using ctx = transport_protocol::context;
-        helper h;
         transport_protocol& tp_orig = h.tp_orig;
         transport_protocol& tp_recv = h.tp_recv;
-
-        constexpr unsigned sz = sizeof(test::test_str2) - 1;    // Zapping null terminator
-
-        //INFO("phase 1")
 
         {
             tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)}, h.recv_sa,
                 (uint32_t)pgns::software_identification);
 
-            h.cycle(t, 0);
+            h.cycle(t, 0);      // Send RTS, receive RTS
 
             REQUIRE(tp_orig.originator().resequence_requested() == false);
 
-            h.cycle(t, 50);
+            h.cycle(t, 50);     // Send CTS, receive CTS
 
             REQUIRE(tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_CTS);
         }
@@ -129,7 +181,8 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         }
 
         {
-            tp_orig.payload((uint8_t*)test::test_str2 + 14);
+            REQUIRE(feed.process());
+            //tp_orig.payload((uint8_t*)test::test_str2 + 14);
 
             h.cycle(t, 200);
 
@@ -144,5 +197,30 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         REQUIRE(h.tp_recv.state() == transport_protocol::RESPONDER_SENT_EOM_ACK);
         REQUIRE(h.tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_EOM_ACK);
+    }
+    SECTION("retry")
+    {
+        char s[32] {};
+        recv_feeder recv_feed(h.tp_recv, (uint8_t*)s);
+
+        h.tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)}, h.recv_sa,
+            (uint32_t)pgns::software_identification);
+
+        h.cycle(t, 0);      // Send RTS, receive RTS
+        h.cycle(t, 0);      // Send CTS, receive CTS
+
+        REQUIRE(feed.process());
+
+        h.cycle(t, 100);    // Send DT, receive DT
+
+        REQUIRE(recv_feed.process());
+
+        REQUIRE(feed.process());
+
+        h.cycle(t, 150);    // Send DT, receive DT
+
+        REQUIRE(recv_feed.process());
+
+        REQUIRE(memcmp(s, test::test_str2, 14) == 0);
     }
 }

@@ -34,6 +34,14 @@ public:
     template <pgns pgn>
     using data_field = const embr::j1939::layer1::data_field<pgn>;
 
+    // EXPERIMENTAL, inactive for process_incoming assisted filtering of incoming DA
+    enum address_filter
+    {
+        FILTER_NONE,        // We desire all traffic
+        FILTER_BAM,         // We desire broadcast and directed (to our DA)
+        FILTER_DA,          // We desire only traffic to this DA specifically
+    };
+
     // Effectively undefined/unhandled CAN frame.  Otherwise, you'll want to add to the switch/data_field mapper
     template <class Transport, class Frame>
     static constexpr bool process_incoming_default(const Transport&, const Frame&)
