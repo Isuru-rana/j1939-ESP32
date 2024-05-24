@@ -54,6 +54,10 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                     return true;
                 }
 
+                // "If a CTS is received while a connection is not established, it shall be ignored."
+                case modes::cts:
+                    return false;
+
                 // RTS & BAM is the only valid message for this to receive when idle
                 default:
                     state_ = WARN;
@@ -186,9 +190,11 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             traits::send(t, cm);
 
             state_ = ORIGINATOR_SENT_RTS;
+            last_event_ = ctx.current;
             return true;
         }
 
+        // Got RTS, send CTS
         case RESPONDER_RECEIVED_RTS:
         {
             pdu<pgns::tp_cm> p;
@@ -197,6 +203,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             p.destination_address(established().originator_.source_address());
             p.source_address(ctx.self_address);
             p.to_send(1);
+            p.can_send(established().originator_.max_packets());
 
             //state_ = RESPONDER_SENDING_CTS;
             traits::send(t, p);
@@ -222,6 +229,37 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             }
             break;
 
+        // +++ Timeouts
+
+        case RESPONDER_SENT_CTS:
+            // [1] Section 5.12.3
+            if(elapsed(ctx, timeouts::T2))
+            {
+                state_ = RESPONDER_TIMEOUT;
+            }
+            break;
+
+        case ORIGINATOR_SENT_RTS:
+            // [1] Section 5.12.3
+            if(elapsed(ctx, timeouts::T3))
+            {
+                state_ = ORIGINATOR_TIMEOUT;
+            }
+            break;
+
+        case ORIGINATOR_RECEIVED_CTS:
+            // If responder asked for a hold, they will need to re-send a CTS
+            // to keep us alive.  Otherwise, timeout
+            // "a lack of a CTS for more than (T4) seconds after a CTS (0) message to “hold the
+            //  connection open” will all cause a connection closure to occur" [1] Section 5.10.2.4
+            if(originator().max_packets_per_cts_ == 0 &&
+                elapsed(ctx, timeouts::T4))
+            {
+                state_ = ORIGINATOR_TIMEOUT;
+            }
+            break;
+
+        // --- Timeouts
 
         default: break;
     }

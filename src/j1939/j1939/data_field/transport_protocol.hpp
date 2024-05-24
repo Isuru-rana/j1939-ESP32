@@ -37,6 +37,13 @@ struct data_field<pgns::tp_cm, Container> :
         abort = 255
     };
 
+    enum abort_reasons
+    {
+        max_connetions = 1,
+        resource_unavailable,
+        timeout
+    };
+
     // We are forced to do inline methods here rather than pure constexpr's due to a clumsy behavior
     // of C++11 [3]
     struct d
@@ -78,11 +85,13 @@ struct data_field<pgns::tp_cm, Container> :
         return base_type::template set<uint8_t>(_d, m);
     }
 
+    // RTS [1] 5.10.3.1
     uint8_t max_packets() const
     {
         return base_type::template get<uint8_t>(d::max_packets());
     }
 
+    // RTS [1] 5.10.3.1
     void max_packets(uint8_t v)
     {
         return base_type::template set<uint8_t>(d::max_packets(), v);
@@ -99,12 +108,17 @@ struct data_field<pgns::tp_cm, Container> :
     }
 
     // RTS [1] 5.10.3.1
+    // ACK [1] 5.10.3.3
+    // BAM [1] 5.10.3.5
     EMBR_J1939_PROPERTY_INLINE2(total_size)
     EMBR_J1939_PROPERTY_INLINE2(total_packets)
 
     // CTS [1] 5.10.3.2
     EMBR_J1939_PROPERTY_INLINE2(can_send)
     EMBR_J1939_PROPERTY_INLINE2(to_send)
+
+    // Abort [1] 5.10.3.4
+    EMBR_J1939_PROPERTY_INLINE2(abort_reason)
 };
 
 

@@ -8,12 +8,14 @@
  */
 #pragma once
 
+#include <estd/chrono.h>
 #include <estd/variant.h>
 
 #include "../addresses.h"
 #include "../pdu.h"
 #include "../ca.h"
 #include "../data_field/transport_protocol.hpp"
+
 
 #define FEATURE_EMBR_J1939_STRICT_STATES 1
 
@@ -28,6 +30,19 @@ namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 class transport_protocol : public impl::controller_application_base
 {
 public:
+    // [1] 5.10.2.4
+    struct timeouts
+    {
+        // all in ms
+
+        static constexpr unsigned Tr = 200;
+        static constexpr unsigned Th = 500;
+        static constexpr unsigned T1 = 750;
+        static constexpr unsigned T2 = 1250;
+        static constexpr unsigned T3 = 1250;
+        static constexpr unsigned T4 = 1050;
+    };
+
     enum roles
     {
         ROLE_UNINITIALIZED,
@@ -95,6 +110,7 @@ public:
         ORIGINATOR_SENDING_DT,
         ORIGINATOR_SENT_DT,
         ORIGINATOR_RECEIVED_EOM_ACK,
+        ORIGINATOR_TIMEOUT,     // Timed out waiting for responder
         ORIGINATOR_ERROR,
 
         // Responder node states
@@ -107,12 +123,12 @@ public:
         RESPONDER_SENT_EOM_ACK,
         RESPONDER_SENDING_ABORT,
         RESPONDER_SENT_ABORT,
+        RESPONDER_TIMEOUT,      // Timeout out waiting for originator
         RESPONDER_ERROR,
     };
 
     using time_point = unsigned;
-
-    time_point last_event_;
+    using duration = unsigned;
 
     struct context
     {
@@ -121,6 +137,18 @@ public:
     };
 
 private:
+    time_point last_event_;
+
+    duration elapsed(const context& ctx) const
+    {
+        return ctx.current - last_event_;
+    }
+
+    bool elapsed(const context& ctx, duration d) const
+    {
+        return ctx.current - last_event_ >= d;
+    }
+
     states state_ = IDLE;
 
     // DEBT: Would prefer this to come in via transport or some pseudo global thing
@@ -135,10 +163,12 @@ private:
     // responder established connections state
     struct responder_established
     {
+        // NOTE: We permit modification of 'max_packets' here
         pdu<pgns::tp_cm> originator_;
         // DEBT: In theory, we could flow through the original transport frame and use a pointer
         // to that.  In reality, we're only talking 8 bytes here
         layer1::data_field<pgns::tp_dt> current_dt_;
+        uint8_t current_packet_per_cts_;
 
         void init(const pdu<pgns::tp_cm>&);
 
@@ -172,15 +202,19 @@ private:
 
     struct originator_state
     {
-        const uint16_t total_size_;
         const uint8_t* current_payload_;
+        const uint16_t total_size_;
         uint8_t current_sequence_;
+        uint8_t max_packets_per_cts_;   // Can be adjusted down by CTS message
+        uint8_t current_packet_per_cts_;
         const uint8_t responder_address_;
 
         constexpr explicit originator_state(uint16_t total_size, uint8_t responder_address) :
-            total_size_{total_size},
             current_payload_{nullptr},
+            total_size_{total_size},
             current_sequence_{0},
+            max_packets_per_cts_{0xFF},
+            current_packet_per_cts_{0},
             responder_address_{responder_address}
         {}
 

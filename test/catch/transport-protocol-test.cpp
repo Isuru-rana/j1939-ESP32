@@ -21,9 +21,10 @@ struct helper
     // plus we auto aggregate to both for convenience
 
     using ctx = transport_protocol::context;
+    using time_point = transport_protocol::time_point;
 
     template <class Transport>
-    unsigned incoming(Transport& t, const typename Transport::frame& f)
+    unsigned incoming(Transport& t, const typename Transport::frame& f, time_point current = {})
     {
         unsigned processed = 0;
 
@@ -34,7 +35,7 @@ struct helper
     }
 
     template <class Transport>
-    unsigned outgoing(Transport& t)
+    unsigned outgoing(Transport& t, time_point current = {})
     {
         unsigned processed = 0;
 
@@ -48,13 +49,18 @@ struct helper
     // then performs incoming phase
     // NOTE: Will need a diff version of this with frame* at some point
     template <class Transport>
-    void cycle(Transport& t)
+    void cycle(Transport& t, time_point current = {})
     {
         typename Transport::frame f;
 
-        REQUIRE(outgoing(t) == 1);
+        CAPTURE(current, tp_recv.state(), tp_orig.state());
+
+        REQUIRE(outgoing(t, current) == 1);
         REQUIRE(t.receive(&f));
-        REQUIRE(incoming(t, f) == 1);
+
+        CAPTURE(tp_recv.state(), tp_orig.state());
+
+        REQUIRE(incoming(t, f, current) == 1);
     }
 
     void verify_incoming_payload(const uint8_t* expected, unsigned expected_sz)
@@ -74,25 +80,27 @@ struct helper
 TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 {
     embr::can::loopback_transport t;
-    embr::can::loopback_transport::frame frame;
+    //embr::can::loopback_transport::frame frame;
 
     SECTION("core")
     {
-        using ctx = transport_protocol::context;
+        //using ctx = transport_protocol::context;
         helper h;
         transport_protocol& tp_orig = h.tp_orig;
         transport_protocol& tp_recv = h.tp_recv;
 
         constexpr unsigned sz = sizeof(test::test_str2) - 1;    // Zapping null terminator
 
+        //INFO("phase 1")
+
         {
             tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)}, h.recv_sa);
 
-            h.cycle(t);
+            h.cycle(t, 0);
 
             REQUIRE(tp_orig.originator().resequence_requested() == false);
 
-            h.cycle(t);
+            h.cycle(t, 50);
 
             REQUIRE(tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_CTS);
         }
@@ -102,7 +110,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         {
             tp_orig.payload((uint8_t*)test::test_str2);
 
-            h.cycle(t);
+            h.cycle(t, 100);
 
             REQUIRE(tp_recv.established().remaining_bytes() == sz - 7);
 
@@ -112,7 +120,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         {
             tp_orig.payload((uint8_t*)test::test_str2 + 7);
 
-            h.cycle(t);
+            h.cycle(t, 150);
 
             REQUIRE(tp_recv.established().remaining_bytes() == sz - 14);
 
@@ -122,7 +130,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         {
             tp_orig.payload((uint8_t*)test::test_str2 + 14);
 
-            h.cycle(t);
+            h.cycle(t, 200);
 
             REQUIRE(tp_recv.established().remaining_bytes() == 2);
 
@@ -131,7 +139,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         // Reached end/ack area
 
-        h.cycle(t);
+        h.cycle(t, 250);
 
         REQUIRE(h.tp_recv.state() == transport_protocol::RESPONDER_SENT_EOM_ACK);
         REQUIRE(h.tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_EOM_ACK);
