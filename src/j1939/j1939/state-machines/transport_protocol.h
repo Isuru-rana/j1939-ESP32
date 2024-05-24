@@ -275,6 +275,7 @@ private:
             return 7;
         }
 
+        // Last sent sequence
         uint8_t current_sequence() const { return current_sequence_; }
 
         bool bam() const { return responder_address_ == 0xFF; }

@@ -154,6 +154,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
             }
             else
             {
+                // DEBT: Re-request via CTS the expected_seq
                 state_ = RESPONDER_SENDING_ABORT;
             }
 
@@ -211,6 +212,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
 
             if(originator().bam() && !elapsed(ctx, timeouts::bam))  return false;
 
+            // DEBT: Only actually increment this if transport level send succeeds
             uint8_t seq = ++originator().current_sequence_;
 
             estd::copy_n(originator().current_payload_,

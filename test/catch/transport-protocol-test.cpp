@@ -156,6 +156,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
             h.cycle(t, 50);     // Send CTS, receive CTS
 
             REQUIRE(tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_CTS);
+            REQUIRE(tp_orig.originator().current_sequence() == 0);
         }
 
         REQUIRE(t.peek() == nullptr);
@@ -163,8 +164,10 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         {
             tp_orig.payload((uint8_t*)test::test_str2);
 
-            h.cycle(t, 100);
+            h.cycle(t, 100);    // Send DT, receive DT
 
+            REQUIRE(tp_orig.originator().current_sequence() == 1);
+            REQUIRE(tp_recv.responder().seq() == 1);
             REQUIRE(tp_recv.responder().remaining_bytes() == sz - 7);
 
             h.verify_incoming_payload((const uint8_t *)"0123456", 7);
@@ -173,8 +176,10 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         {
             tp_orig.payload((uint8_t*)test::test_str2 + 7);
 
-            h.cycle(t, 150);
+            h.cycle(t, 150);    // Send DT, receive DT
 
+            REQUIRE(tp_orig.originator().current_sequence() == 2);
+            REQUIRE(tp_recv.responder().seq() == 2);
             REQUIRE(tp_recv.responder().remaining_bytes() == sz - 14);
 
             h.verify_incoming_payload((const uint8_t *)"789ABCD", 7);
@@ -184,8 +189,10 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
             REQUIRE(feed.process());
             //tp_orig.payload((uint8_t*)test::test_str2 + 14);
 
-            h.cycle(t, 200);
+            h.cycle(t, 200);    // Send DT, receive DT
 
+            REQUIRE(tp_orig.originator().current_sequence() == 3);
+            REQUIRE(tp_recv.responder().seq() == 3);
             REQUIRE(tp_recv.responder().remaining_bytes() == 2);
 
             h.verify_incoming_payload((const uint8_t *)"EF", 2);
