@@ -58,7 +58,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                 case modes::cts:
                     return false;
 
-                // RTS & BAM is the only valid message for this to receive when idle
+                // RTS & BAM and sorta CTS are the only valid message for this to receive when idle
                 default:
                     state_ = WARN;
                     break;
@@ -92,6 +92,10 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                 case modes::ack:
                     // We could check here if we truly sent out everything we wanted to
                     state_ = ORIGINATOR_RECEIVED_EOM_ACK;
+                    return true;
+
+                case modes::abort:
+                    state_ = ORIGINATOR_RECEIVED_ABORT;
                     return true;
 
                 default:    break;
@@ -177,6 +181,18 @@ inline void transport_protocol::prep_cts(pdu<pgns::tp_cm>& cm, const context& ct
     //uint32_t pgn = responder().pgn();
     uint32_t pgn = responder().originator_.payload().pgn();
     cm.payload().pgn(pgn);
+}
+
+inline pdu<pgns::tp_cm> transport_protocol::build_abort(const context& ctx, abort_reasons r)
+{
+    pdu<pgns::tp_cm> cm;
+
+    cm.destination_address(responder().originator_.source_address());
+    cm.source_address(ctx.self_address);
+    cm.control(modes::abort);
+    cm.abort_reason(r);
+
+    return cm;
 }
 
 template <class Transport>
@@ -280,8 +296,9 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             return true;
         }
 
-        // Kind of a special case, picks up state set in payload retrieval and transitions
-        // to end phase if all packets received.  Might want to put this elsewhere
+        // Useful to place this here so that external party can pick up RESPONDER_RECEIVING_DT
+        // payload.  They will transition to RESPONDER_RECEIVED_DT, then we land here to
+        // possibly do further transitions
         case RESPONDER_RECEIVED_DT:
             if(responder().last_one())
             {
@@ -309,11 +326,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 // TODO: I think we may want to issue another CTS here?
                 state_ = RESPONDER_TIMEOUT;
 
-                pdu<pgns::tp_cm> p;
-
-                p.control(modes::abort);
-
-                traits::send(t, p);
+                traits::send(t, build_abort(ctx, abort_reasons::timeout));
             }
             // ---
             break;
@@ -344,11 +357,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 {
                     state_ = ORIGINATOR_TIMEOUT;
 
-                    pdu<pgns::tp_cm> p;
-
-                    p.control(modes::abort);
-
-                    traits::send(t, p);
+                    traits::send(t, build_abort(ctx, abort_reasons::timeout));
                 }
                 else
                     state_ = RESPONDER_SENDING_CTS;
@@ -361,11 +370,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             {
                 state_ = ORIGINATOR_TIMEOUT;
 
-                pdu<pgns::tp_cm> p;
-
-                p.control(modes::abort);
-
-                traits::send(t, p);
+                traits::send(t, build_abort(ctx, abort_reasons::timeout));
             }
             break;
 
@@ -379,11 +384,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             {
                 state_ = ORIGINATOR_TIMEOUT;
 
-                pdu<pgns::tp_cm> p;
-
-                p.control(modes::abort);
-
-                traits::send(t, p);
+                traits::send(t, build_abort(ctx, abort_reasons::timeout));
             }
             break;
 

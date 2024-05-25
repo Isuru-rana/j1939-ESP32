@@ -111,6 +111,7 @@ public:
         ORIGINATOR_RECEIVED_CTS,
         ORIGINATOR_SENDING_DT,
         ORIGINATOR_SENT_DT,
+        ORIGINATOR_RECEIVED_ABORT,
         ORIGINATOR_RECEIVED_EOM_ACK,
         ORIGINATOR_TIMEOUT,     // Timed out waiting for responder
         ORIGINATOR_ERROR,
@@ -308,6 +309,7 @@ private:
     };  */
 
     using modes = pdu<pgns::tp_cm>::modes;
+    using abort_reasons = pdu<pgns::tp_cm>::abort_reasons;
 
 #if UNIT_TESTING
 public:
@@ -337,6 +339,7 @@ public:
     }
 
     void prep_cts(pdu<pgns::tp_cm>&, const context&);
+    pdu<pgns::tp_cm> build_abort(const context&, abort_reasons);
 
 public:
     constexpr states state() const { return state_; }
