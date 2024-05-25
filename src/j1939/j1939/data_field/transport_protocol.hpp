@@ -138,7 +138,7 @@ struct data_field<pgns::tp_dt, Container> :
 
     ESTD_CPP_FORWARDING_CTOR(data_field)
 
-    uint8_t sequence_number() const
+    constexpr uint8_t sequence_number() const
     {
         return base_type::template get<uint8_t>(d::sequence_number());
     }

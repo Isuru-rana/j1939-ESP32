@@ -203,13 +203,13 @@ private:
             return seq() * 7;
         }
 
-        constexpr bool last_one() const
+        bool last_one() const
         {
             return current_dt_.sequence_number() == originator_.total_packets().value();
         }
 
         // DEBT: Need a better name - this indicates if maximum packets per CTS flow is reached
-        constexpr bool last_one_per_batch() const
+        bool last_one_per_batch() const
         {
             return originator_.max_packets() == current_packet_per_cts_;
         }
