@@ -26,19 +26,6 @@ inline responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
 }
 
 
-inline void responder_state::prep_cts(pdu<pgns::tp_cm>& cm, uint8_t self_address)
-{
-    cm.destination_address(originator_.source_address());
-    cm.source_address(self_address);
-    cm.control(modes::cts);
-    cm.to_send(seq() + 1);
-    //uint32_t pgn = responder().pgn();
-    uint32_t pgn = originator_.payload().pgn();
-    cm.payload().pgn(pgn);
-}
-
-
-
 }}
 
 inline namespace v0 {
@@ -88,6 +75,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
             break;
         }
 
+#if FEATURE_EMBR_J1939_TP_ORIGINATOR
         case ORIGINATOR_SENT_DT:
 #if FEATURE_EMBR_J1939_STRICT_PROTOCOL
             if(originator().pgn_ != p.payload().pgn())
@@ -134,6 +122,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                 default:    break;
             }
             break;
+#endif
 
         default: break;
     }
@@ -196,7 +185,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
 #endif
 
 
-inline pdu<pgns::tp_cm> transport_protocol::build_abort(const context& ctx, abort_reasons r)
+inline pdu<pgns::tp_cm> transport_protocol::build_abort(const context& ctx, abort_reasons r) const
 {
     pdu<pgns::tp_cm> cm;
 
@@ -262,6 +251,18 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             last_event_ = ctx.current;
             return true;
         }
+
+        case ORIGINATOR_SENT_DT:
+            // For BAM, this means we're done
+            // Otherwise, it means wait for EOM ACK
+            if(originator().sent_everything())
+                state_ = ORIGINATOR_SENT_ALL_DT;
+            return true;
+
+        case ORIGINATOR_SENT_ALL_DT:
+            if(originator().bam())
+                state_ = IDLE;
+            return true;
 
         case ORIGINATOR_SENDING_RTS:
         {

@@ -2,6 +2,8 @@
 #include <nvs_flash.h>
 #include <driver/twai.h>
 
+#include <estd/thread.h>
+
 #include <j1939/ca.hpp>     // gets us dispatcher process_incoming
 #include <j1939/state-machines/transport_protocol.hpp>
 
@@ -15,13 +17,19 @@ extern void twai_init();
 
 static constexpr uint8_t sa = 0x77;
 
+using namespace estd::chrono_literals;
+
 static const char component_id[] =
     "Make*"
     "Model*"
     "S/N*"
     "Unit Number";
 
-embr::j1939::sm::v0::transport_protocol tp;
+// DEBT: Not fully vetted if this is 100% proper way to emit software ID.  Close, though
+static const char software_id[] =
+    "\1ESP32 cm_dt firmware v0.0.0*";
+
+embr::j1939::sm::v0::transport_protocol tp, tp2;
 
 template <class Transport>
 bool component_identification_ca::process_incoming(Transport&, pdu<pgns::request>& p)
@@ -32,8 +40,7 @@ bool component_identification_ca::process_incoming(Transport&, pdu<pgns::request
     {
         case pgns::component_identification:
             ESP_LOGI(TAG, "component_id initiating");
-            tp.initiate_originator(sizeof(component_id), {0, sa},
-                p.source_address(), pgn);
+            tp.initiate_originator(sizeof(component_id), p.source_address(), pgn);
             return true;
 
         default: break;
@@ -51,7 +58,7 @@ bool component_identification_ca::process_outgoing(Transport&)
         const auto& ctp = tp;
         unsigned pos = ctp.originator().current_position();
 
-        ESP_LOGD(TAG, "Prepping chunk: pos=%u", pos);
+        ESP_LOGD(TAG, "Prepping chunk (ECUID): pos=%u", pos);
 
         tp.payload((uint8_t*)component_id + pos);
     }
@@ -73,16 +80,23 @@ extern "C" void app_main(void)
     twai_init();
 
     uint32_t prev_alerts = 0;
+    using clock = estd::chrono::freertos_clock;
+    using time_point = clock::time_point;
+
+    time_point last_bam;
 
     component_identification_ca ca;
-    embr::j1939::sm::v0::transport_protocol::states state = tp.state();
+    embr::j1939::sm::v0::transport_protocol::states state = tp.state(),
+        state2 = tp2.state();
     using context = embr::j1939::sm::v0::transport_protocol::context;
     transport_type t;
 
     for(;;)
     {
+        const time_point now = clock::now();
         uint32_t alerts = 0;
-        context ctx{0, sa};
+        auto now_ms = estd::chrono::milliseconds(now.time_since_epoch()).count();
+        context ctx{uint32_t(now_ms), sa};
 
         twai_read_alerts(&alerts, 0);
 
@@ -102,19 +116,47 @@ extern "C" void app_main(void)
             {
                 embr::j1939::process_incoming(ca, t, frame);
                 embr::j1939::process_incoming(tp, t, frame, ctx);
+                embr::j1939::process_incoming(tp2, t, frame, ctx);
             }
         }
         else
             // 50ms kind of a magic number for CM DT modes
-            vTaskDelay(50 / portTICK_PERIOD_MS);
+            //vTaskDelay(50 / portTICK_PERIOD_MS);
+            estd::this_thread::sleep_for(50ms);
 
         ca.process_outgoing(t);
         tp.process_outgoing(t, ctx);
+        tp2.process_outgoing(t, ctx);
+        tp2.process_outgoing(t, ctx);       // DEBT: Needing to double these up, in this case so it can transition to SENT_ALL
 
         if(tp.state() != state)
         {
             state = tp.state();
-            ESP_LOGI(TAG, "tp state=%d", state);
+            ESP_LOGI(TAG, "tp state=%s (%d)", embr::j1939::to_string(state), state);
+        }
+
+        if(tp2.state() != state2)
+        {
+            state2 = tp2.state();
+            ESP_LOGI(TAG, "tp2 state=%s (%d)", embr::j1939::to_string(state2), state2);
+        }
+
+        if(tp2.ready_for_payload())
+        {
+            const auto& ctp = tp2;
+            unsigned pos = ctp.originator().current_position();
+
+            ESP_LOGD(TAG, "Prepping chunk (SOFT): pos=%u", pos);
+
+            tp2.payload((uint8_t*)software_id + pos);
+        }
+
+        if(now - last_bam > 10s)
+        {
+            ESP_LOGI(TAG, "software_id (bam) initiating");
+            tp2.initiate_originator(sizeof(software_id) - 1, 0xFF,
+                (uint32_t)embr::j1939::pgns::software_identification);
+            last_bam = now;
         }
     }
 }

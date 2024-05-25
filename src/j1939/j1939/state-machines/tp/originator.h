@@ -33,12 +33,12 @@ struct originator_state
         return current_sequence_ * 7;
     }
 
-    bool resequence_requested() const
+    constexpr bool resequence_requested() const
     {
         return current_payload_ == nullptr && current_sequence_ > 0;
     }
 
-    bool hold_requested() const
+    constexpr bool hold_requested() const
     {
         return max_packets_per_cts_ == 0;
     }
@@ -54,7 +54,12 @@ struct originator_state
     // Last sent sequence OR last resequence-requested seq
     uint8_t current_sequence() const { return current_sequence_; }
 
-    bool bam() const { return responder_address_ == 0xFF; }
+    constexpr bool sent_everything() const
+    {
+        return current_position() >= total_size_;
+    }
+
+    constexpr bool bam() const { return responder_address_ == 0xFF; }
 };
 
 }}}}}

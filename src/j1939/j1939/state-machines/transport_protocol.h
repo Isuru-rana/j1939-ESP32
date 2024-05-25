@@ -115,6 +115,7 @@ public:
         ORIGINATOR_RECEIVED_CTS,
         ORIGINATOR_SENDING_DT,
         ORIGINATOR_SENT_DT,
+        ORIGINATOR_SENT_ALL_DT,
         ORIGINATOR_RECEIVED_ABORT,
         ORIGINATOR_RECEIVED_EOM_ACK,
         ORIGINATOR_TIMEOUT,     // Timed out waiting for responder
@@ -218,8 +219,7 @@ public:
     // For responder role only, requests that a CTS of 0 can_send (hold) emit
     void request_hold();
 
-    void prep_cts(pdu<pgns::tp_cm>&, const context&);
-    pdu<pgns::tp_cm> build_abort(const context&, abort_reasons);
+    pdu<pgns::tp_cm> build_abort(const context&, abort_reasons) const;
 
 public:
     const responder_state& responder() const
@@ -296,7 +296,12 @@ public:
     //bool process_time(time_point);
 
     // Indicates state machine should kick into originator mode
+    // DEBT: Really don't think we need context anymore, keeping around just in case
     void initiate_originator(uint16_t sz, const context&, uint8_t responder_address, uint32_t pgn);
+    void initiate_originator(uint16_t sz, uint8_t responder_address, uint32_t pgn)
+    {
+        initiate_originator(sz, {0, 0}, responder_address, pgn);
+    }
 
     // Indicate we've consumed the latest DT chunk
     void mark_dt_received();
@@ -304,4 +309,8 @@ public:
     time_point next_event() const;
 };
 
-}}}}
+}}
+
+const char* to_string(sm::v0::transport_protocol::states v);
+
+}}

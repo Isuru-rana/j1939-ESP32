@@ -5,6 +5,6 @@ include(${ROOT_DIR}/tools/cmake/sources.cmake)
 idf_component_register(
                     SRCS ${SOURCE_FILES}
                     INCLUDE_DIRS ${ROOT_DIR}
-                    REQUIRES embr estdlib
+                    REQUIRES can embr estdlib
                     esp_wifi    #DEBT
                     )

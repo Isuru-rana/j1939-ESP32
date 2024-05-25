@@ -29,6 +29,22 @@ struct type_traits<spns::software_identification> : internal::ascii_type_traits
 
 }
 
+namespace pgn {
+
+template <>
+struct traits<pgns::software_identification>
+{
+    static constexpr const char* name()
+    {
+        return "Software Identification";
+    }
+
+    static constexpr const char* abbrev() { return "SOFT"; }
+};
+
+}
+
+
 // NOTE: Not sure we want a data field for software_identification pgn
 // because it will far exceed our 32-byte utility limit
 

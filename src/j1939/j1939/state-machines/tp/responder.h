@@ -71,7 +71,7 @@ struct responder_state : enum_base
 
     uint8_t max_packets() const { return originator_.max_packets(); }
 
-    void prep_cts(pdu<pgns::tp_cm>& cm, uint8_t sa);
+    void prep_cts(pdu<pgns::tp_cm>& cm, uint8_t sa) const;
 };
 
 }}}}}
