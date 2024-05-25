@@ -21,6 +21,7 @@
 #include <j1939/cas/internal/prng_address_manager.h>
 
 #include <j1939/data_field/all.hpp>
+#include <j1939/state-machines/transport_protocol.hpp>
 
 #include <j1939/ostream.h>
 
@@ -180,6 +181,19 @@ struct CanPGNActionImpl
 
 #if __cpp_concepts
 #endif
+
+template <>
+struct CanPGNActionImpl<pgns::request>
+{
+    template <class TStreambuf>
+    void action(detail::basic_ostream<TStreambuf>&) {}
+
+    void prep(pdu<pgns::request>& p)
+    {
+        p.payload().pgn((uint32_t)pgns::component_identification);
+    }
+};
+
 
 template <>
 struct CanPGNActionImpl<pgns::cab_message1>
@@ -502,6 +516,7 @@ menu::Navigator nav(&topLevel);
 CanPGNAction<pgns::oel> item4;
 CanPGNAction<pgns::cab_message1> item5;
 CanPGNAction<pgns::time_date> item6;
+CanPGNAction<pgns::request> item7;
 menu::MenuAction subitem1(&nav, &submenu);
 
 InitiateNetworkCAAction subitem1_1;
@@ -516,6 +531,7 @@ void setup()
     topLevel.items.push_back(&item4);
     topLevel.items.push_back(&item5);
     topLevel.items.push_back(&item6);
+    topLevel.items.push_back(&item7);
 
     submenu.items.push_back(&subitem1_1);
 
@@ -555,6 +571,7 @@ void nca_report()
     }
 }
 
+embr::j1939::sm::v0::transport_protocol tp;
 
 bool on_frame_received(transport::frame& frame)
 {
@@ -564,6 +581,8 @@ bool on_frame_received(transport::frame& frame)
 #else
     r = process_incoming(dca, t, frame);
     process_incoming(nca, t, frame);
+    // Won't fit.  Bummer
+    //process_incoming(tp, t, frame, decltype(tp)::context{0, 0});
 #endif
 
     return r;

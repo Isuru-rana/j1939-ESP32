@@ -37,9 +37,9 @@ struct traits<pgns::request> : internal::traits_base
 
 }
 
-template <class TContainer>
-struct data_field<pgns::request, TContainer> :
-    internal::data_field_base<TContainer>
+template <class Container>
+struct data_field<pgns::request, Container> :
+    internal::data_field_base<Container>
 {
     struct d
     {
@@ -47,7 +47,7 @@ struct data_field<pgns::request, TContainer> :
         //{ return spn::descriptor{}}
     };
 
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
     ESTD_CPP_FORWARDING_CTOR(data_field)
 

@@ -260,7 +260,7 @@ private:
             responder_address_{responder_address}
         {}
 
-        uint16_t current_position() const
+        constexpr uint16_t current_position() const
         {
             return current_sequence_ * 7;
         }
@@ -328,6 +328,10 @@ public:
     // For responder role only, requests that a CTS of 0 can_send (hold) emit
     void request_hold();
 
+    void prep_cts(pdu<pgns::tp_cm>&, const context&);
+    pdu<pgns::tp_cm> build_abort(const context&, abort_reasons);
+
+public:
     const responder_state& responder() const
     {
         return *storage_.get<responder_state>();
@@ -338,10 +342,6 @@ public:
         return *storage_.get<originator_state>();
     }
 
-    void prep_cts(pdu<pgns::tp_cm>&, const context&);
-    pdu<pgns::tp_cm> build_abort(const context&, abort_reasons);
-
-public:
     constexpr states state() const { return state_; }
 
     roles role() const;

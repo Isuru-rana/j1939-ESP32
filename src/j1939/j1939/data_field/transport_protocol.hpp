@@ -18,6 +18,36 @@ namespace spn {
 
 }
 
+namespace pgn {
+
+template <>
+struct traits<pgns::tp_cm> : internal::traits_base
+{
+    static constexpr const char* name()
+    {
+        return "Transport Protocol: Connection Management";
+    }
+
+    // DEBT: J1939-21 (REV2006) Table D1 implies this, but not 100% sure
+    static constexpr const char* abbrev() { return "TP.CM"; }
+};
+
+template <>
+struct traits<pgns::tp_dt> : internal::traits_base
+{
+    static constexpr const char* name()
+    {
+        return "Transport Protocol: Data Transfer";
+    }
+
+    // DEBT: J1939-21 (REV2006) Table D1 implies this, but not 100% sure
+    static constexpr const char* abbrev() { return "TP.DT"; }
+};
+
+
+}
+
+
 
 // [1] Section 5.10.3
 template <class Container>

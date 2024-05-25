@@ -43,8 +43,8 @@ using Range = estd::internal::Range<v>;
 
 ///
 /// @tparam pgn
-/// @tparam TPolicy - place where perhaps we can specify underlying storage class preferences, etc
-template <pgns pgn, class TPolicy = void, typename = internal::Range<true> >
+/// @tparam Policy - place where perhaps we can specify underlying storage class preferences, etc
+template <pgns pgn, class Policy = void, typename = internal::Range<true> >
 class pdu;
 
 struct pdu1_header;

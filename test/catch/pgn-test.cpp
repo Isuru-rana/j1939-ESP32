@@ -41,6 +41,10 @@ TEST_CASE("pgn")
             REQUIRE(data.button1_pressed() == spn::measured::on);
             REQUIRE(data.button2_pressed() == spn::measured::not_available);
         }
+        SECTION("disp1")
+        {
+            data_field<pgns::disp1> data;
+        }
         SECTION("oel")
         {
             data_field<pgns::oel> data;

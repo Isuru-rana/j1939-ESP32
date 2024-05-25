@@ -43,6 +43,7 @@ enum class pgns : uint32_t
     NAME_mgmtmsg_experimental = 0x93,           // Unknown, I believe this goes here
     proprietary_method_identification = 0x9B,   // [17]
     text_display = 0xA8,                        // [13]
+    disp1 = text_display,                       // [17]
     request2 = 0xC9,                            // [16]
     transfer_experimental = 0xCA,               // Unknown, I believe this goes here
     cab_illumination_message = 0xD0,            // [13]
@@ -122,6 +123,7 @@ enum class pgns : uint32_t
     vehicle_hours = 65255,                      // [13]
     vehicle_direction_speed = 65256,            // [13]
     //component_identification = 65259,           // [18]
+    vehicle_identification = 65260,
     engine_temperature = 65262,
     vehicle_position = 65267,                   // [17]
     vehicle_electrical_power_1 = 65271,         // [8], [18]
