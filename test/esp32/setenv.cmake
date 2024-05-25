@@ -2,6 +2,8 @@
 
 set(ROOT_DIR ../..)
 
+set(COMPONENTS main)
+
 get_filename_component(ROOT_DIR
     "${CMAKE_CURRENT_LIST_DIR}/${ROOT_DIR}"
     ABSOLUTE)

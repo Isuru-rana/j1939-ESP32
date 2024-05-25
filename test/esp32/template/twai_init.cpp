@@ -23,14 +23,14 @@ void twai_init()
     static const twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
     // DEBT: Consider a utility call in embr TWAI service to acquire this
-    static const twai_timing_config_t t_config = ;
+    static const twai_timing_config_t t_config =
 #if CONFIG_TWAI_TIMING == 125
 #warning 125Kbit TWAI config is deprecated, please use 500 or 1000
         TWAI_TIMING_CONFIG_125KBITS();
 #elif CONFIG_TWAI_TIMING == 500
-        TWAI_TIMING_CONFIG_500KBITS()
+        TWAI_TIMING_CONFIG_500KBITS();
 #elif CONFIG_TWAI_TIMING == 1000
-        TWAI_TIMING_CONFIG_1MBITS()
+        TWAI_TIMING_CONFIG_1MBITS();
 #else
 #error Unsupported TWAI timing
 #endif

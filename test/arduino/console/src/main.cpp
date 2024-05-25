@@ -2,6 +2,10 @@
 
 #undef _abs     // ESP32 specifically has this additional annoying macro set
 
+// 24MAY24 DEBT: Now that chrono uses underlying units, an Arduino regression crept in.
+#undef min
+#undef max
+
 #include <estd/chrono.h>
 #include <estd/istream.h>
 #include <estd/ostream.h>

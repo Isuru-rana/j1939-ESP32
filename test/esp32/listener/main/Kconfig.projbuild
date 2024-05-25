@@ -1,11 +1,13 @@
 menu "J1939 Listener"
 
-        config GPIO_TWAI_TX
-                int "Pin for TWAI/CAN TX"
-		default 5
-		
-        config GPIO_TWAI_RX
-                int "Pin for TWAI/CAN RX"
-		default 4
+# Fun fact: GPIO_TWAI_TX/GPIO_TWAI_RX already present in embr, and
+# it aliases right onto these.
+#        config GPIO_TWAI_TX
+#                int "Pin for TWAI/CAN TX"
+#		default 5
+#		
+#        config GPIO_TWAI_RX
+#                int "Pin for TWAI/CAN RX"
+#		default 4
 
 endmenu

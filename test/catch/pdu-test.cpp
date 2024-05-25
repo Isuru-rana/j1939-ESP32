@@ -66,6 +66,8 @@ TEST_CASE("pdu")
         }
         SECTION("cab temp")
         {
+            // FIX: Temperature float conversion noticably innacurate
+            
             p.cab_interior_temperature_command(embr::units::celsius<int>(23));
             spn::unit<spns::cab_interior_temperature_command> v(p.test());
 

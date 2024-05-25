@@ -5,6 +5,4 @@ add_compile_definitions("FEATURE_EMBR_ESP_TIMER_SCHEDULER=0")
 
 include(../setenv.cmake)
 
-set(COMPONENTS main)
-
 project(j1939-joystick)
