@@ -15,11 +15,11 @@
 
 namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 
-inline void transport_protocol::responder_state::init(const pdu<pgns::tp_cm>& p)
+inline transport_protocol::responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
+    originator_{p},
+    current_packet_per_cts_{0},
+    retransmit_counter_{0}
 {
-    originator_ = p;
-    //current_payload_ = nullptr;
-    // DEBT: We don't handle out of order sequences for the time being
     current_dt_.sequence_number(0);
 }
 
@@ -43,14 +43,14 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                 case modes::bam:
                 {
                     state_ = RESPONDER_RECEIVED_BAM;
-                    responder().init(p);
+                    storage_.emplace<responder_state>(p);
                     return true;
                 }
 
                 case modes::rts:
                 {
                     state_ = RESPONDER_RECEIVED_RTS;
-                    responder().init(p);
+                    storage_.emplace<responder_state>(p);
                     return true;
                 }
 
@@ -151,11 +151,11 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
             {
                 state_ = RESPONDER_RECEIVING_DT;
                 responder().current_dt_ = p.payload();
+                ++responder().current_packet_per_cts_;
             }
             else
             {
-                // DEBT: Re-request via CTS the expected_seq
-                state_ = RESPONDER_SENDING_ABORT;
+                state_ = RESPONDER_SENDING_CTS;
             }
 
             return true;
@@ -205,7 +205,6 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             return true;
         }
 
-        case ORIGINATOR_SENT_BAM:
         case ORIGINATOR_SENDING_DT:
         {
             pdu<pgns::tp_dt> dt;
@@ -297,12 +296,24 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 state_ = RESPONDER_SENT_EOM_ACK;
                 return true;
             }
+            else if(responder().last_one_per_batch())
+            {
+                responder().retransmit_counter_ = 0;
+                state_ = RESPONDER_SENDING_CTS;
+                return true;
+            }
 
             // +++ Timeout code
             if(elapsed(ctx, timeouts::T1))
             {
                 // TODO: I think we may want to issue another CTS here?
                 state_ = RESPONDER_TIMEOUT;
+
+                pdu<pgns::tp_cm> p;
+
+                p.control(modes::abort);
+
+                traits::send(t, p);
             }
             // ---
             break;
@@ -310,12 +321,14 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
         //case RESPONDER_SENDING_EOM_ACK:
         //    break;
 
-        // +++ Timeouts
+        // +++ Timeouts & other time-based activity
 
         case RESPONDER_SENT_CTS_HOLD:
             if(elapsed(ctx, timeouts::Th))
             {
-                state_ = RESPONDER_TIMEOUT;
+                // If nothing has happened and we reach Th time, send another hold
+                // message (like a keep-alive)
+                state_ = RESPONDER_SENDING_CTS_HOLD;
             }
             break;
 
@@ -323,7 +336,22 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             // [1] Section 5.12.3
             if(elapsed(ctx, timeouts::T2))
             {
-                state_ = RESPONDER_TIMEOUT;
+                // NOTE: It is only implied in documentation that a resend of CTS is desired.
+                // [1] Section 5.10.2.4 does indicate one MAY choose to abort connection
+
+                // At least one DT is expected.  If we don't get one, try another CTS
+                if(++responder().retransmit_counter_ == 3)
+                {
+                    state_ = ORIGINATOR_TIMEOUT;
+
+                    pdu<pgns::tp_cm> p;
+
+                    p.control(modes::abort);
+
+                    traits::send(t, p);
+                }
+                else
+                    state_ = RESPONDER_SENDING_CTS;
             }
             break;
 
@@ -332,6 +360,12 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             if(elapsed(ctx, timeouts::T3))
             {
                 state_ = ORIGINATOR_TIMEOUT;
+
+                pdu<pgns::tp_cm> p;
+
+                p.control(modes::abort);
+
+                traits::send(t, p);
             }
             break;
 
@@ -344,6 +378,12 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 elapsed(ctx, timeouts::T4))
             {
                 state_ = ORIGINATOR_TIMEOUT;
+
+                pdu<pgns::tp_cm> p;
+
+                p.control(modes::abort);
+
+                traits::send(t, p);
             }
             break;
 

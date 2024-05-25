@@ -180,8 +180,9 @@ private:
         // to that.  In reality, we're only talking 8 bytes here
         layer1::data_field<pgns::tp_dt> current_dt_;
         uint8_t current_packet_per_cts_;
+        uint8_t retransmit_counter_;
 
-        void init(const pdu<pgns::tp_cm>&);
+        explicit responder_state(const pdu<pgns::tp_cm>&);
 
         // Always represents last received sequence number
         constexpr uint8_t seq() const
@@ -204,6 +205,12 @@ private:
         constexpr bool last_one() const
         {
             return current_dt_.sequence_number() == originator_.total_packets().value();
+        }
+
+        // DEBT: Need a better name - this indicates if maximum packets per CTS flow is reached
+        constexpr bool last_one_per_batch() const
+        {
+            return originator_.max_packets() == current_packet_per_cts_;
         }
 
         // NOTE: Only valid during limited states, and never goes to 0
@@ -275,7 +282,7 @@ private:
             return 7;
         }
 
-        // Last sent sequence
+        // Last sent sequence OR last resequence-requested seq
         uint8_t current_sequence() const { return current_sequence_; }
 
         bool bam() const { return responder_address_ == 0xFF; }
@@ -361,7 +368,9 @@ public:
     // DEBT: Poor naming, only applies to originator mode
     bool ready_for_payload() const
     {
-        return state_ == ORIGINATOR_SENT_DT || state_ == ORIGINATOR_RECEIVED_CTS;
+        return state_ == ORIGINATOR_SENT_DT ||
+            state_ == ORIGINATOR_RECEIVED_CTS ||
+            state_ == ORIGINATOR_SENT_BAM;
     }
 
     void payload(const uint8_t* v)

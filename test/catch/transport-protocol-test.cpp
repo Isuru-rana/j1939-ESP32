@@ -134,14 +134,14 @@ public:
 TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 {
     embr::can::loopback_transport t;
-    //embr::can::loopback_transport::frame frame;
+    embr::can::loopback_transport::frame frame;
     helper h;
     feeder feed(h.tp_orig, (uint8_t*)test::test_str2);
     constexpr unsigned sz = sizeof(test::test_str2) - 1;    // Zapping null terminator
+    using ctx = transport_protocol::context;
 
     SECTION("core")
     {
-        //using ctx = transport_protocol::context;
         transport_protocol& tp_orig = h.tp_orig;
         transport_protocol& tp_recv = h.tp_recv;
 
@@ -200,12 +200,60 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         // Reached end/ack area
 
-        h.cycle(t, 250);
+        h.cycle(t, 250);    // Send ACK, receive ACK
 
         REQUIRE(h.tp_recv.state() == transport_protocol::RESPONDER_SENT_EOM_ACK);
         REQUIRE(h.tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_EOM_ACK);
     }
-    SECTION("retry")
+    SECTION("retry (cts early)")
+    {
+        embr::can::loopback_transport black_hole;
+        h.tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)}, h.recv_sa,
+            (uint32_t)pgns::software_identification);
+
+        h.cycle(t, 0);      // Send RTS, receive RTS
+        h.cycle(t, 50);      // Send CTS, receive CTS
+
+        REQUIRE(t.peek() == nullptr);
+
+        h.tp_orig.payload((uint8_t*)test::test_str2);                   // mark payload as ready to send
+        h.tp_orig.process_outgoing(black_hole, { 100, h.orig_sa });     // lose the DT
+        h.tp_recv.process_outgoing(t, { 100, h.recv_sa });
+
+        REQUIRE(t.peek() == nullptr);
+
+        // DEBT: Minor debt only, two consecutive process_outgoing are needed since one
+        // detects the timeout and the next actually emits the resend
+        h.tp_recv.process_outgoing(t, { transport_protocol::timeouts::T2, h.recv_sa });
+        h.tp_recv.process_outgoing(t, { transport_protocol::timeouts::T2, h.recv_sa });
+
+        REQUIRE(h.tp_recv.responder().retransmit_counter_ == 1);
+
+        REQUIRE(t.receive(&frame));
+
+        process_incoming(h.tp_orig, t, frame, ctx{transport_protocol::timeouts::T2 + 50, h.orig_sa});
+
+        REQUIRE(h.tp_orig.originator().resequence_requested());
+    }
+    SECTION("broadcast (bam)")
+    {
+        h.tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)}, 0xFF,
+            (uint32_t)pgns::software_identification);
+
+        h.cycle(t, 0);      // Send BAM, receive BAM
+
+        h.tp_orig.payload((uint8_t*)test::test_str2);
+        h.tp_orig.process_outgoing(t, {25, h.orig_sa}); // Too early
+
+        REQUIRE(t.peek() == nullptr);
+
+        h.tp_orig.process_outgoing(t, {50, h.orig_sa});
+
+        REQUIRE(t.receive(&frame));
+
+        process_incoming(h.tp_recv, t, frame, ctx{51, h.recv_sa});
+    }
+    SECTION("unfinished test")
     {
         char s[32] {};
         recv_feeder recv_feed(h.tp_recv, (uint8_t*)s);
