@@ -16,9 +16,11 @@
 #include "../ca.h"
 #include "../data_field/transport_protocol.hpp"
 
+#include "tp/enum.h"
+#include "tp/feature.h"
+#include "tp/originator.h"
+#include "tp/responder.h"
 
-#define FEATURE_EMBR_J1939_STRICT_STATES 1
-#define FEATURE_EMBR_J1939_STRICT_PROTOCOL 1
 
 // DEBT: I am so sure I did this before.  Can't seem to find it though
 
@@ -28,7 +30,9 @@ namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 // DEBT: Probably we want a separate responder & originator state machine
 // "SENDING" states are a signal for external party to pick up a message from
 // state machine and send it
-class transport_protocol : public impl::controller_application_base
+class transport_protocol :
+    public impl::controller_application_base,
+    public tp::v0::enum_base
 {
 public:
     // [1] 5.10.2.4
@@ -133,11 +137,6 @@ public:
         RESPONDER_ERROR,
     };
 
-    enum errors
-    {
-        ORIGINATOR_ERROR_MISMATCHED_PGM
-    };
-
     using time_point = unsigned;
     using duration = unsigned;
 
@@ -145,6 +144,15 @@ public:
     {
         const time_point current;
         const uint8_t self_address;
+#if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
+        time_point* const next;
+
+        constexpr context(time_point current, uint8_t sa, time_point* next = nullptr) :
+            current{current},
+            self_address{sa},
+            next{next}
+        {}
+#endif
     };
 
 private:
@@ -171,123 +179,8 @@ private:
 
     };
 
-    // responder established connections state
-    struct responder_state
-    {
-        // NOTE: We permit modification of 'max_packets' here specifically on responder
-        // side.  '0' / hold is handled via RESPONDER_SENT_CTS_HOLD
-        pdu<pgns::tp_cm> originator_;
-        // DEBT: In theory, we could flow through the original transport frame and use a pointer
-        // to that.  In reality, we're only talking 8 bytes here
-        layer1::data_field<pgns::tp_dt> current_dt_;
-        uint8_t current_packet_per_cts_;
-        uint8_t retransmit_counter_;
-
-        explicit responder_state(const pdu<pgns::tp_cm>&);
-
-        // Always represents last received sequence number
-        constexpr uint8_t seq() const
-        {
-            return current_dt_.sequence_number();
-        }
-
-        // While in RESPONDER_RECEIVING_DT, this is your guy
-        constexpr uint16_t receiving_bytes() const
-        {
-            return (seq() - 1) * 7;
-        }
-
-        // NOTE: Doesn't account for last packet
-        constexpr uint16_t received_bytes() const
-        {
-            return seq() * 7;
-        }
-
-        bool last_one() const
-        {
-            return current_dt_.sequence_number() == originator_.total_packets().value();
-        }
-
-        // DEBT: Need a better name - this indicates if maximum packets per CTS flow is reached
-        bool last_one_per_batch() const
-        {
-            return originator_.max_packets() == current_packet_per_cts_;
-        }
-
-        // NOTE: Only valid during limited states, and never goes to 0
-        // (that's up to you to figure out)
-        uint16_t remaining_bytes() const
-        {
-            const uint16_t total = originator_.total_size().value();
-            if(last_one())
-                return total % 7;
-            else
-                return total - received_bytes();
-        }
-
-        bool bam() const
-        {
-            return originator_.destination_address() == uint8_t(addresses::global);
-        }
-
-        // Requested pgn
-        j1939::pgns pgn() const { return (j1939::pgns)originator_.payload().pgn(); }
-
-        uint8_t max_packets() const { return originator_.max_packets(); }
-    };
-
-    struct originator_state
-    {
-        union
-        {
-            const uint8_t* current_payload_;
-            errors error_;
-        };
-        const uint32_t pgn_;
-        const uint16_t total_size_;
-        uint8_t current_sequence_;
-        uint8_t max_packets_per_cts_;   // Can be adjusted down by CTS message
-        uint8_t current_packet_per_cts_;
-        const uint8_t responder_address_;
-
-        constexpr explicit originator_state(uint16_t total_size, uint8_t responder_address, uint32_t pgn) :
-            current_payload_{nullptr},
-            pgn_{pgn},
-            total_size_{total_size},
-            current_sequence_{0},
-            max_packets_per_cts_{0xFF},
-            current_packet_per_cts_{0},
-            responder_address_{responder_address}
-        {}
-
-        constexpr uint16_t current_position() const
-        {
-            return current_sequence_ * 7;
-        }
-
-        bool resequence_requested() const
-        {
-            return current_payload_ == nullptr && current_sequence_ > 0;
-        }
-
-        bool hold_requested() const
-        {
-            return max_packets_per_cts_ == 0;
-        }
-
-        // DEBT: Shrink this down when we get to the very end of the line.  For now we
-        // do a (usually harmless) read buffer overrun.  Obviously a no no, but unlikely
-        // to cause any immediate problems
-        uint16_t payload_size() const
-        {
-            return 7;
-        }
-
-        // Last sent sequence OR last resequence-requested seq
-        uint8_t current_sequence() const { return current_sequence_; }
-
-        bool bam() const { return responder_address_ == 0xFF; }
-    };
+    using responder_state = tp::v0::responder_state;
+    using originator_state = tp::v0::originator_state;
 
     // DEBT: Default constructor seems a little ornery
     estd::internal::variant_storage<
@@ -307,9 +200,6 @@ private:
         // RESPONDER_SENT_CTS, RESPONDER_RECEIVING_DT
         responder_state established_;
     };  */
-
-    using modes = pdu<pgns::tp_cm>::modes;
-    using abort_reasons = pdu<pgns::tp_cm>::abort_reasons;
 
 #if UNIT_TESTING
 public:
@@ -393,9 +283,11 @@ public:
     template <class Transport>
     bool process_incoming(Transport&, const pdu<pgns::tp_cm>&, const context&);
 
+#if FEATURE_EMBR_J1939_TP_RESPONDER
     // Using dispatcher methodology
     template <class Transport>
     bool process_incoming(Transport&, const pdu<pgns::tp_dt>&, const context&);
+#endif
 
     // Combining time-bound operations since they are likely send related anyway
     template <class Transport>

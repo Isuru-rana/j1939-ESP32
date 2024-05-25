@@ -13,15 +13,35 @@
 // DEBT: Put all these inliners out to a .cpp if we really end up not needing to
 // templatize things
 
-namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
+namespace embr { namespace j1939 { namespace sm {
 
-inline transport_protocol::responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
+namespace tp { inline namespace v0 {
+
+inline responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
     originator_{p},
     current_packet_per_cts_{0},
     retransmit_counter_{0}
 {
     current_dt_.sequence_number(0);
 }
+
+
+inline void responder_state::prep_cts(pdu<pgns::tp_cm>& cm, uint8_t self_address)
+{
+    cm.destination_address(originator_.source_address());
+    cm.source_address(self_address);
+    cm.control(modes::cts);
+    cm.to_send(seq() + 1);
+    //uint32_t pgn = responder().pgn();
+    uint32_t pgn = originator_.payload().pgn();
+    cm.payload().pgn(pgn);
+}
+
+
+
+}}
+
+inline namespace v0 {
 
 template <class Transport>
 bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p, const context& ctx)
@@ -39,6 +59,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
 
             switch(p.control())
             {
+#if FEATURE_EMBR_J1939_TP_RESPONDER
                 // NOTE: Won't get here yet due to self_address_ filter
                 case modes::bam:
                 {
@@ -53,6 +74,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                     storage_.emplace<responder_state>(p);
                     return true;
                 }
+#endif
 
                 // "If a CTS is received while a connection is not established, it shall be ignored."
                 case modes::cts:
@@ -71,7 +93,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
             if(originator().pgn_ != p.payload().pgn())
             {
                 state_ = ORIGINATOR_ERROR;
-                originator().error_ = ORIGINATOR_ERROR_MISMATCHED_PGM;
+                originator().error_ = tp::ORIGINATOR_ERROR_MISMATCHED_PGM;
             }
 #endif
             switch(p.control())
@@ -119,6 +141,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
     return false;
 }
 
+#if FEATURE_EMBR_J1939_TP_RESPONDER
 template <class Transport>
 bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
     const context& ctx)
@@ -170,18 +193,8 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
 
     return false;
 }
+#endif
 
-
-inline void transport_protocol::prep_cts(pdu<pgns::tp_cm>& cm, const context& ctx)
-{
-    cm.destination_address(responder().originator_.source_address());
-    cm.source_address(ctx.self_address);
-    cm.control(modes::cts);
-    cm.to_send(responder().seq() + 1);
-    //uint32_t pgn = responder().pgn();
-    uint32_t pgn = responder().originator_.payload().pgn();
-    cm.payload().pgn(pgn);
-}
 
 inline pdu<pgns::tp_cm> transport_protocol::build_abort(const context& ctx, abort_reasons r)
 {
@@ -202,6 +215,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
 
     switch(state_)
     {
+#if FEATURE_EMBR_J1939_TP_ORIGINATOR
         case ORIGINATOR_SENDING_BAM:
         {
             pdu<pgns::tp_cm> cm;
@@ -268,13 +282,38 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             return true;
         }
 
+        case ORIGINATOR_SENT_RTS:
+            // [1] Section 5.12.3
+            if(elapsed(ctx, timeouts::T3))
+            {
+                state_ = ORIGINATOR_TIMEOUT;
+
+                traits::send(t, build_abort(ctx, abort_reasons::timeout));
+            }
+            break;
+
+        case ORIGINATOR_RECEIVED_CTS:
+            // If responder asked for a hold, they will need to re-send a CTS
+            // to keep us alive.  Otherwise, timeout
+            // "a lack of a CTS for more than (T4) seconds after a CTS (0) message to “hold the
+            //  connection open” will all cause a connection closure to occur" [1] Section 5.10.2.4
+            if(originator().hold_requested() &&
+                elapsed(ctx, timeouts::T4))
+            {
+                state_ = ORIGINATOR_TIMEOUT;
+
+                traits::send(t, build_abort(ctx, abort_reasons::timeout));
+            }
+            break;
+#endif
+#if FEATURE_EMBR_J1939_TP_RESPONDER
         // Got RTS, send CTS
         case RESPONDER_RECEIVED_RTS:
         case RESPONDER_SENDING_CTS:
         {
             pdu<pgns::tp_cm> p;
 
-            prep_cts(p, ctx);
+            responder().prep_cts(p, ctx.self_address);
 
             p.can_send(responder().max_packets());
 
@@ -287,7 +326,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
         {
             pdu<pgns::tp_cm> p;
 
-            prep_cts(p, ctx);
+            responder().prep_cts(p, ctx.self_address);
 
             p.can_send(0);
 
@@ -363,30 +402,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                     state_ = RESPONDER_SENDING_CTS;
             }
             break;
-
-        case ORIGINATOR_SENT_RTS:
-            // [1] Section 5.12.3
-            if(elapsed(ctx, timeouts::T3))
-            {
-                state_ = ORIGINATOR_TIMEOUT;
-
-                traits::send(t, build_abort(ctx, abort_reasons::timeout));
-            }
-            break;
-
-        case ORIGINATOR_RECEIVED_CTS:
-            // If responder asked for a hold, they will need to re-send a CTS
-            // to keep us alive.  Otherwise, timeout
-            // "a lack of a CTS for more than (T4) seconds after a CTS (0) message to “hold the
-            //  connection open” will all cause a connection closure to occur" [1] Section 5.10.2.4
-            if(originator().hold_requested() &&
-                elapsed(ctx, timeouts::T4))
-            {
-                state_ = ORIGINATOR_TIMEOUT;
-
-                traits::send(t, build_abort(ctx, abort_reasons::timeout));
-            }
-            break;
+#endif
 
         // --- Timeouts
 
