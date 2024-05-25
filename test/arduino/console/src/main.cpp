@@ -531,7 +531,7 @@ void setup()
     topLevel.items.push_back(&item4);
     topLevel.items.push_back(&item5);
     topLevel.items.push_back(&item6);
-    topLevel.items.push_back(&item7);
+    //topLevel.items.push_back(&item7);
 
     submenu.items.push_back(&subitem1_1);
 
@@ -582,6 +582,8 @@ bool on_frame_received(transport::frame& frame)
     r = process_incoming(dca, t, frame);
     process_incoming(nca, t, frame);
     // Won't fit.  Bummer
+    // Even with FEATURE_EMBR_J1939_OSTREAM_FULL_PAYLOAD=0.  Might be aggravated by all
+    // those inlines
     //process_incoming(tp, t, frame, decltype(tp)::context{0, 0});
 #endif
 

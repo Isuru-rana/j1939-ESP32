@@ -135,9 +135,9 @@ struct payload_put<pgns::cab_message1> : estd::internal::ostream_functor_tag
             units::percent<precision> >(out, payload.requested_percent_fan_speed());
     }
 };
-#endif
 
 }
 
+#endif
 
 }}
