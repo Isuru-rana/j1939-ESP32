@@ -69,10 +69,12 @@ struct helper
     {
         REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVING_DT);
 
-        auto data = (char*)tp_recv.payload().data();
+        auto span = tp_recv.payload();
+        auto data = (char*)span.data();
         // FIX: It appears fixed-size string pointer doesn't work
         //estd::layer2::basic_string<char, 7, false> s{data};
         //REQUIRE(s == "abcdefg");
+        REQUIRE(span.size() == expected_sz);
         REQUIRE(memcmp(data, expected, expected_sz) == 0);
 
         REQUIRE(tp_recv.state() == transport_protocol::RESPONDER_RECEIVED_DT);

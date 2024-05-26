@@ -33,6 +33,7 @@ struct originator_state
         return (total_size_ + 7) / 7;
     }
 
+    /// Absolute position of payload during ORIGINATOR_SENDING_DT
     constexpr uint16_t current_position() const
     {
         return last_sequence_ * 7;

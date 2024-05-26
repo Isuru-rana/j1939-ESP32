@@ -22,7 +22,7 @@ inline responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
     current_packet_per_cts_{0},
     retransmit_counter_{0}
 {
-    current_dt_.sequence_number(0);
+    last_dt_.sequence_number(0);
 }
 
 
@@ -167,7 +167,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
             if(seq == expected_seq)
             {
                 state_ = RESPONDER_RECEIVING_DT;
-                responder().current_dt_ = p.payload();
+                responder().last_dt_ = p.payload();
                 ++responder().current_packet_per_cts_;
             }
             else

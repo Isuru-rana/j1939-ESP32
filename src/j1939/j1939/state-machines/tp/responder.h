@@ -15,7 +15,7 @@ struct responder_state : enum_base
     pdu<pgns::tp_cm> originator_;
     // DEBT: In theory, we could flow through the original transport frame and use a pointer
     // to that.  In reality, we're only talking 8 bytes here
-    layer1::data_field<pgns::tp_dt> current_dt_;
+    layer1::data_field<pgns::tp_dt> last_dt_;
     uint8_t current_packet_per_cts_;
     uint8_t retransmit_counter_;
 
@@ -24,7 +24,7 @@ struct responder_state : enum_base
     // Always represents last received sequence number
     constexpr uint8_t seq() const
     {
-        return current_dt_.sequence_number();
+        return last_dt_.sequence_number();
     }
 
     // While in RESPONDER_RECEIVING_DT, this is your guy
@@ -41,7 +41,7 @@ struct responder_state : enum_base
 
     bool last_one() const
     {
-        return current_dt_.sequence_number() == originator_.total_packets().value();
+        return last_dt_.sequence_number() == originator_.total_packets().value();
     }
 
     // DEBT: Need a better name - this indicates if maximum packets per CTS flow is reached
@@ -72,6 +72,15 @@ struct responder_state : enum_base
     uint8_t max_packets() const { return originator_.max_packets(); }
 
     void prep_cts(pdu<pgns::tp_cm>& cm, uint8_t sa) const;
+
+    estd::span<const uint8_t> payload()
+    {
+        const unsigned sz = last_one() ?
+            originator_.total_size().value() % 7 :
+            7;
+
+        return {last_dt_.packetized_data(), sz };
+    }
 };
 
 }}}}}

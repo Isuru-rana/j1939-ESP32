@@ -254,8 +254,7 @@ public:
 
         state_ = RESPONDER_RECEIVED_DT;
 
-        // DEBT: Un-hardcode 7
-        return { responder().current_dt_.packetized_data(), 7 };
+        return responder().payload();
     }
 
     // DEBT: Poor naming, only applies to originator mode
