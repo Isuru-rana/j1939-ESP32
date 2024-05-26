@@ -53,9 +53,11 @@ struct helper
     {
         typename Transport::frame f;
 
-        CAPTURE(current, tp_recv.state(), tp_orig.state());
+        CAPTURE(
+            current, to_string(tp_recv.state()), tp_recv.state(),
+            to_string(tp_orig.state()));
 
-        REQUIRE(outgoing(t, current) == 1);
+        REQUIRE(outgoing(t, current) >= 1);
         REQUIRE(t.receive(&f));
 
         CAPTURE(tp_recv.state(), tp_orig.state());

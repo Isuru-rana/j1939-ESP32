@@ -77,6 +77,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
 
 #if FEATURE_EMBR_J1939_TP_ORIGINATOR
         case ORIGINATOR_SENT_DT:
+        case ORIGINATOR_SENT_ALL_DT:
 #if FEATURE_EMBR_J1939_STRICT_PROTOCOL
             if(originator().pgn_ != p.payload().pgn())
             {
@@ -89,12 +90,12 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                 // Handshake stuff, kind of an intermediate ack and occasionally re-requesting
                 // already-sent packets
                 case modes::cts:
-                    if(p.to_send() != originator().current_sequence_ + 1)
+                    if(p.to_send() != originator().last_sequence_ + 1)
                     {
                         // resend/retransmit time
                         // We double duty this pointer as a flag to indicate a retransmit is requested
                         originator().current_payload_ = nullptr;
-                        originator().current_sequence_ = p.to_send().value();
+                        originator().last_sequence_ = p.to_send().value();
                     }
                     state_ = ORIGINATOR_RECEIVED_CTS;
                     return true;
@@ -231,7 +232,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             if(originator().bam() && !elapsed(ctx, timeouts::bam))  return false;
 
             // DEBT: Only actually increment this if transport level send succeeds
-            uint8_t seq = ++originator().current_sequence_;
+            uint8_t seq = ++originator().last_sequence_;
 
             estd::copy_n(originator().current_payload_,
                 originator().payload_size(),

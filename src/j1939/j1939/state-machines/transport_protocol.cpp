@@ -16,6 +16,9 @@ const char* to_string(sm::v0::transport_protocol::states v)
         case states::ORIGINATOR_SENDING_DT:     return "Sending DT";
         case states::ORIGINATOR_SENT_DT:        return "Sent DT";
 
+        case states::RESPONDER_RECEIVING_DT:    return "Receiving DT";
+        case states::RESPONDER_RECEIVED_DT:     return "Received DT";
+
         default:    return "N/A";
     }
 }

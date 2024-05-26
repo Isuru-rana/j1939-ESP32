@@ -13,7 +13,7 @@ struct originator_state
     };
     const uint32_t pgn_;
     const uint16_t total_size_;
-    uint8_t current_sequence_;
+    uint8_t last_sequence_;
     uint8_t max_packets_per_cts_;   // Can be adjusted down by CTS message
     uint8_t current_packet_per_cts_;
     const uint8_t responder_address_;
@@ -22,20 +22,25 @@ struct originator_state
         current_payload_{nullptr},
         pgn_{pgn},
         total_size_{total_size},
-        current_sequence_{0},
+        last_sequence_{0},
         max_packets_per_cts_{0xFF},
         current_packet_per_cts_{0},
         responder_address_{responder_address}
     {}
 
+    constexpr unsigned max_position() const
+    {
+        return (total_size_ + 7) / 7;
+    }
+
     constexpr uint16_t current_position() const
     {
-        return current_sequence_ * 7;
+        return last_sequence_ * 7;
     }
 
     constexpr bool resequence_requested() const
     {
-        return current_payload_ == nullptr && current_sequence_ > 0;
+        return current_payload_ == nullptr && last_sequence_ > 0;
     }
 
     constexpr bool hold_requested() const
@@ -52,7 +57,7 @@ struct originator_state
     }
 
     // Last sent sequence OR last resequence-requested seq
-    uint8_t current_sequence() const { return current_sequence_; }
+    uint8_t current_sequence() const { return last_sequence_; }
 
     constexpr bool sent_everything() const
     {
