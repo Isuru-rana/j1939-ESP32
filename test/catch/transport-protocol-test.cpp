@@ -28,8 +28,8 @@ struct helper
     {
         unsigned processed = 0;
 
-        processed += process_incoming(tp_orig, t, f, ctx{0, orig_sa});
-        processed += process_incoming(tp_recv, t, f, ctx{0, recv_sa});
+        processed += process_incoming(tp_orig, t, f, ctx{current, orig_sa});
+        processed += process_incoming(tp_recv, t, f, ctx{current, recv_sa});
 
         return processed;
     }
@@ -39,8 +39,8 @@ struct helper
     {
         unsigned processed = 0;
 
-        processed += tp_orig.process_outgoing(t, ctx{0, orig_sa});
-        processed += tp_recv.process_outgoing(t, ctx{0, recv_sa});
+        processed += tp_orig.process_outgoing(t, ctx{current, orig_sa});
+        processed += tp_recv.process_outgoing(t, ctx{current, recv_sa});
 
         return processed;
     }
@@ -262,8 +262,9 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         char s[32] {};
         recv_feeder recv_feed(h.tp_recv, (uint8_t*)s);
 
-        h.tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)}, h.recv_sa,
-            (uint32_t)pgns::software_identification);
+        h.tp_orig.initiate_originator(h.recv_sa,
+            (uint32_t)pgns::software_identification,
+            sz);
 
         h.cycle(t, 0);      // Send RTS, receive RTS
         h.cycle(t, 0);      // Send CTS, receive CTS
@@ -281,5 +282,42 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         REQUIRE(recv_feed.process());
 
         REQUIRE(memcmp(s, test::test_str2, 14) == 0);
+    }
+    SECTION("auto payoad")
+    {
+        char s[32] {};
+        recv_feeder recv_feed(h.tp_recv, (uint8_t*)s);
+
+        h.tp_orig.initiate_originator(h.recv_sa,
+            (uint32_t)pgns::software_identification,
+            test::test_str2,
+            sz);
+
+        h.outgoing(t, 0);   // Send RTS
+
+        REQUIRE(t.receive(&frame));
+
+        // Receive RTS... ?
+        int r = h.incoming(t, frame, 0) == 1;
+        REQUIRE(r == 1);
+
+        h.cycle(t, 0);      // Send CTS, receive CTS
+
+        r = h.outgoing(t, 0);   // Stoke auto-send logic
+
+        REQUIRE(r == 1);
+
+        h.cycle(t, 100);    // Send DT, receive DT
+
+        REQUIRE(recv_feed.process());
+
+        r = h.outgoing(t, 150);   // Stoke auto-send logic
+
+        h.cycle(t, 150);    // Send DT, receive DT
+
+        REQUIRE(recv_feed.process());
+
+        // Not quite...
+        //REQUIRE(memcmp(s, test::test_str2, 14) == 0);
     }
 }

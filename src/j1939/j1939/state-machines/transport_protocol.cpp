@@ -11,13 +11,19 @@ const char* to_string(sm::v0::transport_protocol::states v)
     switch(v)
     {
         case states::IDLE:                      return "Idle";
+        case states::ORIGINATOR_RECEIVED_CTS:   return "Received CTS";
         case states::ORIGINATOR_SENDING_BAM:    return "Sending BAM";
         case states::ORIGINATOR_SENT_BAM:       return "Sent BAM";
         case states::ORIGINATOR_SENDING_DT:     return "Sending DT";
         case states::ORIGINATOR_SENT_DT:        return "Sent DT";
+        case states::ORIGINATOR_SENDING_RTS:    return "Sending RTS";
+        case states::ORIGINATOR_SENT_RTS:       return "Sent RTS";
 
+        case states::RESPONDER_RECEIVED_RTS:    return "Received RTS";
         case states::RESPONDER_RECEIVING_DT:    return "Receiving DT";
         case states::RESPONDER_RECEIVED_DT:     return "Received DT";
+        case states::RESPONDER_SENDING_CTS:     return "Sending CTS";
+        case states::RESPONDER_SENT_CTS:        return "Sent CTS";
 
         default:    return "N/A";
     }

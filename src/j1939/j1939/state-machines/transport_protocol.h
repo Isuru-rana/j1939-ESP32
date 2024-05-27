@@ -285,7 +285,7 @@ public:
     // Indicates state machine should kick into originator mode
     // DEBT: Really don't think we need context anymore, keeping around just in case
     void initiate_originator(uint16_t sz, const context&, uint8_t responder_address, uint32_t pgn);
-    void initiate_originator(uint16_t sz, uint8_t responder_address, uint32_t pgn)
+    void initiate_originator(uint8_t responder_address, uint32_t pgn, uint16_t sz)
     {
         initiate_originator(sz, {0, 0}, responder_address, pgn);
     }

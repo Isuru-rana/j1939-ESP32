@@ -248,6 +248,8 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 state_ = ORIGINATOR_SENT_ALL_DT;
             else if(originator().current_packet_per_cts_ == originator().max_packets_per_cts_)
                 state_ = ORIGINATOR_WAITING_CTS;
+            else if(originator().auto_payload_)
+                state_ = ORIGINATOR_SENDING_DT;
 
             return true;
 
@@ -296,7 +298,14 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 state_ = ORIGINATOR_TIMEOUT;
 
                 traits::send(t, originator().build_abort(ctx, abort_reasons::timeout));
+                return true;
             }
+            else if(originator().auto_payload_)
+            {
+                state_ = ORIGINATOR_SENDING_DT;
+                return true;
+            }
+
             break;
 #endif
 #if FEATURE_EMBR_J1939_TP_RESPONDER
@@ -437,7 +446,7 @@ inline void transport_protocol::initiate_originator(
     uint16_t sz
     )
 {
-    initiate_originator(sz, dest_address, pgn);
+    initiate_originator(dest_address, pgn, sz);
     originator().payload_ = (const uint8_t*)payload;
     originator().auto_payload_ = true;
 }
