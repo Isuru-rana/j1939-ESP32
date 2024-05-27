@@ -51,9 +51,9 @@ public:
 
     enum roles
     {
-        ROLE_UNINITIALIZED,
-        ROLE_ORIGINATOR,
-        ROLE_RESPONDER
+        ROLE_UNINITIALIZED = 0,
+        ROLE_ORIGINATOR = 1,
+        ROLE_RESPONDER = 2
     };
 
     enum frame_errors
@@ -97,9 +97,11 @@ public:
         frame_errors error_ : 4;
     };
 
+    static constexpr unsigned role_shift = 8;
+
     enum states
     {
-        IDLE,
+        IDLE = ROLE_UNINITIALIZED << role_shift,
         // Invalid state observed, but occurred at a time which doesn't hurt us
         WARN,
         RECEIVING,
@@ -107,6 +109,7 @@ public:
         SENT_ABORT,
 
         // Originator node states
+        ORIGINATOR = ROLE_ORIGINATOR << role_shift,
         ORIGINATOR_SENDING_RTS,
         ORIGINATOR_SENT_RTS,
         ORIGINATOR_SENDING_BAM,
@@ -122,6 +125,7 @@ public:
         ORIGINATOR_ERROR,
 
         // Responder node states
+        RESPONDER = ROLE_RESPONDER << role_shift,
         RESPONDER_RECEIVED_RTS,
         RESPONDER_RECEIVED_BAM,
         RESPONDER_SENDING_CTS,
@@ -140,21 +144,7 @@ public:
 
     using time_point = unsigned;
     using duration = unsigned;
-
-    struct context
-    {
-        const time_point current;
-        const uint8_t self_address;
-#if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
-        time_point* const next;
-
-        constexpr context(time_point current, uint8_t sa, time_point* next = nullptr) :
-            current{current},
-            self_address{sa},
-            next{next}
-        {}
-#endif
-    };
+    using context = tp::v0::context<time_point>;
 
 private:
     time_point last_event_;
@@ -219,8 +209,6 @@ public:
     // For responder role only, requests that a CTS of 0 can_send (hold) emit
     void request_hold();
 
-    pdu<pgns::tp_cm> build_abort(const context&, abort_reasons) const;
-
 public:
     const responder_state& responder() const
     {
@@ -271,7 +259,7 @@ public:
         assert(ready_for_payload());
 #endif
 
-        originator().current_payload_ = v;
+        originator().payload_ = v;
         state_ = ORIGINATOR_SENDING_DT;
     }
 
@@ -302,8 +290,9 @@ public:
         initiate_originator(sz, {0, 0}, responder_address, pgn);
     }
 
-    // Indicate we've consumed the latest DT chunk
-    void mark_dt_received();
+    // auto-payload mode
+    void initiate_originator(uint8_t responder_address, uint32_t pgn,
+        const void* payload, uint16_t sz);
 
     time_point next_event() const;
 };

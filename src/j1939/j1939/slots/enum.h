@@ -47,7 +47,7 @@ enum class slots
     SAEpw02 = 107,
     SAEatad0200 = 108,      ///< ASCII up to 200 bytes, '*' delimited
     SAEatad0005 = 109,      ///< ASCII up to 5 bytes, '*' delimited
-    SAEatad1728 = 110,      ///< ASCII up to 1728 bytes, '*' delimited
+    SAEatad1728 = 111,      ///< ASCII up to 1728 bytes, '*' delimited
     SAEpg00 = 116,          ///< PGN
     SAEpc04 = 128,
     SAEds02 = 142,

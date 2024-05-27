@@ -22,6 +22,10 @@ struct traits_base
     using s = embr::j1939::spns;
 
     static constexpr unsigned priority = 6;
+
+    // Designate fixed (typical, 8 byte payload) or variable (tp.cm & tp.dt)
+    // NOTE: Occasionally some = true variants have fixed modes
+    static constexpr bool variable = false;
 };
 
 }

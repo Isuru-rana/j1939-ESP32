@@ -14,6 +14,7 @@
 #include "cm1.hpp"
 #include "cm3.hpp"
 #include "dm01.hpp"
+#include "di.hpp"
 #include "disp1.hpp"
 #include "ecuid.hpp"
 #include "eec1.hpp"

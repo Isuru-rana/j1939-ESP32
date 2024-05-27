@@ -119,9 +119,11 @@ using status_type_traits = enum_traits_base<control_commands>;
 using measured_type_traits = enum_traits_base<discrete_parameters>;
 
 // TODO: Does a whole lotta nothing right now, but still makes a good placeholder
+template <unsigned N, char delimiter_ = '*'>
 struct ascii_type_traits
 {
-    static constexpr char delimiter = '*';
+    static constexpr unsigned max_len = N;
+    static constexpr char delimiter = delimiter_;
 };
 
 

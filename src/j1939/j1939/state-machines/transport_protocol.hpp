@@ -78,6 +78,7 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
 #if FEATURE_EMBR_J1939_TP_ORIGINATOR
         case ORIGINATOR_SENT_DT:
         case ORIGINATOR_SENT_ALL_DT:
+        case ORIGINATOR_WAITING_CTS:
 #if FEATURE_EMBR_J1939_STRICT_PROTOCOL
             if(originator().pgn_ != p.payload().pgn())
             {
@@ -94,9 +95,11 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                     {
                         // resend/retransmit time
                         // We double duty this pointer as a flag to indicate a retransmit is requested
-                        originator().current_payload_ = nullptr;
+                        originator().payload_ = nullptr;
                         originator().last_sequence_ = p.to_send().value();
                     }
+                    originator().current_packet_per_cts_ = 0;
+                    originator().max_packets_per_cts_ = p.max_packets();
                     state_ = ORIGINATOR_RECEIVED_CTS;
                     return true;
 
@@ -185,19 +188,6 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
 }
 #endif
 
-
-inline pdu<pgns::tp_cm> transport_protocol::build_abort(const context& ctx, abort_reasons r) const
-{
-    pdu<pgns::tp_cm> cm;
-
-    cm.destination_address(responder().originator_.source_address());
-    cm.source_address(ctx.self_address);
-    cm.control(modes::abort);
-    cm.abort_reason(r);
-
-    return cm;
-}
-
 template <class Transport>
 bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
 {
@@ -229,21 +219,19 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
         {
             pdu<pgns::tp_dt> dt;
 
+            // BAM emissions all delay for 50ms
             if(originator().bam() && !elapsed(ctx, timeouts::bam))  return false;
 
             // DEBT: Only actually increment this if transport level send succeeds
             uint8_t seq = ++originator().last_sequence_;
 
-            estd::copy_n(originator().current_payload_,
+            estd::copy_n(originator().payload_,
                 originator().payload_size(),
                 dt.packetized_data());
 
             dt.sequence_number(seq);
             dt.source_address(ctx.self_address);
             dt.destination_address(originator().responder_address_);
-
-            // TODO: Need to notice (likely in process_outgoing) when current_packet_per_cts_
-            // reaches max_packets_per_cts_ and at that time wait for a CTS before proceeding
 
             ++originator().current_packet_per_cts_;
 
@@ -258,6 +246,9 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             // Otherwise, it means wait for EOM ACK
             if(originator().sent_everything())
                 state_ = ORIGINATOR_SENT_ALL_DT;
+            else if(originator().current_packet_per_cts_ == originator().max_packets_per_cts_)
+                state_ = ORIGINATOR_WAITING_CTS;
+
             return true;
 
         case ORIGINATOR_SENT_ALL_DT:
@@ -290,7 +281,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             {
                 state_ = ORIGINATOR_TIMEOUT;
 
-                traits::send(t, build_abort(ctx, abort_reasons::timeout));
+                traits::send(t, originator().build_abort(ctx, abort_reasons::timeout));
             }
             break;
 
@@ -304,7 +295,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             {
                 state_ = ORIGINATOR_TIMEOUT;
 
-                traits::send(t, build_abort(ctx, abort_reasons::timeout));
+                traits::send(t, originator().build_abort(ctx, abort_reasons::timeout));
             }
             break;
 #endif
@@ -367,7 +358,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 // TODO: I think we may want to issue another CTS here?
                 state_ = RESPONDER_TIMEOUT;
 
-                traits::send(t, build_abort(ctx, abort_reasons::timeout));
+                traits::send(t, responder().build_abort(ctx, abort_reasons::timeout));
             }
             // ---
             break;
@@ -398,7 +389,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 {
                     state_ = ORIGINATOR_TIMEOUT;
 
-                    traits::send(t, build_abort(ctx, abort_reasons::timeout));
+                    traits::send(t, responder().build_abort(ctx, abort_reasons::timeout));
                 }
                 else
                     state_ = RESPONDER_SENDING_CTS;
@@ -439,13 +430,16 @@ inline void transport_protocol::initiate_originator(
     storage_.emplace<originator_state>(sz, dest_address, pgn);
 }
 
-inline void transport_protocol::mark_dt_received()
+inline void transport_protocol::initiate_originator(
+    uint8_t dest_address,
+    uint32_t pgn,
+    const void* payload,
+    uint16_t sz
+    )
 {
-#if FEATURE_EMBR_J1939_STRICT_STATES
-    assert(state_ == RESPONDER_RECEIVING_DT);
-#endif
-
-    state_ = RESPONDER_RECEIVED_DT;
+    initiate_originator(sz, dest_address, pgn);
+    originator().payload_ = (const uint8_t*)payload;
+    originator().auto_payload_ = true;
 }
 
 inline void transport_protocol::request_hold()
@@ -488,6 +482,8 @@ inline auto transport_protocol::next_event() const -> time_point
 // into a 2 way sending/receiving/sent, etc and ack, cts, rts, etc.
 inline auto transport_protocol::role() const -> roles
 {
+    return roles(state_ >> role_shift);
+    /*
     switch(state_)
     {
         case ORIGINATOR_RECEIVED_CTS:
@@ -502,7 +498,7 @@ inline auto transport_protocol::role() const -> roles
             return ROLE_RESPONDER;
 
         default:    return ROLE_UNINITIALIZED;
-    }
+    }   */
 }
 
 }}}}

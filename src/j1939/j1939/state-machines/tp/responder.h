@@ -81,6 +81,17 @@ struct responder_state : enum_base
 
         return {last_dt_.packetized_data(), sz };
     }
+
+    template <class TimePoint>
+    pdu<pgns::tp_cm> build_abort(const context<TimePoint>& ctx, abort_reasons r) const
+    {
+        pdu<pgns::tp_cm> cm;
+
+        cm.destination_address(originator_.source_address());
+        prep_abort(cm, ctx, r);
+
+        return cm;
+    }
 };
 
 }}}}}

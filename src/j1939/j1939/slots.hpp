@@ -1,6 +1,7 @@
 #pragma once
 
 #include "slots.h"
+#include "slots/ascii.hpp"
 #include "slots/angle-direction.hpp"
 #include "slots/count.hpp"
 #include "slots/electrical.hpp"

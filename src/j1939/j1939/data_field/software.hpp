@@ -22,7 +22,8 @@ struct type_traits<spns::number_of_software_identification_fields> :
 
 
 template <>
-struct type_traits<spns::software_identification> : internal::ascii_type_traits
+struct type_traits<spns::software_identification> :
+    internal::ascii_type_traits<200>
 {
     // TODO: ASCII type
 };
