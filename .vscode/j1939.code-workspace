@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"name": "root",
+			"path": ".."
+		},
+		{
+			"path": "../test/esp32/cm_dt"
+		}
+	],
+	"settings": {
+		"window.title": "J1939",
+		"files.associations": {
+			"*.ipp": "cpp",
+			"any": "cpp",
+			"bitset": "cpp",
+			"memory": "cpp",
+			"random": "cpp",
+			"future": "cpp",
+			"optional": "cpp"
+		}
+	}
+}

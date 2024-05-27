@@ -49,3 +49,7 @@ build-*/
 sdkconfig
 sdkconfig.old
 dependencies.lock
+
+# Aside from root one which is already checked in and we DO want to track,
+# no other workspace-y (or otherwise) .vscode folders are desired
+.vscode/
