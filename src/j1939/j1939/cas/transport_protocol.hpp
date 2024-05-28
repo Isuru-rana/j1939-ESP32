@@ -41,7 +41,7 @@ class out_tp_dt_streambuf : public estd::internal::impl::streambuf_base<Traits>
     // DEBT: Do evaporate on this guy
     Transport& transport_;
     //transport::connection& connection_;
-    pdu<pgns::tp_dt> p;
+    pdu<pgns::tp_dt> p{null_t{}};
     unsigned pos_ = 0;
     using transport_type = Transport;
     using tt = transport_traits<transport_type>;
@@ -173,6 +173,7 @@ public:
 };
 
 // Pertains to [1] 5.10
+// NOTE: Obsolete - use state machine variety instead
 template <class TTransport>
 struct transport_protocol_ca : impl::controller_application<TTransport>
 {
@@ -234,7 +235,7 @@ struct transport_protocol_ca : impl::controller_application<TTransport>
     // [1] 5.10.3.2
     void send_cts(transport_type& t, const pdu<pgns::tp_cm>& p)
     {
-        pdu<pgns::tp_cm> p_resp;
+        pdu<pgns::tp_cm> p_resp{null_t{}};
 
         p_resp.payload().control(modes::cts);
         p_resp.can_id().destination_address(p.source_address());

@@ -18,13 +18,6 @@
 #include <concepts>
 #endif
 
-// 28MAY24 DEBT: Belongs in proper FEATURE area, sort of
-// 28MAY24 DEBT: Temporary legacy feature flag to retain old auto null init behavior.
-// Phase out by 01JUL24
-#ifndef FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT
-#define FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT 1
-#endif
-
 namespace embr { namespace j1939 {
 
 namespace experimental {

@@ -70,7 +70,7 @@ template <class TTransport, class TScheduler, class TAddressManager>
 void network_ca<TTransport, TScheduler, TAddressManager>::send_request_for_address_claimed(
     transport_type& t, uint8_t dest)
 {
-    pdu<pgns::request> p;
+    pdu<pgns::request> p{null_t{}};
 
     // DEBT: make this pgn param take enum
     p.payload().pgn((uint32_t)pgns::address_claimed);
@@ -174,7 +174,7 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
     transport_type& t,
     const pdu<pgns::address_claimed>& p)
 {
-    pdu<pgns::address_claimed> p_resp;
+    pdu<pgns::address_claimed> p_resp{null_t{}};
 
     uint8_t sa = p.can_id().source_address();
     // we expect all address_claimed messages to be BAM
@@ -249,7 +249,7 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
 
             if(new_address.has_value())
             {
-                pdu<pgns::address_claimed> p;
+                pdu<pgns::address_claimed> p{null_t{}};
 
                 // DEBT: Account for 'requesting' state in which case we probably
                 // shouldn't respond right away but probably should still find_new_address

@@ -240,7 +240,7 @@ struct network_ca : impl::controller_application<TTransport>,
 
     void send_cannot_claim(transport_type& t)
     {
-        pdu<pgns::address_claimed> p;
+        pdu<pgns::address_claimed> p{null_t{}};
 
         p.can_id().destination_address(address_traits::global);
 
@@ -251,7 +251,7 @@ struct network_ca : impl::controller_application<TTransport>,
 
     void send_claim(transport_type& t)
     {
-        pdu<pgns::address_claimed> p;
+        pdu<pgns::address_claimed> p{null_t{}};
 
         send_claim(t, p, *address_);
     }

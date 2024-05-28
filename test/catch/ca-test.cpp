@@ -55,7 +55,7 @@ struct SyntheticCA : j1939::impl::controller_application<TTransport>
             {
                 ++oel_counter;
                 // DEBT: Not really a great command/response chain, but better than a pure echoback
-                pdu<pgns::switch_bank_control> pdu_response;
+                pdu<pgns::switch_bank_control> pdu_response{null_t{}};
 
                 _transport_traits::send(t, pdu_response);
                 break;
@@ -131,7 +131,7 @@ TEST_CASE("Controller Applications")
 
     can::loopback_transport t;
 
-    const pdu<pgns::fms_identity> fmsi;   // Specifically, not a dispatched flavor
+    const pdu<pgns::fms_identity> fmsi{null_t{}};   // Specifically, not a dispatched flavor
 
     SECTION("basics")
     {
@@ -160,7 +160,7 @@ TEST_CASE("Controller Applications")
         impl::transport_protocol_ca<decltype(t)> impl_;
         using controls = pdu<pgns::tp_cm>::modes;
 
-        pdu<pgns::tp_cm> r;
+        pdu<pgns::tp_cm> r{null_t{}};
 
         r.payload().control(controls::rts);
         r.payload().pgn((uint32_t)pgns::NAME_management_message);
@@ -195,7 +195,7 @@ TEST_CASE("Controller Applications")
     {
         diagnostic_ca<can::loopback_transport, ostringstream> dca(out);
 
-        pdu<pgns::oel> p;
+        pdu<pgns::oel> p{null_t{}};
 
         frame f = frame_traits::create(p);
 
@@ -217,7 +217,7 @@ TEST_CASE("Controller Applications")
             auto& child1 = estd::get<0>(ca.child_cas);
             auto& child2 = estd::get<1>(ca.child_cas);
 
-            pdu<pgns::oel> oel1;
+            pdu<pgns::oel> oel1{null_t{}};
 
             oel1.payload().turn_signal_switch(enum_type<spns::turn_signal_switch>::left_turn_to_be_flashing);
 

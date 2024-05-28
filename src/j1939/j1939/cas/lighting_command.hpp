@@ -59,7 +59,7 @@ void lighting_command_ca<TTransport, TScheduler>::prep_lighting_command(
 template <class TTransport, class TScheduler>
 void lighting_command_ca<TTransport, TScheduler>::off_scheduled(time_point* wake, time_point current)
 {
-    pdu<pgns::lighting_command> p_light;
+    pdu<pgns::lighting_command> p_light{null_t{}};
 
     p_light.low_beam_headlight(spn::status::disable);
     p_light.high_beam_headlight(spn::status::disable);
@@ -71,7 +71,7 @@ void lighting_command_ca<TTransport, TScheduler>::off_scheduled(time_point* wake
 template <class TTransport, class TScheduler>
 void lighting_command_ca<TTransport, TScheduler>::scheduled(time_point* wake, time_point current)
 {
-    pdu<pgns::lighting_command> p;
+    pdu<pgns::lighting_command> p{null_t{}};
 
     // If lighting states no longer demand a scheduled task, we're done
     if(!is_scheduled())
@@ -136,7 +136,7 @@ bool lighting_command_ca<TTransport, TScheduler>::process_incoming(
 
     typedef enum_type<spns::main_light_switch> enum_type;
 
-    pdu<pgns::lighting_command> p_light;
+    pdu<pgns::lighting_command> p_light{null_t{}};
 
     switch(v)
     {

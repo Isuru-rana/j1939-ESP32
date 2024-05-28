@@ -47,7 +47,7 @@ TEST_CASE("pdu")
     }
     SECTION("cm1")
     {
-        pdu<pgns::cab_message1> p;
+        pdu<pgns::cab_message1> p{null_t{}};
 
         SECTION("fan speed")
         {
@@ -77,7 +77,7 @@ TEST_CASE("pdu")
     }
     SECTION("fd")
     {
-        pdu<pgns::fan_drive_1> p;
+        pdu<pgns::fan_drive_1> p{null_t{}};
         embr::units::percent<int> percent{50};
 
         p.estimated_percent_fan_speed(percent);
@@ -97,11 +97,11 @@ TEST_CASE("pdu")
     }
     SECTION("dm01")
     {
-        pdu<pgns::active_diagnostic_trouble_codes> p;
+        pdu<pgns::active_diagnostic_trouble_codes> p{null_t{}};
     }
     SECTION("oel")
     {
-        pdu<pgns::oel> p;
+        pdu<pgns::oel> p{null_t{}};
 
         // TODO: Consider a mechanism which deduces which setter to use based solely on the unique
         // enum.  Would have limited use, but still useful in general
@@ -118,7 +118,7 @@ TEST_CASE("pdu")
     }
     SECTION("time_date")
     {
-        pdu<pgns::time_date> p;
+        pdu<pgns::time_date> p{null_t{}};
 
         p.year(5);
 
@@ -130,7 +130,7 @@ TEST_CASE("pdu")
     }
     SECTION("transport protocol data transfer")
     {
-        pdu<pgns::tp_dt> p;
+        pdu<pgns::tp_dt> p{null_t{}};
 
         p.sequence_number(1);
 
@@ -139,7 +139,7 @@ TEST_CASE("pdu")
     SECTION("commanded_address")
     {
         // Also includes implicit NAME testing
-        pdu<pgns::commanded_address> p;
+        pdu<pgns::commanded_address> p{null_t{}};
 
         p.can_id().source_address(77);
         p.payload().source_address(7);
@@ -151,7 +151,7 @@ TEST_CASE("pdu")
     }
     SECTION("address_claimed")
     {
-        pdu<pgns::address_claimed> p;
+        pdu<pgns::address_claimed> p{null_t{}};
 
         test::NAME_trailer_brake<true>::populate(p.payload());
 
@@ -161,7 +161,7 @@ TEST_CASE("pdu")
     }
     SECTION("vep3")
     {
-        pdu<pgns::vehicle_electrical_power_3> p;
+        pdu<pgns::vehicle_electrical_power_3> p{null_t{}};
 
         auto v = p.alternator_current();
 

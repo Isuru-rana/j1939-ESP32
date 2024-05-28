@@ -130,9 +130,9 @@ TEST_CASE("Controller Applications (network)")
         //test::setup_agricultural_planter(impl.name, 1, 0, 0);
 
         // request for address claimed
-        pdu<pgns::request> r;
+        pdu<pgns::request> r{null_t{}};
         // announce address claimed
-        pdu<pgns::address_claimed> p_claim;
+        pdu<pgns::address_claimed> p_claim{null_t{}};
         frame_type f;
 
         r.payload().pgn((uint32_t)pgns::address_claimed);

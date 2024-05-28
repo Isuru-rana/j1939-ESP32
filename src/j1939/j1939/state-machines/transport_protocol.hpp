@@ -19,7 +19,6 @@ namespace tp { inline namespace v0 {
 
 inline responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
     originator_{p},
-    last_dt_(null_t{}),
     current_packet_per_cts_{0},
     retransmit_counter_{0}
 {
@@ -204,7 +203,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
 #if FEATURE_EMBR_J1939_TP_ORIGINATOR
         case ORIGINATOR_SENDING_BAM:
         {
-            pdu<pgns::tp_cm> cm;
+            pdu<pgns::tp_cm> cm{null_t{}};
             const uint16_t& sz = originator().total_size_;
 
             cm.total_packets((sz + 7) / 7);
@@ -223,7 +222,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
 
         case ORIGINATOR_SENDING_DT:
         {
-            pdu<pgns::tp_dt> dt;
+            pdu<pgns::tp_dt> dt{null_t{}};
 
             // BAM emissions all delay for 50ms
             if(originator().bam() && !elapsed(ctx, timeouts::bam))  return false;
@@ -276,7 +275,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
 
         case ORIGINATOR_SENDING_RTS:
         {
-            pdu<pgns::tp_cm> cm;
+            pdu<pgns::tp_cm> cm{null_t{}};
             const uint16_t& sz = originator().total_size_;
 
             cm.total_packets((sz + 7) / 7);
@@ -331,7 +330,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
         case RESPONDER_RECEIVED_RTS:
         case RESPONDER_SENDING_CTS:
         {
-            pdu<pgns::tp_cm> p;
+            pdu<pgns::tp_cm> p{null_t{}};
 
             responder().prep_cts(p, ctx.self_address);
 
@@ -344,7 +343,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
 
         case RESPONDER_SENDING_CTS_HOLD:
         {
-            pdu<pgns::tp_cm> p;
+            pdu<pgns::tp_cm> p{null_t{}};
 
             responder().prep_cts(p, ctx.self_address);
 
