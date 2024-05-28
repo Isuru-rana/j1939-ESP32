@@ -19,7 +19,7 @@ TEST_CASE("pgn")
     {
         SECTION("bjm1")
         {
-            data_field<pgns::basic_joystick_message_1> data;
+            data_field<pgns::basic_joystick_message_1> data{null_t{}};
             const auto& raw = data.data_;
 
             // 35 = 0x23
@@ -43,18 +43,18 @@ TEST_CASE("pgn")
         }
         SECTION("disp1")
         {
-            data_field<pgns::disp1> data;
+            data_field<pgns::disp1> data{null_t{}};
         }
         SECTION("oel")
         {
-            data_field<pgns::oel> data;
+            data_field<pgns::oel> data{null_t{}};
             data.turn_signal_switch();
             data.high_low_beam_switch(enum_type<spns::high_low_beam_switch>::high_beam_selected);
             //data.();
         }
         SECTION("lighting_command")
         {
-            data_field<pgns::lighting_command> data;
+            data_field<pgns::lighting_command> data{null_t{}};
 
             uint16_t val = data.get_raw<spns::left_turn_signal_lights_cmd>();
 
@@ -67,7 +67,7 @@ TEST_CASE("pgn")
         }
         SECTION("vehicle_electrical_power_1")
         {
-            data_field<pgns::vehicle_electrical_power_1> data;
+            data_field<pgns::vehicle_electrical_power_1> data{null_t{}};
             typedef spn::traits<spns::battery_potential> traits_type;
             constexpr embr::units::millivolts<uint16_t> v1{25000};
             constexpr unit_type<spns::battery_potential> v2{v1};
@@ -88,7 +88,7 @@ TEST_CASE("pgn")
         }
         SECTION("transport_protocol")
         {
-            data_field<pgns::tp_cm> data;
+            data_field<pgns::tp_cm> data{null_t{}};
 
             // FIX: Something is wrong with underlying constexpr's
             data.control(data.cts);
@@ -111,14 +111,14 @@ TEST_CASE("pgn")
         {
             SECTION("switch_bank_status")
             {
-                data_field<pgns::switch_bank_status> data;
+                data_field<pgns::switch_bank_status> data{null_t{}};
 
                 bool v = data[4];
             }
         }
         SECTION("time_date")
         {
-            data_field<pgns::time_date> data;
+            data_field<pgns::time_date> data{null_t{}};
             embr::units::days<int> d(10);
 
             data.seconds(3);

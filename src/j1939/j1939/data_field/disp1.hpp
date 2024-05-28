@@ -8,11 +8,9 @@ template<class Container>
 struct data_field<pgns::disp1, Container> :
     internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<Container> base_type;
+    using base_type = internal::data_field_base<Container>;
 
-    data_field() = default;
-
-    data_field(const uint8_t* copy_from) : base_type(copy_from) {}
+    ESTD_CPP_FORWARDING_CTOR(data_field)
 };
 
 }}

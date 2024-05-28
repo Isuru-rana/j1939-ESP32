@@ -23,7 +23,10 @@ TEST_CASE("experimental")
     }
     SECTION("state machines")
     {
-        j1939::data_field<j1939::pgns::tp_dt> v1, v2, v3;
+        j1939::data_field<j1939::pgns::tp_dt>
+            v1{j1939::null_t{}},
+            v2{j1939::null_t{}},
+            v3{j1939::null_t{}};
 
         SECTION("string gatherer")
         {

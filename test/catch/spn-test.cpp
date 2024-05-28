@@ -45,7 +45,7 @@ TEST_CASE("spn")
         {
             SECTION("lighting")
             {
-                data_field<pgns::lighting_command> payload;
+                data_field<pgns::lighting_command> payload{null_t{}};
                 //using ut = unit_type<spns::left_stop_lights_cmd>;
 
                 payload.left_stop(traits_type::enum_type::noop);
@@ -56,7 +56,7 @@ TEST_CASE("spn")
             }
             SECTION("cm1")
             {
-                data_field<pgns::cab_message1> payload;
+                data_field<pgns::cab_message1> payload{null_t{}};
                 using traits = spn::traits<spns::cab_interior_temperature_command>;
                 //typedef slot_traits<slots::SAEtp02> traits;
 

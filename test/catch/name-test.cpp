@@ -79,7 +79,7 @@ TEST_CASE("j1939-81 NAME")
 
             REQUIRE(v);
 
-            NAME n2;
+            NAME n2{j1939::null_t{}};
 
             test::NAME_trailer_brake<false,
                 j1939::manufacturer_codes::chrysler,
@@ -124,7 +124,7 @@ TEST_CASE("j1939-81 NAME")
         SECTION("trailer brake")
         {
             test::names::trailer_brake<true>::sparse name1;
-            j1939::layer1::NAME name2;
+            j1939::layer1::NAME name2{j1939::null_t{}};
 
             name1.populate(name2);
 
@@ -150,7 +150,7 @@ TEST_CASE("j1939-81 NAME")
             REQUIRE(sparse.function_instance_ == 1);
             REQUIRE(sparse.ecu_instance_ == 0);
 
-            j1939::layer1::NAME name;
+            j1939::layer1::NAME name{j1939::null_t{}};
 
             sparse.populate(name);
             //name.function_instance(sparse.function_instance_);

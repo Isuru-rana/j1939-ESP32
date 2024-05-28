@@ -75,11 +75,11 @@ struct traits<pgns::commanded_address> : internal::traits_base
 //
 // "The Cannot Claim Address message is the same PGN as the Address Claimed message but has a source
 //  address of 254, the null address" [3] 4.2.2.3
-template <class TContainer>
-struct data_field<pgns::address_claimed, TContainer> :
-    NAME<TContainer>
+template <class Container>
+struct data_field<pgns::address_claimed, Container> :
+    NAME<Container>
 {
-    typedef NAME<TContainer> base_type;
+    typedef NAME<Container> base_type;
 
     ESTD_CPP_FORWARDING_CTOR(data_field)
 
@@ -94,11 +94,11 @@ struct data_field<pgns::address_claimed, TContainer> :
 
 /*
  * Needs transport protocol data transfer ( > 8 bytes ) mode */
-template <class TContainer>
-struct data_field<pgns::commanded_address, TContainer> :
-    NAME<TContainer>
+template <class Container>
+struct data_field<pgns::commanded_address, Container> :
+    NAME<Container>
 {
-    typedef NAME<TContainer> base_type;
+    typedef NAME<Container> base_type;
 
     ESTD_CPP_FORWARDING_CTOR(data_field)
 

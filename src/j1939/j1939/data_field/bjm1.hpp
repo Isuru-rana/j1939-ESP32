@@ -113,9 +113,7 @@ struct data_field<pgns::basic_joystick_message_1, TContainer> :
 {
     typedef internal::data_field_base<TContainer> base_type;
 
-    data_field() = default;
-
-    constexpr data_field(const uint8_t* copy_from) : base_type(copy_from) {}
+    ESTD_CPP_FORWARDING_CTOR(data_field)
 
     EMBR_J1939_PROPERTY(joystick1_x_axis_position)
     EMBR_J1939_PROPERTY(joystick1_y_axis_position)

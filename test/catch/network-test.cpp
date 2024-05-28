@@ -65,7 +65,7 @@ TEST_CASE("Controller Applications (network)")
     can::loopback_transport t;
 
     embr::internal::layer1::Scheduler<5, FunctorImpl> scheduler;
-    j1939::layer1::NAME name;
+    j1939::layer1::NAME name{j1939::null_t{}};
 
     using network_ca = impl::network_ca<decltype(t), decltype(scheduler), SyntheticAddressManager>;
 
@@ -231,7 +231,7 @@ TEST_CASE("Controller Applications (network)")
         {
             // Since contender uses same pseudo algorithm SA generator, its addresses
             // collide with primary (impl)
-            j1939::layer1::NAME contender_name;
+            j1939::layer1::NAME contender_name{null_t{}};
             test::names::agricultural_planter<true>::populate(contender_name);
             network_ca contender(contender_name, scheduler);
 

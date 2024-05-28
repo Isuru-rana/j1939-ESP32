@@ -18,6 +18,13 @@
 #include <concepts>
 #endif
 
+// 28MAY24 DEBT: Belongs in proper FEATURE area, sort of
+// 28MAY24 DEBT: Temporary legacy feature flag to retain old auto null init behavior.
+// Phase out by 01JUL24
+#ifndef FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT
+#define FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT 1
+#endif
+
 namespace embr { namespace j1939 {
 
 namespace experimental {
@@ -41,11 +48,13 @@ protected:
     typedef bits::internal::material<e, bits::lsb_to_msb, bits::lsb_to_msb,
         Container> base_type;
 
-    // Used just for diagnostic - we are close to a fully active and non-default
-    // null_t, just some experimental NAME/nca stuff holding us back
-    //data_field_base() = delete;
-
+#if FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT
     explicit data_field_base(null_t = {})
+#else
+    constexpr data_field_base() = default;
+
+    explicit data_field_base(null_t)
+#endif
     {
         estd::fill(container_type::begin(), container_type::end(), 0xFF);
     }

@@ -50,6 +50,9 @@ set(SOURCE_FILES
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
+target_compile_definitions(j1939 PUBLIC FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT=0)
+target_compile_definitions(${PROJECT_NAME} PUBLIC FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT=0)
+
 # DEBT: Consolidate this into an estdlib helper cmake, and perhaps even a
 # kind of CMake OPTION which defaults to off - that might be even better
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

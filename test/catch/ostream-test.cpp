@@ -19,7 +19,7 @@ TEST_CASE("ostream")
     SECTION("NAME")
     {
         test::names::trailer_brake<true>::sparse name1;
-        j1939::layer1::NAME name2;
+        j1939::layer1::NAME name2{null_t{}};
 
         name1.populate(name2);
 
@@ -52,7 +52,7 @@ TEST_CASE("ostream")
     {
         SECTION("oel")
         {
-            data_field<pgns::oel> payload;
+            data_field<pgns::oel> payload{null_t{}};
 
             out << estd::hex << j1939::internal::payload_put<pgns::oel>{payload};
 
@@ -61,7 +61,7 @@ TEST_CASE("ostream")
         }
         SECTION("time_data")
         {
-            data_field<pgns::time_date> payload;
+            data_field<pgns::time_date> payload{null_t{}};
             embr::units::years<uint16_t> year(1990);
 
             payload.year(5);    // DEBT: Year is 1985+ this value.  Make year truly take human readable value
@@ -79,7 +79,7 @@ TEST_CASE("ostream")
     }
     SECTION("can_id")
     {
-        pdu<pgns::oel> p;
+        pdu<pgns::oel> p{null_t{}};
 
         out << p.can_id();
 

@@ -111,7 +111,7 @@ struct network_ca_base : ca_base,
 protected:
     // TODO: Optimize to use sparse/layer0/layer2 name but not at the exclusion
     // of the edge case where a NAME can be totally changed
-    layer1::NAME name_;
+    layer1::NAME name_{null_t{}};
 
     // TODO: Change to non-optional (since state machine handles that)
     // May be claimed, claiming or cannot claim depending on
