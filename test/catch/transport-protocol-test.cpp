@@ -97,7 +97,7 @@ public:
     {
         if(tp_.ready_for_payload())
         {
-            const uint16_t pos = tp_.originator().current_position();
+            const uint16_t pos = tp_.originator().last_position();
             tp_.payload(data_ + pos);
             return true;
         }
@@ -160,7 +160,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
             h.cycle(t, 50);     // Send CTS, receive CTS
 
             REQUIRE(tp_orig.state() == transport_protocol::ORIGINATOR_RECEIVED_CTS);
-            REQUIRE(tp_orig.originator().current_sequence() == 0);
+            REQUIRE(tp_orig.originator().last_sequence() == 0);
         }
 
         REQUIRE(t.peek() == nullptr);
@@ -170,9 +170,9 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             h.cycle(t, 100);    // Send DT, receive DT
 
-            REQUIRE(tp_orig.originator().current_sequence() == 1);
+            REQUIRE(tp_orig.originator().last_sequence() == 1);
             REQUIRE(tp_recv.responder().seq() == 1);
-            REQUIRE(tp_recv.responder().remaining_bytes() == sz - 7);
+            REQUIRE(tp_recv.responder().received_bytes() == 7);
 
             h.verify_incoming_payload((const uint8_t *)"0123456", 7);
         }
@@ -182,9 +182,9 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             h.cycle(t, 150);    // Send DT, receive DT
 
-            REQUIRE(tp_orig.originator().current_sequence() == 2);
+            REQUIRE(tp_orig.originator().last_sequence() == 2);
             REQUIRE(tp_recv.responder().seq() == 2);
-            REQUIRE(tp_recv.responder().remaining_bytes() == sz - 14);
+            REQUIRE(tp_recv.responder().received_bytes() == 14);
 
             h.verify_incoming_payload((const uint8_t *)"789ABCD", 7);
         }
@@ -195,9 +195,11 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             h.cycle(t, 200);    // Send DT, receive DT
 
-            REQUIRE(tp_orig.originator().current_sequence() == 3);
+            REQUIRE(tp_orig.originator().last_sequence() == 3);
             REQUIRE(tp_recv.responder().seq() == 3);
-            REQUIRE(tp_recv.responder().remaining_bytes() == 2);
+            // NOTE: State machine doesn't need to precisely know it's 16 bytes, so
+            // it always is on 7 byte boundaries
+            REQUIRE(tp_recv.responder().received_bytes() == 21);
 
             h.verify_incoming_payload((const uint8_t *)"EF", 2);
         }
@@ -212,8 +214,9 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
     SECTION("retry (cts early)")
     {
         embr::can::loopback_transport black_hole;
-        h.tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)}, h.recv_sa,
-            (uint32_t)pgns::software_identification);
+        h.tp_orig.initiate_originator(h.recv_sa,
+            (uint32_t)pgns::software_identification,
+            sz);
 
         h.cycle(t, 0);      // Send RTS, receive RTS
         h.cycle(t, 50);      // Send CTS, receive CTS
@@ -241,8 +244,9 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
     }
     SECTION("broadcast (bam)")
     {
-        h.tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)}, 0xFF,
-            (uint32_t)pgns::software_identification);
+        h.tp_orig.initiate_originator(0xFF,
+            (uint32_t)pgns::software_identification,
+            sz);
 
         h.cycle(t, 0);      // Send BAM, receive BAM
 
@@ -318,6 +322,6 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         REQUIRE(recv_feed.process());
 
         // Not quite...
-        //REQUIRE(memcmp(s, test::test_str2, 14) == 0);
+        REQUIRE(memcmp(s, test::test_str2, 14) == 0);
     }
 }

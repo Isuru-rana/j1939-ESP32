@@ -30,10 +30,13 @@ struct responder_state : enum_base
     // While in RESPONDER_RECEIVING_DT, this is your guy
     constexpr uint16_t receiving_bytes() const
     {
+        // Since seq is last received seq, and it's 1-index-based, we need to bump
+        // down by one for position calculations
         return (seq() - 1) * 7;
     }
 
-    // NOTE: Doesn't account for last packet
+    // NOTE: Always on 7 byte boundaries, and not used directly by state machine
+    // (only for benefit of external parties)
     constexpr uint16_t received_bytes() const
     {
         return seq() * 7;
@@ -50,6 +53,7 @@ struct responder_state : enum_base
         return originator_.max_packets() == current_packet_per_cts_;
     }
 
+    /*  Only used by tests, switching them to 'received_bytes'
     // NOTE: Only valid during limited states, and never goes to 0
     // (that's up to you to figure out)
     uint16_t remaining_bytes() const
@@ -59,7 +63,7 @@ struct responder_state : enum_base
             return total % 7;
         else
             return total - received_bytes();
-    }
+    }   */
 
     bool bam() const
     {

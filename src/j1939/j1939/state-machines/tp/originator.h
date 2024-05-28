@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/algorithm.h>
+
 #include "enum.h"
 #include "base.h"
 
@@ -41,13 +43,14 @@ struct originator_state : enum_base
         responder_address_{responder_address}
     {}
 
-    constexpr unsigned max_position() const
+    constexpr unsigned max_sequence() const
     {
         return (total_size_ + 7) / 7;
     }
 
     /// Absolute position of payload during ORIGINATOR_SENDING_DT
-    constexpr uint16_t current_position() const
+    /// Remember this is 1-index-based
+    constexpr uint16_t last_position() const
     {
         return last_sequence_ * 7;
     }
@@ -62,20 +65,19 @@ struct originator_state : enum_base
         return max_packets_per_cts_ == 0;
     }
 
-    // DEBT: Shrink this down when we get to the very end of the line.  For now we
-    // do a (usually harmless) read buffer overrun.  Obviously a no no, but unlikely
-    // to cause any immediate problems
     uint16_t payload_size() const
     {
-        return 7;
+        const unsigned remaining_to_send = total_size_ - (last_sequence_ * 7);
+
+        return estd::min(remaining_to_send, 7U);
     }
 
     // Last sent sequence OR last resequence-requested seq
-    uint8_t current_sequence() const { return last_sequence_; }
+    uint8_t last_sequence() const { return last_sequence_; }
 
     constexpr bool sent_everything() const
     {
-        return current_position() >= total_size_;
+        return last_position() >= total_size_;
     }
 
     constexpr bool bam() const { return responder_address_ == 0xFF; }

@@ -49,54 +49,6 @@ public:
         static constexpr unsigned T4 = 1050;
     };
 
-    enum roles
-    {
-        ROLE_UNINITIALIZED = 0,
-        ROLE_ORIGINATOR = 1,
-        ROLE_RESPONDER = 2
-    };
-
-    enum frame_errors
-    {
-        FRAME_NOMINAL,  // A-OK
-        // Generic
-        FRAME_ERROR,
-        FRAME_TIMEOUT,
-        FRAME_WARN,
-        FRAME_INVALID_STATE
-    };
-
-    // EXPERIMENTAL, not used
-    enum frame_states
-    {
-        FRAME_IDLE,
-        FRAME_RECEIVING,
-        FRAME_RECEIVED,
-        FRAME_SENDING,
-        FRAME_SENT
-    };
-
-    // EXPERIMENTAL, not used
-    enum frame_types
-    {
-        FRAME_CTS,
-        FRAME_RTS,
-        FRAME_ACK,
-        FRAME_ABORT,
-
-        FRAME_DT,
-    };
-
-    // EXPERIMENTAL, not used - consider eventually merging with embr service
-    // architecture
-    struct frame_tracker
-    {
-        roles role_ : 4;
-        frame_states state_ : 4;
-        frame_types type_ : 4;
-        frame_errors error_ : 4;
-    };
-
     static constexpr unsigned role_shift = 8;
 
     enum states
@@ -225,7 +177,7 @@ public:
     roles role() const;
 
     // DEBT: Poor naming, only applies to responder mode
-    bool payload_present()
+    constexpr bool payload_present() const
     {
         return state_ == RESPONDER_RECEIVING_DT;
     }
@@ -290,9 +242,11 @@ public:
         initiate_originator(sz, {0, 0}, responder_address, pgn);
     }
 
+#if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
     // auto-payload mode
     void initiate_originator(uint8_t responder_address, uint32_t pgn,
         const void* payload, uint16_t sz);
+#endif
 
     time_point next_event() const;
 };

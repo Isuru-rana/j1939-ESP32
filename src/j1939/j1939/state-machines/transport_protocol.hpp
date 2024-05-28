@@ -222,12 +222,16 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             // BAM emissions all delay for 50ms
             if(originator().bam() && !elapsed(ctx, timeouts::bam))  return false;
 
-            // DEBT: Only actually increment this if transport level send succeeds
-            uint8_t seq = ++originator().last_sequence_;
+            uint8_t& seq = originator().last_sequence_;
 
+            // NOTE: Doing this before increasing seq so that payload size calculates
+            // correctly
             estd::copy_n(originator().payload_,
                 originator().payload_size(),
                 dt.packetized_data());
+
+            // DEBT: Only actually increment this if transport level send succeeds
+            ++seq;
 
             dt.sequence_number(seq);
             dt.source_address(ctx.self_address);
@@ -236,6 +240,7 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
             ++originator().current_packet_per_cts_;
 
             traits::send(t, dt);
+
             state_ = ORIGINATOR_SENT_DT;
             last_event_ = ctx.current;
             return true;
@@ -248,8 +253,13 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 state_ = ORIGINATOR_SENT_ALL_DT;
             else if(originator().current_packet_per_cts_ == originator().max_packets_per_cts_)
                 state_ = ORIGINATOR_WAITING_CTS;
+#if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
             else if(originator().auto_payload_)
+            {
+                originator().payload_ += 7;
                 state_ = ORIGINATOR_SENDING_DT;
+            }
+#endif
 
             return true;
 
@@ -300,11 +310,13 @@ bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
                 traits::send(t, originator().build_abort(ctx, abort_reasons::timeout));
                 return true;
             }
+#if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
             else if(originator().auto_payload_)
             {
                 state_ = ORIGINATOR_SENDING_DT;
                 return true;
             }
+#endif
 
             break;
 #endif
@@ -439,6 +451,7 @@ inline void transport_protocol::initiate_originator(
     storage_.emplace<originator_state>(sz, dest_address, pgn);
 }
 
+#if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
 inline void transport_protocol::initiate_originator(
     uint8_t dest_address,
     uint32_t pgn,
@@ -450,6 +463,7 @@ inline void transport_protocol::initiate_originator(
     originator().payload_ = (const uint8_t*)payload;
     originator().auto_payload_ = true;
 }
+#endif
 
 inline void transport_protocol::request_hold()
 {
