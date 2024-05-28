@@ -8,18 +8,22 @@
 namespace embr { namespace j1939 {
 
 // Tag to indicate in place null initialization, kind of a relative of in_place_t
+// DEBT: Somewhat misleading name because for pdu this also initializes pgn and priority into can_id
 struct null_t {};
 
 
 // 28MAY24 DEBT: Belongs in proper FEATURE area, sort of
 // 28MAY24 DEBT: Temporary legacy feature flag to retain old auto null init behavior.
 // Phase out by 01JUL24
+// NOTE: pdu header is still initialized, since primary use cases are:
+// 1. copy initialize from a raw data frame
+// 2. constructing new frame for output, necessitating pgn and somewhat priority
 #ifndef FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT
 #define FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT 1
 #endif
 
 
-template<pgns pgn, class TContainer = estd::array<uint8_t,
+template<pgns pgn, class Container = estd::array<uint8_t,
     pgn::get_descriptor<pgn>().length> >
 struct data_field;
 

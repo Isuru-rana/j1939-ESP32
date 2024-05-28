@@ -37,7 +37,10 @@ public:
 #if FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT
     constexpr explicit pdu1(null_t = {}) :
 #else
-    pdu1() = default;
+    //pdu1() = default;
+    constexpr explicit pdu1() :
+        id{descriptor().default_priority, pgn}
+    {}
 
     constexpr explicit pdu1(null_t) :
 #endif
@@ -48,10 +51,21 @@ public:
     ///
     /// @param _id - undefined if 'range' does not match template pgn
     /// @param data
-    pdu1(can_id _id, const uint8_t* data) :
+    constexpr explicit pdu1(can_id _id, const uint8_t* data) :
         id{_id},
         data_field_type{data}
     {}
+
+    // EXPERIMENTAL
+    template <class ...Args>
+    explicit pdu1(uint8_t sa, uint8_t da, Args&&...args) :
+        id{descriptor().default_priority, pgn},
+        data_field_type{std::forward<Args>(args)...}
+    {
+        source_address(sa);
+        destination_address(da);
+    }
+
 
     const pdu1_header& can_id() const { return *this; }
     pdu1_header& can_id() { return *this; }
@@ -73,7 +87,10 @@ public:
 #if FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT
     constexpr explicit pdu2(null_t = {}) :
 #else
-    pdu2() = default;
+    //pdu2() = default;
+    constexpr explicit pdu2() :
+        id{descriptor().default_priority, pgn}
+    {}
 
     constexpr explicit pdu2(null_t) :
 #endif

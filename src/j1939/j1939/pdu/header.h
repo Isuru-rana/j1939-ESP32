@@ -28,7 +28,7 @@ struct pdu_header : bits::material<bits::little_endian, bits::lsb_to_msb>
 
 struct pdu1_header : can_id
 {
-    constexpr pdu1_header(uint32_t v) : can_id(v) {}
+    constexpr explicit pdu1_header(uint32_t v) : can_id(v) {}
 
     // EXPERIMENTAL
     constexpr pdu1_header(uint8_t priority, pgns pgn) :
@@ -46,7 +46,7 @@ struct pdu1_header : can_id
 
 struct pdu2_header : can_id
 {
-    constexpr pdu2_header(uint32_t v) : can_id(v) {}
+    constexpr explicit pdu2_header(uint32_t v) : can_id(v) {}
 
     constexpr pdu2_header(uint8_t priority, pgns pgn) :
         can_id{((uint32_t)priority << d::priority().bitpos) | (((uint32_t)pgn) << d::range_pdu2().bitpos)}

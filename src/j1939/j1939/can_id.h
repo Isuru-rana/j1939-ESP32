@@ -36,6 +36,10 @@ protected:
 
     embr::bits::internal::word<29> value;
 
+#if FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT == 0
+    can_id() = default;
+#endif
+
 public:
     constexpr can_id(uint32_t v) : value{v} {}
 

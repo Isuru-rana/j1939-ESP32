@@ -130,7 +130,7 @@ TEST_CASE("pdu")
     }
     SECTION("transport protocol data transfer")
     {
-        pdu<pgns::tp_dt> p{null_t{}};
+        pdu<pgns::tp_dt> p;
 
         p.sequence_number(1);
 

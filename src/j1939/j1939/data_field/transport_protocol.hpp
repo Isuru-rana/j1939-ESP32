@@ -149,6 +149,33 @@ struct data_field<pgns::tp_cm, Container> :
 
     // Abort [1] 5.10.3.4
     EMBR_J1939_PROPERTY_INLINE2(abort_reason)
+
+    // EXPERIMENTAL
+    data_field(modes m, uint16_t total_size, uint8_t total_packets,
+        uint8_t max_packets,
+        uint32_t packet_pgn)
+    {
+        control(m);
+        this->total_size(total_size);
+        this->total_packets(total_packets);
+        this->max_packets(max_packets);
+        pgn(packet_pgn);
+    }
+
+
+    // EXPERIMENTAL
+    data_field(abort_reasons r, uint32_t packet_pgn)
+    {
+        control(abort);
+        abort_reason(r);
+        pgn(packet_pgn);
+
+        typename base_type::container_type& c = *this;
+
+        c[2] = 0xFF;
+        c[3] = 0xFF;
+        c[4] = 0xFF;
+    }
 };
 
 

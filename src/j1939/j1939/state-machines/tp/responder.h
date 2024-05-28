@@ -89,10 +89,17 @@ struct responder_state : enum_base
     template <class TimePoint>
     pdu<pgns::tp_cm> build_abort(const context<TimePoint>& ctx, abort_reasons r) const
     {
+        pdu<pgns::tp_cm> cm(
+            ctx.self_address,
+            originator_.source_address(),
+            r,
+            originator_.payload().pgn());
+
+        /*
         pdu<pgns::tp_cm> cm{null_t{}};
 
         cm.destination_address(originator_.source_address());
-        prep_abort(cm, ctx, r);
+        prep_abort(cm, ctx, r); */
 
         return cm;
     }
