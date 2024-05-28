@@ -25,7 +25,6 @@ inline responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
     last_dt_.sequence_number(0);
 }
 
-
 }}
 
 inline namespace v0 {
@@ -40,6 +39,10 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
 
     switch(state_)
     {
+        case ANTICIPATING_RTS:
+            if(idle().anticipated_address_ != p.source_address())   return false;
+            //[[fallthrough]];
+
         case IDLE:
         {
             last_event_ = ctx.current;
@@ -441,6 +444,10 @@ inline void transport_protocol::initiate_originator(
     uint8_t dest_address,
     uint32_t pgn)
 {
+#if FEATURE_EMBR_J1939_STRICT_STATES
+    assert(state_ == IDLE);
+#endif
+
     if(dest_address == (uint8_t)addresses::global)
     {
         state_ = ORIGINATOR_SENDING_BAM;
@@ -501,6 +508,16 @@ inline auto transport_protocol::next_event() const -> time_point
 
         default: return 0;
     }
+}
+
+inline void transport_protocol::initiate_responder(uint8_t originator_address)
+{
+#if FEATURE_EMBR_J1939_STRICT_STATES
+    assert(state_ == IDLE);
+#endif
+
+    storage_.get<idle_state>()->anticipated_address_ = originator_address;
+    state_ = ANTICIPATING_RTS;
 }
 
 // DEBT: A little clumsy.  Might be better to track role explicitly and rework state machine

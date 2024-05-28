@@ -56,6 +56,8 @@ public:
         IDLE = ROLE_UNINITIALIZED << role_shift,
         // Invalid state observed, but occurred at a time which doesn't hurt us
         WARN,
+        // Active listener mode, think of this as a reservation for a particular originator address
+        ANTICIPATING_RTS,
         RECEIVING,
         SENDING_ABORT,
         SENT_ABORT,
@@ -117,9 +119,9 @@ private:
     // or perhaps only pass in traffic matched to global or our address in the first place
     //uint8_t self_address_ = uint8_t(addresses::null_address);
 
-    struct preamble
+    struct idle_state
     {
-
+        uint8_t anticipated_address_;
     };
 
     using responder_state = tp::v0::responder_state;
@@ -127,7 +129,7 @@ private:
 
     // DEBT: Default constructor seems a little ornery
     estd::internal::variant_storage<
-        preamble,
+        idle_state,
         responder_state,
         originator_state
         > storage_;
@@ -148,6 +150,11 @@ private:
 public:
 #endif
 
+    idle_state& idle()
+    {
+        return *storage_.get<idle_state>();
+    };
+
     responder_state& responder()
     {
         return *storage_.get<responder_state>();
@@ -162,6 +169,12 @@ public:
     void request_hold();
 
 public:
+    // NOTE: Just a formality, idle_state doesn't need init, and since state machines
+    // love lazy init, we don't care about last_event_ either
+    transport_protocol() :      // NOLINT
+        storage_{estd::in_place_index_t<0>{}}
+    {}
+
     const responder_state& responder() const
     {
         return *storage_.get<responder_state>();
@@ -247,6 +260,8 @@ public:
     void initiate_originator(uint8_t responder_address, uint32_t pgn,
         const void* payload, uint16_t sz);
 #endif
+
+    void initiate_responder(uint8_t originator_address);
 
     time_point next_event() const;
 };
