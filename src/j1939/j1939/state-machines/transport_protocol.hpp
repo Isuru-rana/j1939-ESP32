@@ -120,6 +120,8 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
             switch(p.control())
             {
                 case modes::cts:
+                    // DEBT: Probably want to handle timeouts here in addition to
+                    // 'outgoing' section
                     state_ = ORIGINATOR_RECEIVED_CTS;
                     return true;
 

@@ -261,7 +261,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         process_incoming(h.tp_recv, t, frame, ctx{51, h.recv_sa});
     }
-    SECTION("unfinished test")
+    SECTION("experimental feeder test")
     {
         char s[32] {};
         recv_feeder recv_feed(h.tp_recv, (uint8_t*)s);
@@ -287,7 +287,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         REQUIRE(memcmp(s, test::test_str2, 14) == 0);
     }
-    SECTION("auto payoad")
+    SECTION("auto send payoad")
     {
         char s[32] {};
         recv_feeder recv_feed(h.tp_recv, (uint8_t*)s);
@@ -321,7 +321,34 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         REQUIRE(recv_feed.process());
 
-        // Not quite...
         REQUIRE(memcmp(s, test::test_str2, 14) == 0);
+    }
+    SECTION("timeouts/aborts")
+    {
+        h.tp_orig.initiate_originator(h.recv_sa,
+            (uint32_t)pgns::software_identification,
+            test::test_str2,
+            sz);
+
+        h.outgoing(t, 0);   // Send RTS
+
+        REQUIRE(t.receive(&frame));
+
+        SECTION("On initial handshake")
+        {
+            h.incoming(t, frame, 0);    // Receive RTS
+
+            // tp_orig process outgoing (too late) results in an abort
+            // tp_recv Send CTS (too late)
+            // DEBT: tp_recv is able to detect it's too late, but does nothing
+            // about it - maybe it should emit an abort message too
+            h.outgoing(t, transport_protocol::timeouts::T2 + 1);
+
+            // Here we have two messages now, a CTS and abort
+            REQUIRE(t.queue.size() == 2);
+            REQUIRE(t.receive(&frame));
+
+            h.incoming(t, frame, transport_protocol::timeouts::T2 + 2);
+        }
     }
 }
