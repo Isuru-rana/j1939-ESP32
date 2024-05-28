@@ -7,6 +7,9 @@
 
 namespace embr { namespace j1939 {
 
+// Tag to indicate in place null initialization, kind of a relative of in_place_t
+struct null_t {};
+
 template<pgns pgn, class TContainer = estd::array<uint8_t,
     pgn::get_descriptor<pgn>().length> >
 struct data_field;

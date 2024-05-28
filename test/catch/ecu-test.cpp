@@ -76,6 +76,6 @@ TEST_CASE("ecu")
 
     SECTION("NAME")
     {
-        j1939::NAME<estd::array<uint8_t, 8> > name;
+        j1939::NAME<estd::array<uint8_t, 8> > name{j1939::null_t{}};
     }
 }

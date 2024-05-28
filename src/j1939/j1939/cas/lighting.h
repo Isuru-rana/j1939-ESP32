@@ -44,7 +44,7 @@ struct lighting_command_ca : impl::controller_application<TTransport>
         bool on;
         bool scheduled;     // Not fully functional
 
-        data_field<pgns::oel> last;
+        data_field<pgns::oel> last{null_t{}};
 
         void reset()
         {

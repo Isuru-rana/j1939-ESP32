@@ -235,9 +235,7 @@ struct data_field<pgns::oel, TContainer> :
     typedef internal::data_field_base<TContainer> base_type;
     typedef estd::chrono::duration<uint16_t, estd::ratio<1> > seconds_type;
 
-    data_field() = default;
-
-    data_field(const uint8_t* copy_from) : base_type(copy_from) {}
+    ESTD_CPP_FORWARDING_CTOR(data_field);
 
     // DEBT: Do this with alias
     void delay_off_time(seconds_type seconds)

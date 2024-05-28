@@ -55,15 +55,13 @@ constexpr descriptor get_descriptor<spns::request_cab_zone_heating>()
 }
 
 
-template<class TContainer>
-struct data_field<pgns::cab_message1, TContainer> :
-    internal::data_field_base<TContainer>
+template<class Container>
+struct data_field<pgns::cab_message1, Container> :
+    internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
-    data_field() = default;
-
-    constexpr data_field(const uint8_t* copy_from) : base_type(copy_from) {}
+    ESTD_CPP_FORWARDING_CTOR(data_field)
 
     EMBR_J1939_PROPERTY(requested_percent_fan_speed);
     EMBR_J1939_PROPERTY(cab_interior_temperature_command);

@@ -30,18 +30,22 @@ namespace internal {
 
 // length is processed from bit position towards msb, as per [lost reference]
 // binary data is little endian, "least significant byte first" [1] 5.1.2
-template <class TContainer, bits::endianness e = bits::little_endian>
+template <class Container, bits::endianness e = bits::little_endian>
 struct data_field_base :
     bits::internal::material<e, bits::lsb_to_msb, bits::lsb_to_msb,
-        TContainer>
+        Container>
 {
-    typedef TContainer container_type;
+    typedef Container container_type;
 
 protected:
     typedef bits::internal::material<e, bits::lsb_to_msb, bits::lsb_to_msb,
-        TContainer> base_type;
+        Container> base_type;
 
-    data_field_base()
+    // Used just for diagnostic - we are close to a fully active and non-default
+    // null_t, just some experimental NAME/nca stuff holding us back
+    //data_field_base() = delete;
+
+    explicit data_field_base(null_t = {})
     {
         estd::fill(container_type::begin(), container_type::end(), 0xFF);
     }
@@ -57,16 +61,16 @@ protected:
     }
 
 public:
-    template <class TInt>
-    inline TInt get(spn::descriptor d) const
+    template <class Int>
+    inline Int get(spn::descriptor d) const
     {
-        return base_type::template get<TInt>(d.bytepos - 1, bits::descriptor{d.bitpos-1, d.length});
+        return base_type::template get<Int>(d.bytepos - 1, bits::descriptor{d.bitpos-1, d.length});
     }
 
-    template <class TInt>
-    inline void set(spn::descriptor d, TInt v)
+    template <class Int>
+    inline void set(spn::descriptor d, Int v)
     {
-        return base_type::template set<TInt>(d.bytepos - 1, bits::descriptor{d.bitpos-1, d.length}, v);
+        return base_type::template set<Int>(d.bytepos - 1, bits::descriptor{d.bitpos-1, d.length}, v);
     }
 
     template <size_t bits>
@@ -85,24 +89,24 @@ public:
     }
 
     // Does not attempt to promote the type to enum_type
-    template <spns spn_, class TTraits = spn::traits<spn_> >
-    inline typename TTraits::int_type get_raw() const
+    template <spns spn_, class Traits = spn::traits<spn_> >
+    inline typename Traits::int_type get_raw() const
     {
-        return get<typename TTraits::int_type>(TTraits::get_descriptor());
+        return get<typename Traits::int_type>(Traits::get_descriptor());
     }
 
-    template <spns spn_, class TTraits = spn::traits<spn_>,
-        estd::enable_if_t<estd::is_base_of<spn::intrinsic_tag, TTraits>::value, bool> = true>
-    inline typename TTraits::int_type get() const
+    template <spns spn_, class Traits = spn::traits<spn_>,
+        estd::enable_if_t<estd::is_base_of<spn::intrinsic_tag, Traits>::value, bool> = true>
+    inline typename Traits::int_type get() const
     {
-        return get_raw<spn_, TTraits>();
+        return get_raw<spn_, Traits>();
     }
 
-    template <spns spn_, class TTraits = spn::traits<spn_>,
-        estd::enable_if_t<!estd::is_base_of<spn::intrinsic_tag, TTraits>::value, bool> = true>
-    inline typename TTraits::value_type get() const
+    template <spns spn_, class Traits = spn::traits<spn_>,
+        estd::enable_if_t<!estd::is_base_of<spn::intrinsic_tag, Traits>::value, bool> = true>
+    inline typename Traits::value_type get() const
     {
-        return (typename TTraits::value_type)get<typename TTraits::int_type>(TTraits::get_descriptor());
+        return (typename Traits::value_type)get<typename Traits::int_type>(Traits::get_descriptor());
     }
 
     template <spns spn_>

@@ -25,15 +25,13 @@
 namespace embr { namespace j1939 {
 
 
-template<pgns pgn, class TContainer>
+template<pgns pgn, class Container>
 struct data_field :
-    internal::data_field_base<TContainer>
+    internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
-    data_field() = default;
-
-    data_field(const uint8_t* copy_from) : base_type(copy_from) {}
+    ESTD_CPP_FORWARDING_CTOR(data_field)
 };
 
 

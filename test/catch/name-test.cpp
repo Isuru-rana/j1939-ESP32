@@ -31,7 +31,7 @@ TEST_CASE("j1939-81 NAME")
 
     // DEBT: Since NAME comes from data_field, it auto initializes to 0xFF.
     // We may want to deviate from that default for NAME specifically
-    NAME n;
+    NAME n{j1939::null_t{}};
 
     n.identity_number(identity_number);
 

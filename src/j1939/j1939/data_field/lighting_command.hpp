@@ -128,9 +128,7 @@ struct data_field<pgns::lighting_command, TContainer> :
 {
     typedef internal::data_field_base<TContainer> base_type;
 
-    data_field() = default;
-
-    data_field(const uint8_t* copy_from) : base_type(copy_from) {}
+    ESTD_CPP_FORWARDING_CTOR(data_field)
 
     EMBR_J1939_PROPERTY_ALIAS(front_fog_lights_cmd, front_fog_lights);
     EMBR_J1939_PROPERTY_ALIAS(low_beam_headlight_cmd, low_beam_headlight);

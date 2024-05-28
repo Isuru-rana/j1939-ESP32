@@ -34,7 +34,9 @@ public:
     static constexpr pgns pgn = pgn_;
     static constexpr pgn::descriptor descriptor() { return pgn::get_descriptor<pgn>(); }
 
-    pdu1() : id{descriptor().default_priority, pgn} {}
+    constexpr pdu1(null_t = {}) : id{descriptor().default_priority, pgn},
+        data_field_type{null_t{}}
+    {}
 
     ///
     /// @param _id - undefined if 'range' does not match template pgn
@@ -61,7 +63,10 @@ public:
     static constexpr pgns pgn = pgn_;
     static constexpr pgn::descriptor descriptor() { return pgn::get_descriptor<pgn>(); }
 
-    pdu2() : id{descriptor().default_priority, pgn} {}
+    constexpr pdu2(null_t = {}) :
+        id{descriptor().default_priority, pgn},
+        data_field_type(null_t{})
+    {}
 
     ///
     /// @param _id - undefined if 'range' does not match template pgn

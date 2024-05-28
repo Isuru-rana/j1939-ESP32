@@ -137,7 +137,7 @@ TEST_CASE("Controller Applications")
     {
         controller_application<decltype(t), SyntheticCA<decltype(t)> > ca;
 
-        pdu<pgns::oel> oel1;
+        pdu<pgns::oel> oel1(null_t{});
 
         oel1.payload().turn_signal_switch(enum_type<spns::turn_signal_switch>::left_turn_to_be_flashing);
 
@@ -173,7 +173,7 @@ TEST_CASE("Controller Applications")
         impl::lighting_command_ca<decltype(t), decltype(scheduler)> ca(scheduler);
         can::loopback_transport::frame frame;
 
-        pdu<pgns::oel> p;
+        pdu<pgns::oel> p{null_t{}};
 
         p.turn_signal_switch(enum_type<spns::turn_signal_switch>::left_turn_to_be_flashing);
 
@@ -240,7 +240,7 @@ TEST_CASE("Controller Applications")
         using nca_init_type = nca_type::init1<proto_name::sparse>;
         nca_init_type nca_init(proto_name::sparse(0, 0, 0), scheduler);
         auto nca_init2 = nca_type::get_init(proto_name::sparse(0, 0, 0), scheduler);
-        embr::j1939::layer1::NAME name;
+        embr::j1939::layer1::NAME name{embr::j1939::null_t{}};
 
         nca_type nca(nca_init2);
 

@@ -60,15 +60,13 @@ constexpr descriptor get_descriptor<spns::fan_speed>()
 
 }
 
-template<class TContainer>
-struct data_field<pgns::fan_drive_1, TContainer> :
-    internal::data_field_base<TContainer>
+template<class Container>
+struct data_field<pgns::fan_drive_1, Container> :
+    internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
-    data_field() = default;
-
-    data_field(const uint8_t* copy_from) : base_type(copy_from) {}
+    ESTD_CPP_FORWARDING_CTOR(data_field)
 
     EMBR_J1939_PROPERTY(estimated_percent_fan_speed);
     EMBR_J1939_PROPERTY(fan_drive_state);

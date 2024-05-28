@@ -19,6 +19,7 @@ namespace tp { inline namespace v0 {
 
 inline responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
     originator_{p},
+    last_dt_(null_t{}),
     current_packet_per_cts_{0},
     retransmit_counter_{0}
 {
