@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#define FEATURE_EMBR_J1939_TP_RESPONDER 0
+#define FEATURE_EMBR_J1939_TP_RESPONDER 0   // ~1k ROM
 
 #include <estd/string.h>
 
@@ -35,6 +35,10 @@ static transport t;
 
 scheduler_type scheduler;
 
+#define FEATURE_DIAGNOSTIC  1       // ~7k ROM
+#define FEATURE_NETWORK     1       // ~6k ROM
+#define FEATURE_TP          1       // ~7k ROM w/ responder disabled
+
 using dca_type = diagnostic_ca<transport, arduino_ostream>;
 
 using proto_name = embr::j1939::layer0::NAME<true,
@@ -56,13 +60,19 @@ embr::j1939::impl::controller_application_aggregator<dca_type, nca_type>
             scheduler));
 #endif
 
+#if FEATURE_NETWORK
 nca_type nca(proto_name::sparse{1, 0, 3}, scheduler);
+#endif
 
+#if FEATURE_DIAGNOSTIC
 dca_type dca(cout);
+#endif
 
+#if FEATURE_TP
 sm::transport_protocol tp;
 
 component_identification_ca cidca;
+#endif
 
 
 
@@ -70,6 +80,7 @@ component_identification_ca cidca;
 static const char software_id[] =
     "\1Arduino cm_dt/network test firmware v0.0.0*";
 
+#if FEATURE_TP
 template <class Transport>
 bool component_identification_ca::process_incoming(Transport&, pdu<pgns::request>& p)
 {
@@ -87,7 +98,7 @@ bool component_identification_ca::process_incoming(Transport&, pdu<pgns::request
 
     return {};
 }
-
+#endif
 
 void setup()
 {
@@ -102,16 +113,35 @@ void setup()
 void loop()
 {
     transport::frame f;
-    sm::transport_protocol::context ctx{millis(), nca.address().value()};
+    // DEBT: time_point overall needs more attention
+#if FEATURE_TP
+    sm::transport_protocol::context ctx{
+        unsigned(millis()),
+#if FEATURE_NETWORK
+        nca.address().value()};
+#else
+        0x77};
+#endif
+#endif
 
     if(t.receive(&f))
     {
+#if FEATURE_DIAGNOSTIC
         process_incoming(dca, t, f);
+#endif
+#if FEATURE_NETWORK
         process_incoming(nca, t, f);
+#endif
+#if FEATURE_TP
         process_incoming(tp, t, f, ctx);
         process_incoming(cidca, t, f);
+#endif
     }
 
+#if FEATURE_TP
     tp.process_outgoing(t, ctx);
+#endif
+#if FEATURE_NETWORK
     scheduler.process();
+#endif
 }
