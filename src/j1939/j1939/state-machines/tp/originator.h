@@ -5,6 +5,8 @@
 #include "enum.h"
 #include "base.h"
 
+#include <estd/internal/macro/push.h>
+
 namespace embr { namespace j1939 { namespace sm { namespace tp { inline namespace v0 {
 
 struct originator_state : enum_base
@@ -101,3 +103,5 @@ struct originator_state : enum_base
 };
 
 }}}}}
+
+#include <estd/internal/macro/pop.h>
