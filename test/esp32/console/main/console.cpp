@@ -4,6 +4,15 @@
 #include <esp_log.h>
 #include <argtable3/argtable3.h>
 
+#include "nca.h"
+#include "streambuf.h"
+
+using namespace embr::j1939;
+
+static esp_idf::log_ostream clog;   // Coming along well, almost ready
+
+extern transport_type t;
+
 #define PROMPT_STR "j1939"
 
 static struct
@@ -43,9 +52,13 @@ static int addr(int argc, char** argv)
 
     estd::layer2::const_string cmd = addr_args.command->sval[0];
 
-    if(cmd == "get")
+    if(cmd == "set")
     {
 
+    }
+    else if(cmd == "claim")
+    {
+        nca.start(t);
     }
     else if(cmd == "release")
     {
@@ -53,7 +66,20 @@ static int addr(int argc, char** argv)
     }
     else if(cmd == "show")
     {
+        clog << "address: ";
 
+        if(nca.state == impl::network_ca_base::states::claimed)
+        {
+            clog << estd::hex << (unsigned) nca.address().value();
+            clog << " (claimed)";
+        }
+        // TODO: Do set override too
+        else
+        {
+            clog << "unset";
+        }
+
+        clog << estd::endl;
     }
 
     return 0;
@@ -100,7 +126,7 @@ static void register_addr()
         .argtable = &addr_args
     };
 
-    addr_args.command = arg_str1(nullptr, nullptr, "<get|show|release>", nullptr);
+    addr_args.command = arg_str1(nullptr, nullptr, "<set|show|claim|release>", nullptr);
     addr_args.end = arg_end(2);
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
