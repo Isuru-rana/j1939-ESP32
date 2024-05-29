@@ -30,10 +30,10 @@ estd::chrono::milliseconds network_ca<TTransport, TScheduler, TAddressManager>::
 }
 
 
-template <class TTransport, class TScheduler, class TAddressManager>
-void network_ca<TTransport, TScheduler, TAddressManager>::send_claim(
-    transport_type& t, pdu<pgns::address_claimed>& p, uint8_t sa)
+template <class Transport>
+void network_ca_base::send_claim(Transport& t, pdu<pgns::address_claimed>& p, uint8_t sa)
 {
+    using traits = transport_traits<Transport>;
     // DEBT: Not sure if claim ALWAYS is a BAM but I think so
     p.can_id().destination_address(address_traits::global);
     p.payload() = name_;
@@ -43,13 +43,10 @@ void network_ca<TTransport, TScheduler, TAddressManager>::send_claim(
 #if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
     t.one_shot(true);
 #endif
-    bool send_result = _transport_traits::send(t, p);
+    bool send_result = traits::send(t, p);
 #if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
     t.one_shot(false);
 #endif
-
-    // DEBT: May not want to do this IN emitter method itself
-    timeout = scheduler.impl().now() + address_claim_timeout();
 
 #if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
     // DEBT: Do this pseudo asynchronously, since 'send' may not register an error
@@ -65,19 +62,29 @@ void network_ca<TTransport, TScheduler, TAddressManager>::send_claim(
 }
 
 
-// See [1] Figure A5, A6, A7
-template <class TTransport, class TScheduler, class TAddressManager>
-void network_ca<TTransport, TScheduler, TAddressManager>::send_request_for_address_claimed(
-    transport_type& t, uint8_t dest)
+template <class Transport>
+void network_ca_base::send_request_for_address_claimed(Transport& t, uint8_t da)
 {
+    using traits = transport_traits<Transport>;
+
     pdu<pgns::request> p{null_t{}};
 
     // DEBT: make this pgn param take enum
     p.payload().pgn((uint32_t)pgns::address_claimed);
     p.can_id().source_address(address_traits::null);
-    p.can_id().destination_address(dest);
+    p.can_id().destination_address(da);
 
-    _transport_traits::send(t, p);
+    traits::send(t, p);
+}
+
+
+
+// See [1] Figure A5, A6, A7
+template <class TTransport, class TScheduler, class TAddressManager>
+void network_ca<TTransport, TScheduler, TAddressManager>::send_request_for_address_claimed(
+    transport_type& t, uint8_t dest)
+{
+    network_ca_base::send_request_for_address_claimed(t, dest);
 
     // DEBT: May not want to do this IN emitter method itself
     timeout = scheduler.impl().now() + request_for_address_claim_timeout();
@@ -229,7 +236,7 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
         {
             // we have the higher priority name
             // transmit our own address, basically re-announce our claim
-            send_claim(t);
+            network_ca_base::send_claim(t);
 
             // If we're currently claiming, this extends the 250ms timeout
             // If we're fully claimed, this has no followup scheduled
@@ -316,7 +323,7 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_request_for_ad
         case states::claimed:
             // Send as basically an ACK, so no followup scheduling for this particular
             // send_claim
-            send_claim(t);
+            network_ca_base::send_claim(t);
             break;
 
         case states::claim_failed:
@@ -350,6 +357,11 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(trans
     }
 }
 
+inline void network_ca_base::start()
+{
+
+}
+
 
 template <class TTransport, class TScheduler, class TAddressManager>
 void network_ca<TTransport, TScheduler, TAddressManager>::start(transport_type& t)
@@ -357,6 +369,8 @@ void network_ca<TTransport, TScheduler, TAddressManager>::start(transport_type& 
     this->t = &t;
 
     function_type f{&wake_model};
+
+    network_ca_base::start();
 
     address_ = address_manager().get_candidate();
 

@@ -21,6 +21,8 @@
 
 #include "internal/rng_address_manager.h"
 
+#include "../state-machines/tp/base.h"
+
 #include "fwd.h"
 
 namespace embr { namespace j1939 {
@@ -66,6 +68,9 @@ struct network_ca_base : ca_base,
 #ifdef ESP_PLATFORM
     static constexpr const char* TAG = "network_ca";
 #endif
+
+    template <class TimePoint>
+    using context = sm::tp::v0::context<TimePoint>;
 
     // DEBT: Upgrade this to embr 'service' architecture
     enum class states
@@ -166,6 +171,57 @@ public:
     {
         return name_.arbitrary_address_capable();
     }
+
+    template <class Transport>
+    void send_claim(Transport& t, pdu<pgns::address_claimed>& p, uint8_t sa);
+
+    template <class Transport>
+    void send_claim(Transport& t)
+    {
+        pdu<pgns::address_claimed> p{null_t{}};
+
+        send_claim(t, p, *address_);
+    }
+
+    template <class Transport>
+    void send_request_for_address_claimed(Transport&, uint8_t da);
+
+
+    template <class Transport>
+    void send_cannot_claim(Transport& t, pdu<pgns::address_claimed>& p)
+    {
+        p.can_id().source_address(address_traits::null);
+        p.payload() = name_;
+        transport_traits<Transport>::send(t, p);
+
+    }
+
+    template <class Transport>
+    void send_cannot_claim(Transport& t)
+    {
+        pdu<pgns::address_claimed> p{null_t{}};
+
+        p.can_id().destination_address(address_traits::global);
+
+        send_cannot_claim(t, p);
+    }
+
+
+    void start();
+
+    constexpr bool has_address() const
+    {
+        return address_.has_value();
+    }
+
+    /// Is the address in this claimed message the same as the one we intend to use?
+    constexpr bool is_contender(const pdu<pgns::address_claimed>& p) const
+    {
+        return p.source_address() == address_;
+    }
+
+    template <class Transport, class TimePoint>
+    void process_outgoing(Transport&, const context<TimePoint>&);
 };
 
 // Pertains to [1] 5.10
@@ -212,6 +268,22 @@ struct network_ca : impl::controller_application<TTransport>,
 
     estd::chrono::milliseconds get_send_claim_defer();
 
+    void send_claim(transport_type& t, pdu<pgns::address_claimed>& p, uint8_t sa)
+    {
+        network_ca_base::send_claim(t, p, sa);
+
+        // DEBT: May not want to do this IN emitter method itself
+        timeout = scheduler.impl().now() + address_claim_timeout();
+    }
+
+    void send_claim(transport_type& t)
+    {
+        network_ca_base::send_claim(t);
+
+        // DEBT: May not want to do this IN emitter method itself
+        timeout = scheduler.impl().now() + address_claim_timeout();
+    }
+
     address_type find_new_address()
     {
         if(address_manager().depleted())
@@ -220,41 +292,10 @@ struct network_ca : impl::controller_application<TTransport>,
             return address_manager().get_candidate();
     }
 
-    constexpr bool has_address() const
-    {
-        return address_.has_value();
-    }
-
     // [1] 4.2.1
     void send_request_for_address_claimed(
             transport_type&,
             uint8_t dest = address_traits::global);
-
-    void send_cannot_claim(transport_type& t, pdu<pgns::address_claimed>& p)
-    {
-        p.can_id().source_address(address_traits::null);
-        p.payload() = name_;
-        _transport_traits::send(t, p);
-
-    }
-
-    void send_cannot_claim(transport_type& t)
-    {
-        pdu<pgns::address_claimed> p{null_t{}};
-
-        p.can_id().destination_address(address_traits::global);
-
-        send_cannot_claim(t, p);
-    }
-
-    void send_claim(transport_type& t, pdu<pgns::address_claimed>& p, uint8_t sa);
-
-    void send_claim(transport_type& t)
-    {
-        pdu<pgns::address_claimed> p{null_t{}};
-
-        send_claim(t, p, *address_);
-    }
 
     // Emits address claim over transport and assures a followup of
     // is scheduled for 250ms later
@@ -371,12 +412,6 @@ struct network_ca : impl::controller_application<TTransport>,
     {
         // TODO: Map incoming CA/SA/NAMEs, probably via some kind of impl associated with
         // SA generation
-    }
-
-    /// Is the address in this claimed message the same as the one we intend to use?
-    constexpr bool is_contender(const pdu<pgns::address_claimed>& p) const
-    {
-        return p.source_address() == address_;
     }
 
     /// In response to a contending incoming address claim, initiate process of
