@@ -43,18 +43,18 @@ protected:
 public:
     constexpr can_id(uint32_t v) : value{v} {}
 
-    uint8_t source_address() const { return value.get(d::source_address()); }
+    constexpr uint8_t source_address() const { return value.get(d::source_address()); }
 
     constexpr uint8_t pdu_specific() const { return value.get(d::pdu_specific()); }
 
     constexpr uint8_t pdu_format() const { return value.get(d::pdu_format()); }
 
-    bool data_page() const
+    constexpr bool data_page() const
     {
         return (value & ((uint32_t)1 << 24)) != 0U;
     }
 
-    bool reserved() const
+    constexpr bool reserved() const
     {
         return (value & ((uint32_t)1 << 25)) != 0U;
     }

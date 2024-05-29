@@ -26,6 +26,16 @@ static struct
 
 static struct
 {
+    //struct arg_str* abbrev;
+    struct arg_int* da;
+    struct arg_int* pgn;
+    struct arg_end* end;
+
+}   emit_rqst_args;
+
+
+static struct
+{
     struct arg_str* command;
     struct arg_end* end;
 
@@ -33,6 +43,12 @@ static struct
 
 
 static int emit(int argc, char** argv)
+{
+    return -1;
+}
+
+
+static int emit_rqst(int argc, char** argv)
 {
     return -1;
 }
@@ -102,6 +118,28 @@ static void register_emit()
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
+
+// DEBT: Would prefer a smart enough 'emit' to handle all this
+static void register_emit_rqst()
+{
+    const esp_console_cmd_t cmd = {
+        .command = "emit-rqst",
+        .help = "Send request message with defaults",
+        .hint = nullptr,
+        .func = &emit_rqst,
+        .argtable = &emit_rqst_args
+    };
+
+    //emit_rqst_args.abbrev = arg_str1(nullptr, nullptr, "<cmd>", "Abbreviated command name (i.e. CM1, BJM1, etc)");
+    emit_rqst_args.da = arg_int1(nullptr, nullptr, "<da>", "Destination Address");
+    emit_rqst_args.pgn = arg_int1(nullptr, nullptr, "<pgn>", "Particular PGN requested");
+    emit_rqst_args.end = arg_end(2);
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+
+
 static void register_list()
 {
     const esp_console_cmd_t cmd = {
@@ -150,11 +188,13 @@ static esp_console_repl_t* init_repl()
     return repl;
 }
 
+
 void init_console()
 {
     esp_console_repl_t* repl = init_repl();
 
     register_emit();
+    register_emit_rqst();
     register_list();
     register_addr();
 
