@@ -60,6 +60,12 @@ struct data_field<pgns::request, Container> :
     {
         return base_type::template set<spns::parameter_group_number_rqst>(v);
     }
+
+    // EXPERIMENTAL
+    explicit data_field(uint32_t pgn)
+    {
+        this->pgn(pgn);
+    }
 };
 
 }}

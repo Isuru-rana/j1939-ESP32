@@ -4,16 +4,23 @@
 #include <esp_log.h>
 #include <argtable3/argtable3.h>
 
+#include <j1939/state-machines/transport_protocol.hpp>
+
 #include "nca.h"
 #include "streambuf.h"
 
 using namespace embr::j1939;
 
 static esp_idf::log_ostream clog;   // Coming along well, almost ready
+using address_traits = spn::internal::address_type_traits_base;
+static uint8_t global_da = address_traits::null;
 
 extern transport_type t;
+extern sm::transport_protocol tp;
 
 #define PROMPT_STR "j1939"
+
+const char* TAG = "j1939::console::pri";
 
 static struct
 {
@@ -50,7 +57,38 @@ static int emit(int argc, char** argv)
 
 static int emit_rqst(int argc, char** argv)
 {
-    return -1;
+    using traits = transport_traits<transport_type>;
+
+    int nerrors = arg_parse(argc, argv, (void**) &emit_rqst_args);
+
+    if(nerrors) return -1;
+
+    bool da_present = emit_rqst_args.da->count;
+    int da = da_present ? emit_rqst_args.da->ival[0] : global_da;
+    uint8_t sa;
+    uint32_t pgn = emit_rqst_args.pgn->ival[0];
+
+    // DEBT: Check for da range validity
+
+    if(nca.state == impl::network_ca_base::states::claimed)
+        sa = nca.address().value();
+    else
+        sa = 0; // DEBT
+
+    pdu<pgns::request> p(sa, da, pgn);
+
+    traits::send(t, p);
+
+    if(tp.state() == sm::transport_protocol::IDLE)
+    {
+        // Reserve transport protocol state machine, in case response is > 8 bytes
+        // TODO: Still need to unreserve/release
+        tp.initiate_responder(da);
+    }
+    else
+        ESP_LOGI(TAG, "Unable to reserve transport protocol for receipt");
+
+    return 0;
 }
 
 
@@ -97,6 +135,10 @@ static int addr(int argc, char** argv)
 
         clog << estd::endl;
     }
+    else if(cmd == "dest")
+    {
+        // default destination
+    }
 
     return 0;
 }
@@ -131,7 +173,7 @@ static void register_emit_rqst()
     };
 
     //emit_rqst_args.abbrev = arg_str1(nullptr, nullptr, "<cmd>", "Abbreviated command name (i.e. CM1, BJM1, etc)");
-    emit_rqst_args.da = arg_int1(nullptr, nullptr, "<da>", "Destination Address");
+    emit_rqst_args.da = arg_int0(nullptr, nullptr, "<da>", "Destination Address");
     emit_rqst_args.pgn = arg_int1(nullptr, nullptr, "<pgn>", "Particular PGN requested");
     emit_rqst_args.end = arg_end(2);
 
@@ -164,7 +206,7 @@ static void register_addr()
         .argtable = &addr_args
     };
 
-    addr_args.command = arg_str1(nullptr, nullptr, "<set|show|claim|release>", nullptr);
+    addr_args.command = arg_str1(nullptr, nullptr, "<set|dest|show|claim|release>", nullptr);
     addr_args.end = arg_end(2);
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
@@ -182,8 +224,15 @@ static esp_console_repl_t* init_repl()
 
     esp_console_register_help_command();
 
+#if defined(CONFIG_ESP_CONSOLE_UART_DEFAULT) || defined(CONFIG_ESP_CONSOLE_UART_CUSTOM)
     esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_console_new_repl_uart(&hw_config, &repl_config, &repl));
+#elif defined(CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG)
+    esp_console_dev_usb_serial_jtag_config_t hw_config = ESP_CONSOLE_DEV_USB_SERIAL_JTAG_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_console_new_repl_usb_serial_jtag(&hw_config, &repl_config, &repl));
+#else
+#error
+#endif
 
     return repl;
 }

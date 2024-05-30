@@ -61,6 +61,7 @@ public:
         RECEIVING,
         SENDING_ABORT,
         SENT_ABORT,
+        OFFLINE,
 
         // Originator node states
         ORIGINATOR = ROLE_ORIGINATOR << role_shift,
@@ -188,6 +189,24 @@ public:
     constexpr states state() const { return state_; }
 
     roles role() const;
+
+    void set_offline()
+    {
+#if FEATURE_EMBR_J1939_STRICT_STATES
+        assert(state_ == IDLE || state_ == WARN);
+#endif
+
+        state_ = OFFLINE;
+    }
+
+    void set_online()
+    {
+#if FEATURE_EMBR_J1939_STRICT_STATES
+        assert(state_ == OFFLINE);
+#endif
+
+        state_ = IDLE;
+    }
 
     // DEBT: Poor naming, only applies to responder mode
     constexpr bool payload_present() const
