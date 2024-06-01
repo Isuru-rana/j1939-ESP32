@@ -56,7 +56,7 @@ bool component_identification_ca::process_outgoing(Transport&)
     if(tp.ready_for_payload())
     {
         const auto& ctp = tp;
-        unsigned pos = ctp.originator().current_position();
+        unsigned pos = ctp.originator().last_position();
 
         ESP_LOGD(TAG, "Prepping chunk (ECUID): pos=%u", pos);
 
@@ -144,7 +144,7 @@ extern "C" void app_main(void)
         if(tp2.ready_for_payload())
         {
             const auto& ctp = tp2;
-            unsigned pos = ctp.originator().current_position();
+            unsigned pos = ctp.originator().last_position();
 
             ESP_LOGD(TAG, "Prepping chunk (SOFT): pos=%u", pos);
 

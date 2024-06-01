@@ -41,7 +41,9 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
     {
         case ANTICIPATING_RTS:
             if(idle().anticipated_address_ != p.source_address())   return false;
-            //[[fallthrough]];
+#if __cplusplus >= 201703L
+            [[fallthrough]];
+#endif
 
         case IDLE:
         {
