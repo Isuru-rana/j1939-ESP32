@@ -8,6 +8,8 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Quick SerialBus)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
+add_subdirectory(../lib lib)
+
 set(TARGET_NAME app${PROJECT_NAME})
 
 qt_add_executable(${TARGET_NAME}
@@ -34,7 +36,7 @@ set_target_properties(${TARGET_NAME} PROPERTIES
 )
 
 target_link_libraries(${TARGET_NAME}
-    PRIVATE Qt6::Quick Qt6::SerialBus
+    PRIVATE Qt6::Quick Qt6::SerialBus j1939::qt
 )
 
 include(GNUInstallDirs)

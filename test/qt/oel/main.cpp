@@ -1,3 +1,4 @@
+#include <QCanBus>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 
@@ -14,6 +15,13 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection
     );
     engine.loadFromModule("oel", "Main");
+
+
+    if (QCanBus::instance()->plugins().contains(QStringLiteral("virtualcan"))) {
+        QCanBusDevice *device = QCanBus::instance()->createDevice(
+            QStringLiteral("virtualcan"), QStringLiteral("can0"));
+        device->connectDevice();
+    }
 
     return app.exec();
 }
