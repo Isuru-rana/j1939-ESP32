@@ -232,6 +232,41 @@ struct network_ca_temp : network_ca_base
 
     address_manager_type address_manager_;
 
+    address_type find_new_address()
+    {
+        if(address_manager().depleted())
+            return {};
+        else
+            return address_manager().get_candidate();
+    }
+
+    void track(const pdu<pgns::address_claimed>&)
+    {
+        // TODO: Map incoming CA/SA/NAMEs, probably via some kind of impl associated with
+        // SA generation
+    }
+
+
+    estd::chrono::milliseconds get_send_claim_defer();
+
+    /// In response to a contending incoming address claim, initiate process of
+    /// coming up with a new candidate SA
+    template <class Transport>
+    void evaluate_contender(Transport& t, const pdu<pgns::address_claimed>& p)
+    {
+        // TODO: We'll need to emit our own address claimed, cannot claim and
+        // perhaps do some requests to see what address we should try for
+
+        //state = states::claiming;
+        //substate = substates::contending;
+    }
+
+    // DEBT: Poor naming.  State machine assist to react to incoming address claim
+    // which may contend
+    template <class Transport>
+    bool evaluate_contenders(Transport& t, const pdu<pgns::address_claimed>& p);
+
+
     address_manager_type& address_manager() { return address_manager_; }
 
     template <class ...Args>
@@ -269,6 +304,7 @@ struct network_ca : impl::controller_application<TTransport>,
     using nca_base_type::state;
     using nca_base_type::substate;
     using nca_base_type::address_manager;
+    using nca_base_type::find_new_address;
 
     typedef transport_traits<transport_type> _transport_traits;
 
@@ -299,8 +335,6 @@ struct network_ca : impl::controller_application<TTransport>,
 
     transport_type* t;
 
-    estd::chrono::milliseconds get_send_claim_defer();
-
     void send_claim(transport_type& t, pdu<pgns::address_claimed>& p, uint8_t sa)
     {
         network_ca_base::send_claim(t, p, sa);
@@ -315,14 +349,6 @@ struct network_ca : impl::controller_application<TTransport>,
 
         // DEBT: May not want to do this IN emitter method itself
         timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
-    }
-
-    address_type find_new_address()
-    {
-        if(address_manager().depleted())
-            return {};
-        else
-            return address_manager().get_candidate();
     }
 
     // [1] 4.2.1
@@ -439,23 +465,6 @@ struct network_ca : impl::controller_application<TTransport>,
     // DEBT: I think we'd prefer to do this at constructor, but for now is easier
     // to do a manual start call
     void start(transport_type& t);
-
-    void track(const pdu<pgns::address_claimed>&)
-    {
-        // TODO: Map incoming CA/SA/NAMEs, probably via some kind of impl associated with
-        // SA generation
-    }
-
-    /// In response to a contending incoming address claim, initiate process of
-    /// coming up with a new candidate SA
-    void evaluate_contender(transport_type& t, const pdu<pgns::address_claimed>& p)
-    {
-        // TODO: We'll need to emit our own address claimed, cannot claim and
-        // perhaps do some requests to see what address we should try for
-
-        //state = states::claiming;
-        //substate = substates::contending;
-    }
 
     template <pgns pgn>
     inline bool process_incoming(transport_type& t, pdu<pgn> p) { return false; }

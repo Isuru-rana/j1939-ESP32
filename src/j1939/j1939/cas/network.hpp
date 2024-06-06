@@ -20,8 +20,8 @@ namespace embr { namespace j1939 {
 
 namespace impl {
 
-template <class TTransport, class TScheduler, class TAddressManager>
-estd::chrono::milliseconds network_ca<TTransport, TScheduler, TAddressManager>::
+template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
+estd::chrono::milliseconds network_ca_temp<AddressManager>::
     get_send_claim_defer()
 {
     uint8_t v = address_manager().rng().get() % 256;
@@ -29,6 +29,46 @@ estd::chrono::milliseconds network_ca<TTransport, TScheduler, TAddressManager>::
     return d;
 }
 
+
+template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
+template <class Transport>
+bool network_ca_temp<AddressManager>::evaluate_contenders(Transport& t, const pdu<pgns::address_claimed>& p)
+{
+    switch(state)
+    {
+        // Incoming address claim after we've settled on our SA.  Evaluate whether
+        // we can/should give it up
+        case states::claimed:
+            if(is_contender(p))
+                evaluate_contender(t, p);
+            break;
+
+        // Incoming address claim while we're trying to claim SA.  Could be someone
+        // specifically contending with our claim
+        case states::claiming:
+            if(is_contender(p))
+                evaluate_contender(t, p);
+            break;
+
+        // Incoming address claims after we do a request for address claim is expected.
+        // Contention possibility is still present.
+        case states::requesting:
+            if(is_contender(p))
+                evaluate_contender(t, p);
+
+            track(p);
+
+            break;
+
+        // If unstarted, we must ignore things until we DO start/init
+        // If claim_failed, we've given up trying to get on network
+        case states::unstarted:
+        case states::claim_failed:
+            return false;
+    }
+
+    return true;
+}
 
 template <class Transport>
 void network_ca_base::send_claim(Transport& t, pdu<pgns::address_claimed>& p, uint8_t sa)
@@ -154,7 +194,7 @@ void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
         // While waiting 250ms after address claim, a bus/send error occurred.
         // We intentionally reach here at the 250ms expiry
         case substates::claim_send_error:
-            timeout += get_send_claim_defer();
+            timeout += nca_base_type::get_send_claim_defer();
             *wake = timeout;
             substate = substates::reclaim_waiting;
             break;
@@ -192,38 +232,9 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
     ESP_LOGV(TAG, "processing AC with SA:%X", sa);
 #endif
 
-    switch(state)
-    {
-        // Incoming address claim after we've settled on our SA.  Evaluate whether
-        // we can/should give it up
-        case states::claimed:
-            if(nca_base_type::is_contender(p))
-                evaluate_contender(t, p);
-            break;
+    bool result = nca_base_type::evaluate_contenders(t, p);
 
-        // Incoming address claim while we're trying to claim SA.  Could be someone
-        // specifically contending with our claim
-        case states::claiming:
-            if(nca_base_type::is_contender(p))
-                evaluate_contender(t, p);
-            break;
-
-        // Incoming address claims after we do a request for address claim is expected.
-        // Contention possibility is still present.
-        case states::requesting:
-            if(nca_base_type::is_contender(p))
-                evaluate_contender(t, p);
-
-            track(p);
-
-            break;
-
-        // If unstarted, we must ignore things until we DO start/init
-        // If claim_failed, we've given up trying to get on network
-        case states::unstarted:
-        case states::claim_failed:
-            return false;
-    }
+    if(result == false) return false;
 
     // Is our address in contest? [1] 4.4.3.3
     if(sa == address_)
@@ -260,6 +271,8 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
 
                 // DEBT: Account for 'requesting' state in which case we probably
                 // shouldn't respond right away but probably should still find_new_address
+                // DEBT: Do this output with a state machine.  Arguably cleaner to service in process_outgoing,
+                // and also gives us chance to decouple this whole function from scheduler
                 send_claim_and_schedule(t, p, *new_address);
 
                 // DEBT: Account for other states here also
