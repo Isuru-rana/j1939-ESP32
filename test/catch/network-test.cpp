@@ -109,12 +109,13 @@ TEST_CASE("Controller Applications (network)")
             }
         }
     }
+    // DEBT: Move this out to state machine area
     SECTION("network ca base")
     {
         test::NAME_trailer_brake<true>::sparse v;
 
-        impl::network_ca_base ncb1(v);
-        impl::network_ca_base ncb2(test::NAME_trailer_brake<true>::sparse{});
+        sm::network_base ncb1(v);
+        sm::network_base ncb2(test::NAME_trailer_brake<true>::sparse{});
 
         REQUIRE(ncb1.name() == name);
         REQUIRE(ncb2.name() == name);

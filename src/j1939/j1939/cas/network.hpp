@@ -15,124 +15,11 @@
 #include "network.h"
 
 #include "../data_field/request.hpp"
+#include "../state-machines/network.hpp"
 
 namespace embr { namespace j1939 {
 
 namespace impl {
-
-template <class Transport, class TimePoint>
-bool network_ca_base::process_outgoing(Transport&, const context<TimePoint>&)
-{
-    if(substate != substates::sending) return false;
-
-    switch(state)
-    {
-        case states::claiming:
-            return true;
-
-        default:
-            return false;
-    }
-}
-
-
-template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
-estd::chrono::milliseconds network_ca_temp<AddressManager, TimePoint>::
-    get_send_claim_defer()
-{
-    uint8_t v = address_manager().rng().get() % 256;
-    estd::chrono::duration<uint8_t, estd::ratio<6, 10000>> d(v);
-    return d;
-}
-
-
-template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
-template <class Transport>
-bool network_ca_temp<AddressManager, TimePoint>::evaluate_contenders(Transport& t, const pdu<pgns::address_claimed>& p)
-{
-    switch(state)
-    {
-        // Incoming address claim after we've settled on our SA.  Evaluate whether
-        // we can/should give it up
-        case states::claimed:
-            if(is_contender(p))
-                evaluate_contender(t, p);
-            break;
-
-        // Incoming address claim while we're trying to claim SA.  Could be someone
-        // specifically contending with our claim
-        case states::claiming:
-            if(is_contender(p))
-                evaluate_contender(t, p);
-            break;
-
-        // Incoming address claims after we do a request for address claim is expected.
-        // Contention possibility is still present.
-        case states::requesting:
-            if(is_contender(p))
-                evaluate_contender(t, p);
-
-            track(p);
-
-            break;
-
-        // If unstarted, we must ignore things until we DO start/init
-        // If claim_failed, we've given up trying to get on network
-        case states::unstarted:
-        case states::claim_failed:
-            return false;
-    }
-
-    return true;
-}
-
-template <class Transport>
-void network_ca_base::send_claim(Transport& t, pdu<pgns::address_claimed>& p, uint8_t sa)
-{
-    using traits = transport_traits<Transport>;
-    // DEBT: Not sure if claim ALWAYS is a BAM but I think so
-    p.can_id().destination_address(address_traits::global);
-    p.payload() = name_;
-    p.can_id().source_address(sa);
-
-    // Turn off CAN transport auto retry as per [1] 4.4.4.3
-#if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
-    t.one_shot(true);
-#endif
-    bool send_result = traits::send(t, p);
-#if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
-    t.one_shot(false);
-#endif
-
-#if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
-    // DEBT: Do this pseudo asynchronously, since 'send' may not register an error
-    // right away
-    if(!t.good() || !send_result)
-    {
-        // If a bus error, schedule our own retry after "idle" 250ms
-        // as per [1] 4.4.4.3 and [3] 1.1.4.
-        // As per [3] 1.1.4.1 - "idle" MIGHT mean CAN idle - that will require a code change
-        substate = substates::claim_send_error;
-    }
-#endif
-}
-
-
-template <class Transport>
-void network_ca_base::send_request_for_address_claimed(Transport& t, uint8_t da)
-{
-    using traits = transport_traits<Transport>;
-
-    pdu<pgns::request> p{null_t{}};
-
-    // DEBT: make this pgn param take enum
-    p.payload().pgn((uint32_t)pgns::address_claimed);
-    p.can_id().source_address(address_traits::null);
-    p.can_id().destination_address(da);
-
-    traits::send(t, p);
-}
-
 
 
 template <class TTransport, class TScheduler, class TAddressManager>
@@ -255,7 +142,7 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
         {
             // we have the higher priority name
             // transmit our own address, basically re-announce our claim
-            network_ca_base::send_claim(t);
+            nca_base_type::send_claim(t);
 
             // If we're currently claiming, this extends the 250ms timeout
             // If we're fully claimed, this has no followup scheduled
@@ -344,7 +231,7 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_request_for_ad
         case states::claimed:
             // Send as basically an ACK, so no followup scheduling for this particular
             // send_claim
-            network_ca_base::send_claim(t);
+            nca_base_type::send_claim(t);
             break;
 
         case states::claim_failed:
@@ -377,12 +264,6 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(trans
             return false;
     }
 }
-
-inline void network_ca_base::start()
-{
-
-}
-
 
 template <class TTransport, class TScheduler, class TAddressManager>
 void network_ca<TTransport, TScheduler, TAddressManager>::start(transport_type& t)
@@ -425,13 +306,13 @@ void network_ca<TTransport, TScheduler, TAddressManager>::send_claim_and_schedul
     switch(state)
     {
         case states::claimed:
-            network_ca_base::send_claim(t, p, sa);
+            nca_base_type::send_claim(t, p, sa);
             timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
             scheduler.schedule(timeout, f);
             break;
 
         case states::claiming:
-            network_ca_base::send_claim(t, p, sa);
+            nca_base_type::send_claim(t, p, sa);
             timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
             // this implicitly reschedules by virtue of adjusting 'timeout'
             break;
