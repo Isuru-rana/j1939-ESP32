@@ -87,7 +87,7 @@ void network_ca<TTransport, TScheduler, TAddressManager>::send_request_for_addre
     network_ca_base::send_request_for_address_claimed(t, dest);
 
     // DEBT: May not want to do this IN emitter method itself
-    timeout = scheduler.impl().now() + request_for_address_claim_timeout();
+    timeout = scheduler.impl().now() + nca_base_type::request_for_address_claim_timeout();
 }
 
 
@@ -197,21 +197,21 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
         // Incoming address claim after we've settled on our SA.  Evaluate whether
         // we can/should give it up
         case states::claimed:
-            if(is_contender(p))
+            if(nca_base_type::is_contender(p))
                 evaluate_contender(t, p);
             break;
 
         // Incoming address claim while we're trying to claim SA.  Could be someone
         // specifically contending with our claim
         case states::claiming:
-            if(is_contender(p))
+            if(nca_base_type::is_contender(p))
                 evaluate_contender(t, p);
             break;
 
         // Incoming address claims after we do a request for address claim is expected.
         // Contention possibility is still present.
         case states::requesting:
-            if(is_contender(p))
+            if(nca_base_type::is_contender(p))
                 evaluate_contender(t, p);
 
             track(p);
@@ -277,7 +277,7 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
             }
             else
             {
-                send_cannot_claim(t);
+                nca_base_type::send_cannot_claim(t);
                 state = states::claim_failed;
             }
         }
@@ -329,7 +329,7 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_request_for_ad
         case states::claim_failed:
             // [1] 4.4.3.1
             // emit a 'cannot claim'
-            send_cannot_claim(t);
+            nca_base_type::send_cannot_claim(t);
             break;
 
         // If we ourselves are waiting on a response to our own request for claim,
@@ -376,7 +376,7 @@ void network_ca<TTransport, TScheduler, TAddressManager>::start(transport_type& 
 
     // DEBT: Not 100% right, more like we have an alleged address and
     // the send_claim is to ensure there's no contention
-    if(has_address())
+    if(nca_base_type::has_address())
     {
         state = states::claiming;
         substate = substates::waiting;

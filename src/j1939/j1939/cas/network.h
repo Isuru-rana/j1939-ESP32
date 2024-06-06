@@ -224,15 +224,51 @@ public:
     void process_outgoing(Transport&, const context<TimePoint>&);
 };
 
+template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
+struct network_ca_temp : network_ca_base
+{
+    using base_type = network_ca_base;
+    using address_manager_type = AddressManager;
+
+    address_manager_type address_manager_;
+
+    address_manager_type& address_manager() { return address_manager_; }
+
+    template <class ...Args>
+    network_ca_temp(address_manager_type& am, Args&&...args) :
+        network_ca_base(std::forward<Args>(args)...),
+        address_manager_{am}
+    {}
+
+    template <class ...Args>
+    network_ca_temp(address_manager_type&& am, Args&&...args) :
+        network_ca_base(std::forward<Args>(args)...),
+        address_manager_{std::move(am)}
+    {}
+};
+
 // Pertains to [1] 5.10
-template <class TTransport, class TScheduler, class TAddressManager>
+template <class TTransport, class TScheduler,
+    ESTD_CPP_CONCEPT(internal::concepts::AddressManager) TAddressManager>
 struct network_ca : impl::controller_application<TTransport>,
-                    network_ca_base
+                    network_ca_temp<TAddressManager>
 {
     typedef j1939::impl::controller_application<TTransport> base_type;
+    using nca_base_type = network_ca_temp<TAddressManager>;
+
     using typename base_type::transport_type;
     using typename base_type::frame_type;
     using typename base_type::frame_traits;
+    using typename nca_base_type::address_traits;
+    using typename nca_base_type::address_type;
+    using typename nca_base_type::states;
+    using typename nca_base_type::substates;
+
+    using nca_base_type::name_;
+    using nca_base_type::address_;
+    using nca_base_type::state;
+    using nca_base_type::substate;
+    using nca_base_type::address_manager;
 
     typedef transport_traits<transport_type> _transport_traits;
 
@@ -246,9 +282,6 @@ struct network_ca : impl::controller_application<TTransport>,
     typedef TAddressManager address_manager_type;
 
     scheduler_type& scheduler;
-    address_manager_type address_manager_;
-
-    address_manager_type& address_manager() { return address_manager_; }
 
     // DEBT: Instead, expose impl_type directly from sechduler_type
     typedef estd::remove_reference_t<decltype(scheduler.impl())> scheduler_impl_type;
@@ -273,7 +306,7 @@ struct network_ca : impl::controller_application<TTransport>,
         network_ca_base::send_claim(t, p, sa);
 
         // DEBT: May not want to do this IN emitter method itself
-        timeout = scheduler.impl().now() + address_claim_timeout();
+        timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
     }
 
     void send_claim(transport_type& t)
@@ -281,7 +314,7 @@ struct network_ca : impl::controller_application<TTransport>,
         network_ca_base::send_claim(t);
 
         // DEBT: May not want to do this IN emitter method itself
-        timeout = scheduler.impl().now() + address_claim_timeout();
+        timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
     }
 
     address_type find_new_address()
@@ -305,9 +338,9 @@ struct network_ca : impl::controller_application<TTransport>,
     // otherwise we'll definitely run into a form of jitter
     bool schedule_address_claim_timeout(time_point* wake)
     {
-        if(skip_timeout()) return false;
+        if(nca_base_type::skip_timeout()) return false;
 
-        *wake += address_claim_timeout();
+        *wake += nca_base_type::address_claim_timeout();
         return true;
     }
 
@@ -372,7 +405,7 @@ struct network_ca : impl::controller_application<TTransport>,
         embr::j1939::layer0::sparse_tag, TLayer0Name>::value, bool> = true>
     explicit constexpr network_ca(TLayer0Name sparse,
         scheduler_type& scheduler) :
-        network_ca_base(sparse),
+        nca_base_type(address_manager_type{}, sparse),
         scheduler{scheduler}
     {}
 
@@ -386,7 +419,7 @@ struct network_ca : impl::controller_application<TTransport>,
     template <class TContainer>
     explicit constexpr network_ca(const NAME<TContainer>& name,
         scheduler_type& scheduler) :
-        network_ca_base(name),
+        nca_base_type(address_manager_type{}, name),
         scheduler{scheduler}
         //f([&](time_point* wake, time_point current) { scheduled(wake, current); })
     {
@@ -397,9 +430,8 @@ struct network_ca : impl::controller_application<TTransport>,
     explicit constexpr network_ca(const NAME<TContainer>& name,
         scheduler_type& scheduler,
         address_manager_type& am) :
-        network_ca_base(name),
-        scheduler{scheduler},
-        address_manager_{am}
+        nca_base_type(am, name),
+        scheduler{scheduler}
     {
 
     }
