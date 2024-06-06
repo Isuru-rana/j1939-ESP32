@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.19)
 
 project(j1939-unit-test VERSION 1.0.0)
 
@@ -6,6 +6,8 @@ project(j1939-unit-test VERSION 1.0.0)
 if(NOT DEFINED CMAKE_CXX_STANDARD)
     message(STATUS "Forcing to minimum c++11")
     set(CMAKE_CXX_STANDARD 11)
+else()
+    message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 endif()
 
 add_definitions(-DUNIT_TESTING)
@@ -52,6 +54,10 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 target_compile_definitions(j1939 PUBLIC FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT=0)
 target_compile_definitions(${PROJECT_NAME} PUBLIC FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT=0)
+
+# Experimentation: My ancient Mac seems to resist c++20 mode.  Clang 11
+# claims to have a fair bit of support for it.  Mysterious.
+#target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 # DEBT: Consolidate this into an estdlib helper cmake, and perhaps even a
 # kind of CMake OPTION which defaults to off - that might be even better

@@ -5,6 +5,8 @@
 // a huge chore for AVR
 #include <estd/cstdlib.h>
 
+#include "fwd.h"
+
 // Since we use AVRs sometimes and they don't have c++11's awesome rng stuff, we slum it here.
 // Fortunately our RNG needs for J1939 are meager, so collisions and weak randomness are liveable.
 // That said, if one gets into a LOT of ECUs (speculating around 20+) the weak randomness may start

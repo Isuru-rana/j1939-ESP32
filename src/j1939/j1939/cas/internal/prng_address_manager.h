@@ -1,5 +1,6 @@
 #pragma once
 
+#include "fwd.h"
 #include "rng.h"
 
 namespace embr { namespace j1939 { namespace internal {
