@@ -22,6 +22,7 @@
 #include "internal/rng_address_manager.h"
 
 #include "../state-machines/tp/base.h"
+#include "../state-machines/network.h"
 
 #include "fwd.h"
 
@@ -89,7 +90,7 @@ struct network_ca_base : ca_base,
         unstarted,
 
         // generic reused states
-        emitting,           ///< Indicate transport is in process of emitting something (see 'states' for what)
+        sending,            ///< Indicate transport is in process of emitting something (see 'states' for what)
         waiting,            ///< Indicate main state has done what it can, and now waiting for response traffic
 
         // requesting state
@@ -191,6 +192,7 @@ public:
         send_claim(t, p, *address_);
     }
 
+    // [1] 4.2.1
     template <class Transport>
     void send_request_for_address_claimed(Transport&, uint8_t da);
 
@@ -244,11 +246,13 @@ public:
     bool process_outgoing(Transport&, const context<TimePoint>&);
 };
 
-template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
+template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager,
+    class TimePoint>
 struct network_ca_temp : network_ca_base
 {
     using base_type = network_ca_base;
     using address_manager_type = AddressManager;
+    using time_point = TimePoint;
 
     address_manager_type address_manager_;
 
@@ -306,14 +310,16 @@ struct network_ca_temp : network_ca_base
 template <class TTransport, class TScheduler,
     ESTD_CPP_CONCEPT(internal::concepts::AddressManager) TAddressManager>
 struct network_ca : impl::controller_application<TTransport>,
-                    network_ca_temp<TAddressManager>
+                    network_ca_temp<TAddressManager, typename TScheduler::time_point>
 {
     typedef j1939::impl::controller_application<TTransport> base_type;
-    using nca_base_type = network_ca_temp<TAddressManager>;
+    using nca_base_type = network_ca_temp<TAddressManager, typename TScheduler::time_point>;
 
     using typename base_type::transport_type;
     using typename base_type::frame_type;
     using typename base_type::frame_traits;
+
+    using typename nca_base_type::time_point;
     using typename nca_base_type::address_traits;
     using typename nca_base_type::address_type;
     using typename nca_base_type::states;
@@ -341,7 +347,7 @@ struct network_ca : impl::controller_application<TTransport>,
 
     // DEBT: Instead, expose impl_type directly from sechduler_type
     typedef estd::remove_reference_t<decltype(scheduler.impl())> scheduler_impl_type;
-    typedef typename scheduler_impl_type::time_point time_point;
+    //typedef typename scheduler_impl_type::time_point time_point;
     typedef typename scheduler_impl_type::function_type fn_test;
 
     using function_type = typename scheduler_impl_type::function_type;
@@ -355,14 +361,6 @@ struct network_ca : impl::controller_application<TTransport>,
 
     transport_type* t;
 
-    void send_claim(transport_type& t, pdu<pgns::address_claimed>& p, uint8_t sa)
-    {
-        network_ca_base::send_claim(t, p, sa);
-
-        // DEBT: May not want to do this IN emitter method itself
-        timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
-    }
-
     void send_claim(transport_type& t)
     {
         network_ca_base::send_claim(t);
@@ -370,11 +368,6 @@ struct network_ca : impl::controller_application<TTransport>,
         // DEBT: May not want to do this IN emitter method itself
         timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
     }
-
-    // [1] 4.2.1
-    void send_request_for_address_claimed(
-            transport_type&,
-            uint8_t dest = address_traits::global);
 
     // Emits address claim over transport and assures a followup of
     // is scheduled for 250ms later

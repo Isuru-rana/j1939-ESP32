@@ -23,14 +23,21 @@ namespace impl {
 template <class Transport, class TimePoint>
 bool network_ca_base::process_outgoing(Transport&, const context<TimePoint>&)
 {
-    if(substate != substates::emitting) return false;
+    if(substate != substates::sending) return false;
 
-    return false;
+    switch(state)
+    {
+        case states::claiming:
+            return true;
+
+        default:
+            return false;
+    }
 }
 
 
-template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
-estd::chrono::milliseconds network_ca_temp<AddressManager>::
+template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
+estd::chrono::milliseconds network_ca_temp<AddressManager, TimePoint>::
     get_send_claim_defer()
 {
     uint8_t v = address_manager().rng().get() % 256;
@@ -39,9 +46,9 @@ estd::chrono::milliseconds network_ca_temp<AddressManager>::
 }
 
 
-template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
+template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
 template <class Transport>
-bool network_ca_temp<AddressManager>::evaluate_contenders(Transport& t, const pdu<pgns::address_claimed>& p)
+bool network_ca_temp<AddressManager, TimePoint>::evaluate_contenders(Transport& t, const pdu<pgns::address_claimed>& p)
 {
     switch(state)
     {
@@ -126,18 +133,6 @@ void network_ca_base::send_request_for_address_claimed(Transport& t, uint8_t da)
     traits::send(t, p);
 }
 
-
-
-// See [1] Figure A5, A6, A7
-template <class TTransport, class TScheduler, class TAddressManager>
-void network_ca<TTransport, TScheduler, TAddressManager>::send_request_for_address_claimed(
-    transport_type& t, uint8_t dest)
-{
-    network_ca_base::send_request_for_address_claimed(t, dest);
-
-    // DEBT: May not want to do this IN emitter method itself
-    timeout = scheduler.impl().now() + nca_base_type::request_for_address_claim_timeout();
-}
 
 
 template <class TTransport, class TScheduler, class TAddressManager>
@@ -396,7 +391,7 @@ void network_ca<TTransport, TScheduler, TAddressManager>::start(transport_type& 
 
     function_type f{&wake_model};
 
-    network_ca_base::start();
+    nca_base_type::start();
 
     address_ = address_manager().get_candidate();
 
@@ -405,15 +400,17 @@ void network_ca<TTransport, TScheduler, TAddressManager>::start(transport_type& 
     if(nca_base_type::has_address())
     {
         state = states::claiming;
-        substate = substates::waiting;
+        substate = substates::sending;      // Dormant substate at the moment
         send_claim(t);
+        substate = substates::waiting;
     }
     else
     {
         // TODO: Likely we need to instead do this during the "cannot claim" process
         state = states::requesting;
         substate = substates::request_waiting;
-        send_request_for_address_claimed(t);
+        nca_base_type::send_request_for_address_claimed(t, address_traits::global);
+        timeout = scheduler.impl().now() + nca_base_type::request_for_address_claim_timeout();
     }
 
     scheduler.schedule(timeout, f);
@@ -428,12 +425,14 @@ void network_ca<TTransport, TScheduler, TAddressManager>::send_claim_and_schedul
     switch(state)
     {
         case states::claimed:
-            send_claim(t, p, sa);
+            network_ca_base::send_claim(t, p, sa);
+            timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
             scheduler.schedule(timeout, f);
             break;
 
         case states::claiming:
-            send_claim(t, p, sa);
+            network_ca_base::send_claim(t, p, sa);
+            timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
             // this implicitly reschedules by virtue of adjusting 'timeout'
             break;
 
