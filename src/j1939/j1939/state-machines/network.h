@@ -30,7 +30,10 @@ struct network_base : ca_base //,
         requesting,         ///< Request for address_claimed [2] A5, A6, A7 Initialize
         claiming,           ///< Address Claim - emit and wait
         claimed,            ///< Address Claim success without contention
-        claim_failed
+        claim_failed,
+
+        // EXPERIMENTAL
+        //bus_error           ///< Unless address != null, all bets are off and similar to 'unstarted'
     };
 
 
@@ -180,9 +183,9 @@ public:
         return p.source_address() == address_;
     }
 
-    // DEBT: Need to coordinate this better with 'timeout' assignment,
+    // DEBT: Need to coordinate this better with 'next_event_' assignment,
     // otherwise we'll definitely run into a form of jitter
-    // DEBT: Need better name, more along the lines of "next claim timeout"
+    // DEBT: Need better name, more along the lines of "next claim next_event_"
     template <class Rep, class Period>
     bool schedule_address_claim_timeout(estd::chrono::duration<Rep, Period>* wake)
     {
@@ -193,7 +196,7 @@ public:
     }
 
     template <class Transport, class TimePoint>
-    bool process_outgoing(Transport&, const context<TimePoint>&);
+    bool process_outgoing_internal(Transport&, const context<TimePoint>&);
 };
 
 
@@ -205,7 +208,15 @@ struct network : network_base
     using address_manager_type = AddressManager;
     using time_point = TimePoint;
 
+    // DEBT: Do some data hiding
+
     address_manager_type address_manager_;
+
+    // Depending on whether we're claiming or request for claim we'll
+    // next_event_ 250ms or 1250ms.  Also expected but not yet implemented
+    // is a pre-send next_event_ with bus_collision_delay
+    // NOTE: We miss old 'last_claim' but this is more efficient
+    time_point next_event_;
 
     address_type find_new_address()
     {
@@ -255,6 +266,16 @@ struct network : network_base
         base_type(std::forward<Args>(args)...),
         address_manager_{std::move(am)}
     {}
+
+    template <class Transport>
+    bool process_outgoing(Transport& t, const context<TimePoint>& c)
+    {
+        if(substate != substates::sending) return false;
+
+        if(c.current < next_event_) return false;
+
+        return process_outgoing_internal(t, c);
+    }
 };
 
 }}}}

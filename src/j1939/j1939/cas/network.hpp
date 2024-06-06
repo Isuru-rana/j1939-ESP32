@@ -28,13 +28,13 @@ void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
 {
     // Currently just a NOOP
     const typename nca_base_type::context context{current, *address_};
-    nca_base_type::process_outgoing(*t, context);
+    nca_base_type::process_outgoing_internal(*t, context);
 
     switch(substate)
     {
         case substates::bus_off:
             // TODO: "Delaying before Address Re-Claim"
-            // this is a preceding addition to the regular 250ms timeout
+            // this is a preceding addition to the regular 250ms next_event_
             substate = substates::bus_off_recover;
             // DEBT: Arbitrary delay here, need something way more specific
             *wake += estd::chrono::milliseconds(500);
@@ -43,7 +43,7 @@ void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
         case substates::bus_off_recover:
             send_claim(*t);
             substate = substates::waiting;
-            if(!nca_base_type::schedule_address_claim_timeout(wake)) // set up 250ms timeout
+            if(!nca_base_type::schedule_address_claim_timeout(wake)) // set up 250ms next_event_
                 // don't wait for scheduling, immediately go to 'waiting' finish portion
                 scheduled_claiming(wake, current);
             break;
@@ -52,7 +52,7 @@ void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
             break;
 
         case substates::request_waiting:
-            // got to 1.25s timeout for request for address claim
+            // got to 1.25s next_event_ for request for address claim
             // [1] Figure A5, A6, A7
             // 1.TODO: For A5, if noone contends, send out claim for X.  Then, wait 250ms for contention
             // 2.TODO: For A5, if someone contends, flow to A6
@@ -70,27 +70,27 @@ void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
 
         // Waiting to finish our own claim address phase
         case substates::waiting:
-            if(current >= timeout)
+            if(current >= next_event_)
             {
-                // got to timeout without contention means successful claim
+                // got to next_event_ without contention means successful claim
                 state = states::claimed;
                 substate = substates::expired;
             }
             else
             {
-                // timeout can get adjusted when contenders come in, since
+                // next_event_ can get adjusted when contenders come in, since
                 // we sometimes need to re-emit and therefore re-start claim
                 // process as per [3] 3.3.3.1
                 // this effectively elongates the 'waiting' period so we reschedule
-                *wake = timeout;
+                *wake = next_event_;
             }
             break;
 
         // While waiting 250ms after address claim, a bus/send error occurred.
         // We intentionally reach here at the 250ms expiry
         case substates::claim_send_error:
-            timeout += nca_base_type::get_send_claim_defer();
-            *wake = timeout;
+            next_event_ += nca_base_type::get_send_claim_defer();
+            *wake = next_event_;
             substate = substates::reclaim_waiting;
             break;
 
@@ -144,7 +144,7 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
             // transmit our own address, basically re-announce our claim
             nca_base_type::send_claim(t);
 
-            // If we're currently claiming, this extends the 250ms timeout
+            // If we're currently claiming, this extends the 250ms next_event_
             // If we're fully claimed, this has no followup scheduled
 
             // DEBT: Do we need to schedule a followup here?
@@ -291,10 +291,10 @@ void network_ca<TTransport, TScheduler, TAddressManager>::start(transport_type& 
         state = states::requesting;
         substate = substates::request_waiting;
         nca_base_type::send_request_for_address_claimed(t, address_traits::global);
-        timeout = scheduler.impl().now() + nca_base_type::request_for_address_claim_timeout();
+        next_event_ = scheduler.impl().now() + nca_base_type::request_for_address_claim_timeout();
     }
 
-    scheduler.schedule(timeout, f);
+    scheduler.schedule(next_event_, f);
 }
 
 template <class TTransport, class TScheduler, class TAddressManager>
@@ -307,14 +307,14 @@ void network_ca<TTransport, TScheduler, TAddressManager>::send_claim_and_schedul
     {
         case states::claimed:
             nca_base_type::send_claim(t, p, sa);
-            timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
-            scheduler.schedule(timeout, f);
+            next_event_ = scheduler.impl().now() + nca_base_type::address_claim_timeout();
+            scheduler.schedule(next_event_, f);
             break;
 
         case states::claiming:
             nca_base_type::send_claim(t, p, sa);
-            timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
-            // this implicitly reschedules by virtue of adjusting 'timeout'
+            next_event_ = scheduler.impl().now() + nca_base_type::address_claim_timeout();
+            // this implicitly reschedules by virtue of adjusting 'next_event_'
             break;
 
         default:

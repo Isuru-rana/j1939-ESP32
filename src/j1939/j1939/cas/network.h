@@ -83,6 +83,7 @@ struct network_ca : impl::controller_application<Transport>,
     using nca_base_type::substate;
     using nca_base_type::address_manager;
     using nca_base_type::find_new_address;
+    using nca_base_type::next_event_;
 
     typedef transport_traits<transport_type> _transport_traits;
 
@@ -105,12 +106,6 @@ struct network_ca : impl::controller_application<Transport>,
     using function_type = typename scheduler_impl_type::function_type;
     //typedef impl::experimental::ca_time_helper<scheduler_impl_type> helper;
 
-    // Depending on whether we're claiming or request for claim we'll
-    // timeout 250ms or 1250ms.  Also expected but not yet implemented
-    // is a pre-send timeout with bus_collision_delay
-    // NOTE: We miss old 'last_claim' but this is more efficient
-    time_point timeout;
-
     transport_type* t;
 
     void send_claim(transport_type& t)
@@ -118,7 +113,7 @@ struct network_ca : impl::controller_application<Transport>,
         nca_base_type::send_claim(t);
 
         // DEBT: May not want to do this IN emitter method itself
-        timeout = scheduler.impl().now() + nca_base_type::address_claim_timeout();
+        next_event_ = scheduler.impl().now() + nca_base_type::address_claim_timeout();
     }
 
     // Emits address claim over transport and assures a followup of

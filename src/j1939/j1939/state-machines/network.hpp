@@ -4,13 +4,12 @@
 
 namespace embr { namespace j1939 { namespace sm { inline namespace v1 {
 
+// 'internal' flavor does not check next_event_ or substate == sending
 // true = another call to process_outgoing is requested OR we performed a meaningful task
 // false = no further calls to outgoing are requested
 template <class Transport, class TimePoint>
-bool network_base::process_outgoing(Transport& t, const context<TimePoint>& context)
+bool network_base::process_outgoing_internal(Transport& t, const context<TimePoint>& context)
 {
-    if(substate != substates::sending) return false;
-
     switch(state)
     {
         case states::requesting:
