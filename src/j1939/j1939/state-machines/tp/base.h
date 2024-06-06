@@ -5,6 +5,7 @@
 
 namespace embr { namespace j1939 { namespace sm { namespace tp { inline namespace v0 {
 
+// Consider a specialization ala "include_next" rather than a feature flag
 template <class TimePoint>
 struct context
 {

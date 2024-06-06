@@ -88,11 +88,19 @@ struct network_ca_base : ca_base,
     {
         unstarted,
 
+        // generic reused states
+        emitting,           ///< Indicate transport is in process of emitting something (see 'states' for what)
+        waiting,            ///< Indicate main state has done what it can, and now waiting for response traffic
+
         // requesting state
-        request_waiting,    ///< Waiting period (1250ms) after we emit a request for address claim
+
+        /// Waiting period (1250ms) after we emit a request for address claim
+        request_waiting, // = waiting,  // DEBT: scheduled_claiming doesn't quite disambiguate enough here
 
         // claiming state
-        waiting,            ///< Waiting period (250ms) after we emit a claim address
+
+        /// Waiting period (250ms) after we emit a claim address
+        claim_waiting,  // = waiting,
         contending,         ///< Evaluation period after we receive a contending address
         claim_send_error,   ///< Same as 'waiting' but bus/send error occurred [3] 1.1.4
         reclaim_waiting,    ///< Waiting period of 0-153ms preceding re-transmit of claim [1] 4.4.4.3
@@ -220,8 +228,20 @@ public:
         return p.source_address() == address_;
     }
 
+    // DEBT: Need to coordinate this better with 'timeout' assignment,
+    // otherwise we'll definitely run into a form of jitter
+    // DEBT: Need better name, more along the lines of "next claim timeout"
+    template <class Rep, class Period>
+    bool schedule_address_claim_timeout(estd::chrono::duration<Rep, Period>* wake)
+    {
+        if(skip_timeout()) return false;
+
+        *wake += address_claim_timeout();
+        return true;
+    }
+
     template <class Transport, class TimePoint>
-    void process_outgoing(Transport&, const context<TimePoint>&);
+    bool process_outgoing(Transport&, const context<TimePoint>&);
 };
 
 template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
@@ -359,17 +379,6 @@ struct network_ca : impl::controller_application<TTransport>,
     // Emits address claim over transport and assures a followup of
     // is scheduled for 250ms later
     void send_claim_and_schedule(transport_type& t, pdu<pgns::address_claimed>& p, uint8_t sa);
-
-    // DEBT: Need to coordinate this better with 'timeout' assignment,
-    // otherwise we'll definitely run into a form of jitter
-    bool schedule_address_claim_timeout(time_point* wake)
-    {
-        if(nca_base_type::skip_timeout()) return false;
-
-        *wake += nca_base_type::address_claim_timeout();
-        return true;
-    }
-
 
     // Scheduler calls this guy
     void scheduled_claiming(time_point* wake, time_point current);

@@ -20,6 +20,15 @@ namespace embr { namespace j1939 {
 
 namespace impl {
 
+template <class Transport, class TimePoint>
+bool network_ca_base::process_outgoing(Transport&, const context<TimePoint>&)
+{
+    if(substate != substates::emitting) return false;
+
+    return false;
+}
+
+
 template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
 estd::chrono::milliseconds network_ca_temp<AddressManager>::
     get_send_claim_defer()
@@ -135,6 +144,10 @@ template <class TTransport, class TScheduler, class TAddressManager>
 void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
     time_point* wake, time_point current)
 {
+    // Currently just a NOOP
+    const typename nca_base_type::context context{current, *address_};
+    nca_base_type::process_outgoing(*t, context);
+
     switch(substate)
     {
         case substates::bus_off:
@@ -148,7 +161,7 @@ void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
         case substates::bus_off_recover:
             send_claim(*t);
             substate = substates::waiting;
-            if(!schedule_address_claim_timeout(wake)) // set up 250ms timeout
+            if(!nca_base_type::schedule_address_claim_timeout(wake)) // set up 250ms timeout
                 // don't wait for scheduling, immediately go to 'waiting' finish portion
                 scheduled_claiming(wake, current);
             break;
@@ -170,7 +183,7 @@ void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
             substate = substates::waiting;
             // DEBT: Getting here we sorta presume we're arbitrary capable, meaning
             // we always do 250ms wait
-            schedule_address_claim_timeout(wake);
+            nca_base_type::schedule_address_claim_timeout(wake);
             break;
 
         // Waiting to finish our own claim address phase
