@@ -74,7 +74,7 @@ struct NAME
 
         // DEBT: Pretty sure I'd prefer a undefined/uninitialized
         // default constructor
-        constexpr sparse_base() :
+        constexpr sparse_base(null_t) :
             vehicle_system_instance_{0},
             function_instance_{0},
             ecu_instance_{0}

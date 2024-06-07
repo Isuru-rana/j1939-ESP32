@@ -123,7 +123,7 @@ TEST_CASE("j1939-81 NAME")
     {
         SECTION("trailer brake")
         {
-            test::names::trailer_brake<true>::sparse name1;
+            test::names::trailer_brake<true>::sparse name1{j1939::null_t{}};
             j1939::layer1::NAME name2{j1939::null_t{}};
 
             name1.populate(name2);
@@ -136,7 +136,7 @@ TEST_CASE("j1939-81 NAME")
             // Correctly is ambiguous, and qualifying by namespace
             // fixes that
             //test::names::synthetic_collider<true>::sparse name3;
-            test::names::ig2::synthetic_collider<true>::sparse name3;
+            test::names::ig2::synthetic_collider<true>::sparse name3{j1939::null_t{}};
         }
         SECTION("joystick")
         {

@@ -7,11 +7,6 @@
 
 namespace embr { namespace j1939 {
 
-// Tag to indicate in place null initialization, kind of a relative of in_place_t
-// DEBT: Somewhat misleading name because for pdu this also initializes pgn and priority into can_id
-struct null_t {};
-
-
 // 28MAY24 DEBT: Belongs in proper FEATURE area, sort of
 // 28MAY24 DEBT: Temporary legacy feature flag to retain old auto null init behavior.
 // Phase out by 01JUL24

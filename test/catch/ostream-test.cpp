@@ -18,7 +18,7 @@ TEST_CASE("ostream")
 
     SECTION("NAME")
     {
-        test::names::trailer_brake<true>::sparse name1;
+        test::names::trailer_brake<true>::sparse name1{j1939::null_t{}};
         j1939::layer1::NAME name2{null_t{}};
 
         name1.populate(name2);

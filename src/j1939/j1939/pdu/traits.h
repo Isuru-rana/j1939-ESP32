@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/cstdint.h>
+
 namespace embr { namespace j1939 {
 
 namespace internal {

@@ -112,10 +112,10 @@ TEST_CASE("Controller Applications (network)")
     // DEBT: Move this out to state machine area
     SECTION("network ca base")
     {
-        test::NAME_trailer_brake<true>::sparse v;
+        test::NAME_trailer_brake<true>::sparse v{j1939::null_t{}};
 
         sm::network_base ncb1(v);
-        sm::network_base ncb2(test::NAME_trailer_brake<true>::sparse{});
+        sm::network_base ncb2(test::NAME_trailer_brake<true>::sparse{j1939::null_t{}});
 
         REQUIRE(ncb1.name() == name);
         REQUIRE(ncb2.name() == name);
@@ -306,8 +306,11 @@ TEST_CASE("Controller Applications (network)")
     }
     SECTION("state machine only")
     {
-        //sm::network<SyntheticAddressManager,
-        //    estd::chrono::system_clock::time_point>
-        //        n(SyntheticAddressManager{}, test::NAME_trailer_brake<true>::sparse{});
+        sm::network<
+            SyntheticAddressManager,
+            estd::chrono::system_clock::time_point>
+            n(
+                SyntheticAddressManager{},
+                test::names::trailer_brake<true>::sparse{j1939::null_t{}});
     }
 }
