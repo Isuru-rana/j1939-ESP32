@@ -150,7 +150,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         transport_protocol& tp_recv = h.tp_recv;
 
         {
-            tp_orig.initiate_originator(sz, {0, uint8_t(addresses::null_address)}, h.recv_sa,
+            tp_orig.initiate_originator(sz, {0, addresses::null}, h.recv_sa,
                 (uint32_t)pgns::software_identification);
 
             h.cycle(t, 0);      // Send RTS, receive RTS

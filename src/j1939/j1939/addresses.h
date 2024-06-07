@@ -8,12 +8,12 @@
  */
 #pragma once
 
-namespace embr { namespace j1939 {
+namespace embr { namespace j1939 { namespace addresses {
 
 // All from [1], [2]
 // See [2] Table B2 for full descriptions
 // "Preferred Addresses Industry Group #0 - Global"
-enum class addresses : uint8_t
+enum type : uint8_t
 {
     // NAME Function 0 (engine)
     engine1 = 0,
@@ -100,8 +100,8 @@ enum class addresses : uint8_t
 
     // NAME Function 41 (lighting_operator_controls)
     lighting_operator_controls = 55,    ///< "The controller for sending the operator lighting controls messages
-                                        ///<  when they are coming from a device dedicated to transmitting
-                                        ///<  these specific messages on the network." [2]
+    ///<  when they are coming from a device dedicated to transmitting
+    ///<  these specific messages on the network." [2]
 
     // NAME Function 21 (cab_climate_control)
     passenger_operator_climate_control_2 = 58,
@@ -153,9 +153,9 @@ enum class addresses : uint8_t
     reserved_for_experimental_use = 252,    // [1]
     reserved_for_oem = 253,                 // [1]
 
-    null_address = 254,
+    null = 254,
     global = 255
 
 };
 
-}}
+}}}

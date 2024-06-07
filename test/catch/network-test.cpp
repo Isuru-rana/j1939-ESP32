@@ -6,6 +6,7 @@
 
 #include <j1939/ca.hpp>
 
+#include <j1939/addresses.h>
 #include <j1939/cas/network.hpp>
 #include <j1939/cas/internal/prng_address_manager.h>
 #include <j1939/cas/internal/address_tracker.h>
@@ -306,11 +307,22 @@ TEST_CASE("Controller Applications (network)")
     }
     SECTION("state machine only")
     {
+        using time_point = estd::chrono::system_clock::time_point;
         sm::network<
             SyntheticAddressManager,
-            estd::chrono::system_clock::time_point>
+            time_point>
             n(
                 SyntheticAddressManager{},
                 test::names::trailer_brake<true>::sparse{j1939::null_t{}});
+        time_point now;
+
+        SECTION("external incoming claim")
+        {
+            n.start(t, now);
+
+            pdu<pgns::address_claimed> p_claim(
+                addresses::axle_steering,
+                addresses::global);
+        }
     }
 }
