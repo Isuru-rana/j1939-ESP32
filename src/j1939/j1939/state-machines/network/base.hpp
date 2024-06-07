@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.h"
+#include "../../addresses.h"
 
 namespace embr { namespace j1939 { namespace sm { inline namespace v1 {
 
@@ -44,7 +45,7 @@ void network_base::send_claim(Transport& t, uint8_t sa)
 {
     // DEBT: Not sure if claim ALWAYS is a BAM but I think so
 
-    pdu<pgns::address_claimed> p(sa, address_traits::global, name_);
+    pdu<pgns::address_claimed> p(sa, addresses::global, name_);
 
     using traits = transport_traits<Transport>;
     //p.can_id().destination_address(address_traits::global);
@@ -107,7 +108,7 @@ bool network_base::process_request_for_address_claimed(
 
     const uint8_t da = p.can_id().destination_address();
 
-    if (!(da == address_traits::global ||
+    if (!(da == addresses::global ||
           da == address_))
         return false;
 
@@ -139,5 +140,22 @@ bool network_base::process_request_for_address_claimed(
 
     return true;
 }
+
+
+template <class Transport>
+bool network_base::process_incoming(Transport& t, const pdu<pgns::request>& p)
+{
+    switch((pgns)p.payload().pgn())
+    {
+        // [1] 4.2.1, 4.4.3 - request for address claimed
+        case pgns::address_claimed:
+            process_request_for_address_claimed(t, p);
+            return false;
+
+        default:
+            return false;
+    }
+}
+
 
 }}}}

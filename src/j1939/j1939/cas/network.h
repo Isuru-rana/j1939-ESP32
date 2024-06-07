@@ -84,6 +84,7 @@ struct network_ca : impl::controller_application<Transport>,
     using nca_base_type::address_manager;
     using nca_base_type::find_new_address;
     using nca_base_type::next_event_;
+    using nca_base_type::process_incoming;
 
     typedef transport_traits<transport_type> _transport_traits;
 
@@ -107,10 +108,6 @@ struct network_ca : impl::controller_application<Transport>,
     //typedef impl::experimental::ca_time_helper<scheduler_impl_type> helper;
 
     transport_type* t;
-
-    // Emits address claim over transport and assures a followup of
-    // is scheduled for 250ms later
-    void resend_claim_and_reschedule(transport_type& t, uint8_t sa);
 
     // Scheduler calls this guy
     void scheduled_claiming(time_point* wake, time_point current);
@@ -207,12 +204,7 @@ struct network_ca : impl::controller_application<Transport>,
     // to do a manual start call
     void start(transport_type& t);
 
-    template <pgns pgn>
-    inline bool process_incoming(transport_type& t, pdu<pgn> p) { return false; }
-
-    bool process_incoming(transport_type& t, const pdu<pgns::address_claimed>& p);
-
-    bool process_incoming(transport_type& t, const pdu<pgns::request>& p);
+    bool process_incoming(transport_type& t, const pdu<pgns::address_claimed>& p);  // NOLINT
 };
 
 

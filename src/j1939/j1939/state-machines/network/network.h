@@ -25,6 +25,8 @@ struct network : network_base
     using address_manager_type = AddressManager;
     using time_point = TimePoint;
 
+    using network_base::process_incoming;
+
     // DEBT: Do some data hiding
 
     address_manager_type address_manager_;
@@ -95,6 +97,26 @@ struct network : network_base
 
     template <class Transport>
     void start(Transport& transport, time_point current);
+
+    // Emits address claim over transport and indicates whether a followup
+    // 250ms later is desired (returns true in that case)
+    template <class Transport>
+    bool resend_claim(Transport& t, time_point current, uint8_t sa);
+
+    template <class Transport>
+    bool process_incoming_internal(Transport&, const pdu<pgns::address_claimed>&,
+        time_point,
+        bool* do_schedule);
+
+    template <class Transport>
+    bool process_incoming(Transport& t, const pdu<pgns::address_claimed>& p,
+        const context<TimePoint>& c)
+    {
+        bool do_schedule;
+
+        return process_incoming_internal(t, p, c.current, &do_schedule);
+    }
+
 
 #if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
     template <class Transport>

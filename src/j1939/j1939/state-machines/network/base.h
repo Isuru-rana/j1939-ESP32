@@ -200,6 +200,12 @@ public:
         return true;
     }
 
+    template <class Transport, pgns pgn>
+    constexpr bool process_incoming(const Transport&, pdu<pgn>) const { return false; }
+
+    template <class Transport>
+    bool process_incoming(Transport& t, const pdu<pgns::request>& p);
+
     template <class Transport, class TimePoint>
     bool process_outgoing_internal(Transport&, const context<TimePoint>&);
 
