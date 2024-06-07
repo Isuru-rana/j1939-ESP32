@@ -29,7 +29,8 @@ concept AddressManager = requires(T t)
     { t.depleted() } -> std::convertible_to<uint8_t>;
 #endif
 };
-#endif
+
 }
+#endif
 
 }}}

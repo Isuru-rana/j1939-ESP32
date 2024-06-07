@@ -27,7 +27,8 @@ void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
     time_point* wake, time_point current)
 {
     // Currently just a NOOP
-    const typename nca_base_type::context context{current, *address_};
+    using type = typename nca_base_type::template context<time_point>;
+    const type context(current, *address_);
     nca_base_type::process_outgoing_internal(*t, context);
 
     nca_base_type::scheduled_claiming(*t, wake, current);

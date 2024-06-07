@@ -304,4 +304,10 @@ TEST_CASE("Controller Applications (network)")
             process_incoming(impl, t, f);
         }
     }
+    SECTION("state machine only")
+    {
+        //sm::network<SyntheticAddressManager,
+        //    estd::chrono::system_clock::time_point>
+        //        n(SyntheticAddressManager{}, test::NAME_trailer_brake<true>::sparse{});
+    }
 }
