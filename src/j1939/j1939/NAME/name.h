@@ -22,10 +22,10 @@ namespace embr { namespace j1939 {
 // [1], [2]
 // [3] 4.1.1
 // SAEnm01
-template <class TContainer>
-struct NAME : internal::data_field_base<TContainer>
+template <class Container>
+struct NAME : internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
     // DEBT: Auto initializing to 0xFF which is likely not what we want
     // DEBT: As a consequence of above, reserved bit is not 0 as it should be as per [3] 4.1.1.6

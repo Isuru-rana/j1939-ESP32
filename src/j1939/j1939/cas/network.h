@@ -79,8 +79,8 @@ struct network_ca : impl::controller_application<Transport>,
 
     using nca_base_type::name_;
     using nca_base_type::address_;
-    using nca_base_type::state;
-    using nca_base_type::substate;
+    using nca_base_type::state_;
+    using nca_base_type::substate_;
     using nca_base_type::address_manager;
     using nca_base_type::find_new_address;
     using nca_base_type::next_event_;
@@ -108,24 +108,16 @@ struct network_ca : impl::controller_application<Transport>,
 
     transport_type* t;
 
-    void send_claim(transport_type& t)
-    {
-        nca_base_type::send_claim(t);
-
-        // DEBT: May not want to do this IN emitter method itself
-        next_event_ = scheduler.impl().now() + nca_base_type::address_claim_timeout();
-    }
-
     // Emits address claim over transport and assures a followup of
     // is scheduled for 250ms later
-    void send_claim_and_schedule(transport_type& t, pdu<pgns::address_claimed>& p, uint8_t sa);
+    void resend_claim_and_reschedule(transport_type& t, uint8_t sa);
 
     // Scheduler calls this guy
     void scheduled_claiming(time_point* wake, time_point current);
 
     void scheduled_cannot_claim(time_point* wake, time_point current)
     {
-        switch(substate)
+        switch(substate_)
         {
             //case substates::
             default:
@@ -135,7 +127,7 @@ struct network_ca : impl::controller_application<Transport>,
 
     void scheduled(time_point* wake, time_point current)
     {
-        switch(state)
+        switch(state_)
         {
             case states::claiming:
                 scheduled_claiming(wake, current);
@@ -219,8 +211,6 @@ struct network_ca : impl::controller_application<Transport>,
     inline bool process_incoming(transport_type& t, pdu<pgn> p) { return false; }
 
     bool process_incoming(transport_type& t, const pdu<pgns::address_claimed>& p);
-
-    bool process_request_for_address_claimed(transport_type& t, const pdu<pgns::request>& p);
 
     bool process_incoming(transport_type& t, const pdu<pgns::request>& p);
 };

@@ -284,15 +284,15 @@ TEST_CASE("Controller Applications (network)")
             // DEBT: Why doesn't ms user literal work?
             scheduler.process(estd::chrono::milliseconds(11));
 
-            REQUIRE(impl.state == network_ca::states::claiming);
+            REQUIRE(impl.state() == network_ca::states::claiming);
 
             scheduler.process(estd::chrono::milliseconds(249));
 
-            REQUIRE(impl.state == network_ca::states::claiming);
+            REQUIRE(impl.state() == network_ca::states::claiming);
 
             scheduler.process(estd::chrono::milliseconds(250));
 
-            REQUIRE(impl.state == network_ca::states::claimed);
+            REQUIRE(impl.state() == network_ca::states::claimed);
         }
         SECTION("CA has no internal SA, requests address claimed")
         {

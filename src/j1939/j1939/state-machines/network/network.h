@@ -1,0 +1,106 @@
+/**
+ *
+ * References:
+ *
+ * 1. J1939-81 (draft MAY2003)
+ * 2. J1939-21 (DEC2006)
+ * 3. AddressResolution.md v0.1
+ */
+#pragma once
+
+#include "base.h"
+
+namespace embr { namespace j1939 { namespace sm { inline namespace v1 {
+
+
+template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager,
+    class TimePoint>
+struct network : network_base
+{
+#ifdef ESP_PLATFORM
+    static constexpr const char* TAG = "sm::network";
+#endif
+
+    using base_type = network_base;
+    using address_manager_type = AddressManager;
+    using time_point = TimePoint;
+
+    // DEBT: Do some data hiding
+
+    address_manager_type address_manager_;
+
+    // Depending on whether we're claiming or request for claim we'll
+    // next_event_ 250ms or 1250ms.  Also expected but not yet implemented
+    // is a pre-send next_event_ with bus_collision_delay
+    // NOTE: We miss old 'last_claim' but this is more efficient
+    time_point next_event_;
+
+    address_type find_new_address()
+    {
+        if(address_manager().depleted())
+            return {};
+        else
+            return address_manager().get_candidate();
+    }
+
+    void track(const pdu<pgns::address_claimed>&)
+    {
+        // TODO: Map incoming CA/SA/NAMEs, probably via some kind of impl associated with
+        // SA generation
+    }
+
+
+    milliseconds get_send_claim_defer();
+
+    /// In response to a contending incoming address claim, initiate process of
+    /// coming up with a new candidate SA
+    template <class Transport>
+    void evaluate_contender(Transport& t, const pdu<pgns::address_claimed>& p)
+    {
+        // TODO: We'll need to emit our own address claimed, cannot claim and
+        // perhaps do some requests to see what address we should try for
+
+        //state = states::claiming;
+        //substate = substates::contending;
+    }
+
+    // DEBT: Poor naming.  State machine assist to react to incoming address claim
+    // which may contend
+    template <class Transport>
+    bool evaluate_contenders(Transport& t, const pdu<pgns::address_claimed>& p);
+
+
+    address_manager_type& address_manager() { return address_manager_; }
+
+    template <class ...Args>
+    constexpr explicit network(address_manager_type& am, Args&&...args) :
+        base_type(std::forward<Args>(args)...),
+        address_manager_{am}
+    {}
+
+    template <class ...Args>
+    constexpr explicit network(address_manager_type&& am, Args&&...args) :
+        base_type(std::forward<Args>(args)...),
+        address_manager_{std::move(am)}
+    {}
+
+    template <class Transport>
+    bool process_outgoing(Transport& t, const context<TimePoint>& c)
+    {
+        if(substate_ != substates::sending) return false;
+
+        if(c.current < next_event_) return false;
+
+        return process_outgoing_internal(t, c);
+    }
+
+    // DEBT: Quick and dirty adaptation from non-state-machine variety.  Likely needs
+    // cleanup in context of state machine design
+    template <class Transport>
+    bool scheduled_claiming(Transport& t, time_point* wake, time_point current);
+
+    template <class Transport>
+    void start(Transport& transport, time_point current);
+};
+
+}}}}
