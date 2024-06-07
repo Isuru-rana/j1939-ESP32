@@ -19,7 +19,7 @@
 // Include in context indication of next process_outgoing event
 // Feature not ready yet
 #ifndef FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
-#define FEATURE_EMBR_J1939_TP_CONTEXT_NEXT 0
+#define FEATURE_EMBR_J1939_TP_CONTEXT_NEXT 1
 #endif
 
 #ifndef FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD

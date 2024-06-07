@@ -26,7 +26,7 @@ struct network_base //:
         requesting,         ///< Request for address_claimed [2] A5, A6, A7 Initialize
         claiming,           ///< Address Claim - emit and wait
         claimed,            ///< Address Claim success without contention
-        claim_failed,
+        claim_failed,       ///< No possibility of acquiring address
 
         // EXPERIMENTAL
         //bus_error           ///< Unless address != null, all bets are off and similar to 'unstarted'
@@ -59,6 +59,7 @@ struct network_base //:
 
         // claimed state
         expired,            ///< Claim waiting period expired with no incident, meaning we succeeded
+        elapsed = expired,
 
         // claim failed state
         failed,             ///< Root substate when we've given up trying to get SA
@@ -96,7 +97,9 @@ public:
         sparse.populate(name_);
     }
 
-    // [1] Figure D1
+    /// Indicates whether address claim should be followed up by a 250ms waiting period
+    /// @return
+    // [1] Figure D1, Section 4.4
     constexpr bool skip_timeout() const
     {
         return (address_ >= 0 && address_ <= 127) ||
@@ -108,6 +111,12 @@ public:
     const address_type& address() const { return address_; }
 
     constexpr states state() const { return state_; }
+
+    void state(states s, substates ss)
+    {
+        state_ = s;
+        substate_ = ss;
+    }
 
     // DEBT: Would like this to work, though perhaps not specifically
     // preferred.  See layer2::NAME in fwd for more details as to
@@ -133,14 +142,12 @@ public:
     }
 
     template <class Transport>
-    void send_claim(Transport& t, pdu<pgns::address_claimed>& p, uint8_t sa);
+    void send_claim(Transport& t, uint8_t sa);
 
     template <class Transport>
     void send_claim(Transport& t)
     {
-        pdu<pgns::address_claimed> p{null_t{}};
-
-        send_claim(t, p, *address_);
+        send_claim(t, *address_);
     }
 
     // [1] 4.2.1
@@ -179,6 +186,11 @@ public:
     // DEBT: Need to coordinate this better with 'next_event_' assignment,
     // otherwise we'll definitely run into a form of jitter
     // DEBT: Need better name, more along the lines of "next claim next_event_"
+    ///
+    /// @tparam Rep
+    /// @tparam Period
+    /// @param wake
+    /// @return false if this particular address is in the "omit delay" category, otherwise true
     template <class Rep, class Period>
     bool schedule_address_claim_timeout(estd::chrono::duration<Rep, Period>* wake)
     {

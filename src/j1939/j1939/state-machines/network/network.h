@@ -49,6 +49,8 @@ struct network : network_base
         // SA generation
     }
 
+    bool contended();
+
 
     milliseconds get_send_claim_defer();
 
@@ -84,23 +86,29 @@ struct network : network_base
         address_manager_{std::move(am)}
     {}
 
-    template <class Transport>
-    bool process_outgoing(Transport& t, const context<TimePoint>& c)
-    {
-        if(substate_ != substates::sending) return false;
-
-        if(c.current < next_event_) return false;
-
-        return process_outgoing_internal(t, c);
-    }
-
     // DEBT: Quick and dirty adaptation from non-state-machine variety.  Likely needs
     // cleanup in context of state machine design
+    // Returns true when 'wake' is updated.  So far no scenarios exist where multiple
+    // schedule_claiming calls are needed per 'wake'
     template <class Transport>
     bool scheduled_claiming(Transport& t, time_point* wake, time_point current);
 
     template <class Transport>
     void start(Transport& transport, time_point current);
+
+#if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
+    template <class Transport>
+    bool process_outgoing(Transport& t, const context<TimePoint>& c)
+    {
+        //if(substate_ != substates::sending) return false;
+
+        if(c.current < next_event_) return false;
+
+        //return process_outgoing_internal(t, c);
+        return scheduled_claiming(t, c.next_, c.current);
+    }
+#endif
+
 };
 
 }}}}

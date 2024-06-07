@@ -66,17 +66,22 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
             // transmit our own address, basically re-announce our claim
             nca_base_type::send_claim(t);
 
+            // TODO:
             // If we're currently claiming, this extends the 250ms next_event_
             // If we're fully claimed, this has no followup scheduled
+            if(state_ == states::claiming)  {}
 
             // DEBT: Do we need to schedule a followup here?
         }
         else if(name_ > incoming_name)
         {
-            // we have the lower priority name
+            // we have the lower priority name, we're contended.  Give up our SA
 
             // Incoming address remembered so that we avoid RNG attempts at it
             address_manager().encountered(sa);
+
+            // Dormant
+            nca_base_type::contended();
 
             // [1] 4.4.4
             // emit a 'cannot claim' or attempt to claim a new address
@@ -159,14 +164,12 @@ template <class TTransport, class TScheduler, class TAddressManager>
 void network_ca<TTransport, TScheduler, TAddressManager>::resend_claim_and_reschedule(
     transport_type& t, uint8_t sa)
 {
-    pdu<pgns::address_claimed> p;
-
     switch(state_)
     {
         // Use case here is we've comfortably sat on an address past negotiation phase,
         // and a newcomer has arrived contending us.  Scheduler has spooled out
         case states::claimed:
-            nca_base_type::send_claim(t, p, sa);
+            nca_base_type::send_claim(t, sa);
             next_event_ = scheduler.impl().now() + nca_base_type::address_claim_timeout();
             scheduler.schedule(next_event_, &wake_model);
             break;
@@ -174,7 +177,7 @@ void network_ca<TTransport, TScheduler, TAddressManager>::resend_claim_and_resch
         // Use case here is we're underway performing a claim and someone has contended.
         // In this case our scheduled item is still active
         case states::claiming:
-            nca_base_type::send_claim(t, p, sa);
+            nca_base_type::send_claim(t, sa);
             next_event_ = scheduler.impl().now() + nca_base_type::address_claim_timeout();
             // this implicitly reschedules by virtue of adjusting 'next_event_'
             break;

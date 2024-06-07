@@ -71,12 +71,26 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
 
         case substates::bus_off_recover:
             send_claim(t);
+
+            if(skip_timeout())
+            {
+                state(states::claimed, substates::elapsed);
+            }
+            else
+            {
+                substate_ = substates::waiting;
+                next_event_ = current + address_claim_timeout();
+                *wake += address_claim_timeout();
+                return true;
+            }
+
+            /*
             next_event_ = current + address_claim_timeout();
 
             substate_ = substates::waiting;
             if(!schedule_address_claim_timeout(wake)) // set up 250ms next_event_
                 // don't wait for scheduling, immediately go to 'waiting' finish portion
-                scheduled_claiming(t, wake, current);
+                return scheduled_claiming(t, wake, current);    */
             break;
 
         case substates::contending:
@@ -93,20 +107,27 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
 
             // Handles 1 and partial 3
             send_claim(t);
+            if(skip_timeout())
+            {
+                state(states::claimed, substates::elapsed);
+                return false;
+            }
+
             next_event_ = current + address_claim_timeout();
             substate_ = substates::waiting;
+            *wake += address_claim_timeout();
+
             // DEBT: Getting here we sorta presume we're arbitrary capable, meaning
             // we always do 250ms wait
-            schedule_address_claim_timeout(wake);
-            break;
+            //schedule_address_claim_timeout(wake);
+            return true;
 
         // Waiting to finish our own claim address phase
         case substates::waiting:
             if(current >= next_event_)
             {
                 // got to timeout/next_event_ without contention means successful claim
-                state_ = states::claimed;
-                substate_ = substates::expired;
+                state(states::claimed, substates::elapsed);
             }
             else
             {
@@ -115,6 +136,7 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
                 // process as per [3] 3.3.3.1
                 // this effectively elongates the 'waiting' period so we reschedule
                 *wake = next_event_;
+                return true;
             }
             break;
 
@@ -124,7 +146,7 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
             next_event_ += get_send_claim_defer();
             *wake = next_event_;
             substate_ = substates::reclaim_waiting;
-            break;
+            return true;
 
         // Reach here after deferred waiting period for retransmission of claim
         // Manually retry as per [3] 1.1.4
@@ -133,7 +155,8 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
             substate_ = substates::waiting;
             send_claim(t);
             next_event_ = current + address_claim_timeout();
-            break;
+            *wake = next_event_;
+            return true;
 
 
         case substates::cannot_claim_waiting:
@@ -170,6 +193,12 @@ void network<AddressManager, TimePoint>::start(Transport& t, time_point current)
         send_request_for_address_claimed(t, address_traits::global);
         next_event_ = current + request_for_address_claim_timeout();
     }
+}
+
+template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
+bool network<AddressManager, TimePoint>::contended()
+{
+    return {};
 }
 
 }}}}

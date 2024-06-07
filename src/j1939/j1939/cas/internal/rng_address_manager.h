@@ -11,15 +11,16 @@ namespace embr { namespace j1939 { namespace impl {
 
 struct address_tracker2
 {
-    // Address range 128-247, inclusive
-    estd::bitset<15> tracked {};
+    static constexpr unsigned range = 247-128;
+    static constexpr unsigned segment = 4;
 
-    static constexpr unsigned range() { return 8; }
+    // Address range 128-247, inclusive
+    estd::bitset<(range + segment) / segment> tracked {};
 
     void encountered(uint8_t addr)
     {
         unsigned index = addr - 128;
-        index /= range();
+        index /= segment;
 
         tracked.set(index);
     }
@@ -41,7 +42,7 @@ struct address_tracker2
                 return start;
             }
 
-            start += range();
+            start += segment;
         }
 
         return 254;
@@ -75,6 +76,8 @@ inline unsigned random_address_manager::get_candidate()
 {
     const unsigned r = rng_type::get();    // NOLINT
 
+    // If nothing is yet tracked, or if everything is all tracked up,
+    // do a 100% random request
     if(tracker.tracked.none() || tracker.tracked.all())
     {
         unsigned v = 128 + (r % 120);
@@ -87,7 +90,7 @@ inline unsigned random_address_manager::get_candidate()
         // return null address denoting failure
         if(start == 254) return 254;
 
-        unsigned v = r % tracker.range();
+        unsigned v = r % tracker.segment;
 
         return v + start;
     }

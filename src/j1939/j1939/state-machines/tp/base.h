@@ -16,11 +16,11 @@ struct context
 #if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
     time_point* const next_;
 
-        constexpr context(time_point current, uint8_t sa, time_point* next = nullptr) :
-            current{current},
-            self_address{sa},
-            next_{next}
-        {}
+    constexpr context(time_point current, uint8_t sa, time_point* next = nullptr) :
+        current{current},
+        self_address{sa},
+        next_{next}
+    {}
 
     // EXPERIMENTAL
     template <class Duration>

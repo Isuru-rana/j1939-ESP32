@@ -21,7 +21,7 @@ bool network_base::process_outgoing_internal(Transport& t, const context<TimePoi
             {
                 case substates::bus_off:
                     // DEBT: Arbitrary delay here, need something way more specific
-                    context.next(estd::chrono::milliseconds(500));
+                    //context.next(estd::chrono::milliseconds(500));
                     return false;
 
                 case substates::bus_off_recover:
@@ -40,13 +40,16 @@ bool network_base::process_outgoing_internal(Transport& t, const context<TimePoi
 
 
 template <class Transport>
-void network_base::send_claim(Transport& t, pdu<pgns::address_claimed>& p, uint8_t sa)
+void network_base::send_claim(Transport& t, uint8_t sa)
 {
-    using traits = transport_traits<Transport>;
     // DEBT: Not sure if claim ALWAYS is a BAM but I think so
-    p.can_id().destination_address(address_traits::global);
-    p.payload() = name_;
-    p.can_id().source_address(sa);
+
+    pdu<pgns::address_claimed> p(sa, address_traits::global, name_);
+
+    using traits = transport_traits<Transport>;
+    //p.can_id().destination_address(address_traits::global);
+    //p.payload() = name_;
+    //p.can_id().source_address(sa);
 
     // Turn off CAN transport auto retry as per [1] 4.4.4.3
 #if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
@@ -57,7 +60,11 @@ void network_base::send_claim(Transport& t, pdu<pgns::address_claimed>& p, uint8
     t.one_shot(false);
 #endif
 
+    // TODO: Being this is a state machine, we're more tolerant of side effects.
+    // Consider setting up waiting/elapsed substate here
+
 #if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
+    // FIX: Most of the time this substate gets blown away with 'waiting' or 'elapsed'
     // DEBT: Do this pseudo asynchronously, since 'send' may not register an error
     // right away
     if(!t.good() || !send_result)
