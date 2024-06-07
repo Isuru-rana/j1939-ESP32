@@ -190,7 +190,7 @@ void network<AddressManager, TimePoint>::start(Transport& t, time_point current)
         // TODO: Likely we need to instead do this during the "cannot claim" process
         state_ = states::requesting;
         substate_ = substates::request_waiting;
-        send_request_for_address_claimed(t, address_traits::global);
+        send_request_for_address_claimed(t, addresses::global);
         next_event_ = current + request_for_address_claim_timeout();
     }
 }
@@ -242,9 +242,7 @@ template <class Transport>
 bool network<AddressManager, TimePoint>::process_incoming_internal(
     Transport& t, const pdu<pgns::address_claimed>& p, time_point current, bool* do_schedule)
 {
-    pdu<pgns::address_claimed> p_resp{null_t{}};
-
-    const uint8_t sa = p.can_id().source_address();
+    const addresses::type sa = p.can_id().source_address();
     // we expect all address_claimed messages to be BAM
     //uint8_t da = p.can_id().destination_address();
 

@@ -308,6 +308,7 @@ TEST_CASE("Controller Applications (network)")
     SECTION("state machine only")
     {
         using time_point = estd::chrono::system_clock::time_point;
+        using context = sm::network_base::context<time_point>;
         sm::network<
             SyntheticAddressManager,
             time_point>
@@ -319,10 +320,16 @@ TEST_CASE("Controller Applications (network)")
         SECTION("external incoming claim")
         {
             n.start(t, now);
+            context ctx(now, addresses::null);
 
             pdu<pgns::address_claimed> p_claim(
                 addresses::axle_steering,
                 addresses::global);
+
+            process_incoming(n, t,
+                frame_traits::create(p_claim),
+                ctx
+                );
         }
     }
 }

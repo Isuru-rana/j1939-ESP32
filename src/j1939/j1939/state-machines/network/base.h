@@ -200,8 +200,18 @@ public:
         return true;
     }
 
+    // DEBT: Consolidate this with controller_application_base
+    template <class Transport, class Frame>
+    static constexpr bool process_incoming_default(const Transport&, const Frame&)
+    {
+        return false;
+    }
+
     template <class Transport, pgns pgn>
     constexpr bool process_incoming(const Transport&, pdu<pgn>) const { return false; }
+
+    template <class Transport, pgns pgn, class TimePoint>
+    constexpr bool process_incoming(const Transport&, pdu<pgn>, context<TimePoint>) const { return false; }
 
     template <class Transport>
     bool process_incoming(Transport& t, const pdu<pgns::request>& p);

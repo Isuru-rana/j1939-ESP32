@@ -9,6 +9,8 @@
 
 #include <embr/bits/word.hpp>
 
+#include "addresses.h"
+
 namespace embr { namespace j1939 {
 
 // as per [1]
@@ -16,6 +18,7 @@ class can_id
 {
 protected:
     using desc = bits::descriptor;
+    using address_type = addresses::type;
 
     // EXPERIMENTAL
     struct traits
@@ -43,7 +46,10 @@ protected:
 public:
     constexpr can_id(uint32_t v) : value{v} {}
 
-    constexpr uint8_t source_address() const { return value.get(d::source_address()); }
+    constexpr address_type source_address() const
+    {
+        return address_type(value.get(d::source_address()));
+    }
 
     constexpr uint8_t pdu_specific() const { return value.get(d::pdu_specific()); }
 
