@@ -4,7 +4,7 @@
 
 namespace embr { namespace can {
 
-template <class TFrame>
+template <class Frame>
 struct frame_traits;
 
 }}

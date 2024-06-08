@@ -1,8 +1,6 @@
 #include "j1939/qt/ca/network.h"
 
-//#include <j1939/cas/internal/dispatcher.h>
-#include <j1939/cas/internal/dispatcher.hpp>
-//#include <j1939/ca.hpp> // DEBT: Way to get at process_incoming wrappers
+#include <j1939/internal/dispatcher/incoming.hpp>
 
 namespace embr::j1939::qt::ca { inline namespace v1 {
 
@@ -25,7 +23,9 @@ void Network::handler()
 
 void Network::frameReceived(const QCanBusFrame& frame)
 {
-    //process_incoming(sm_, t, frame);
+    process_incoming(sm_, transport_, frame);
+
+    // DEBT: Consider if next_event_ gets accellerated
 }
 
 

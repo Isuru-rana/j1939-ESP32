@@ -26,6 +26,16 @@ struct frame_traits<QCanBusFrame>
         return f;
     }
 
+    static uint32_t id(const frame& f)
+    {
+        return f.frameId();
+    }
+
+    static const uint8_t* payload(const frame& f)
+    {
+        // NOTE: Beware: as usual, lifespan of payload is probably very short
+        return (const uint8_t*)f.payload().data();
+    }
 };
 
 
