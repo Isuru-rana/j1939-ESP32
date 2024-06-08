@@ -24,7 +24,9 @@ template <>
 struct type_traits<spns::address_assignment> :
     internal::address_type_traits_base
 {
-
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "address_asignment"; }
+    static constexpr const char* description() { return "new source address"; }
 };
 
 template <>

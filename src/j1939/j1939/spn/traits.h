@@ -97,19 +97,23 @@ constexpr bool noop(TInt v, unsigned bitpos)
 }
 
 // Yields matching int_type and value_type
-template <class TInt>
+template <class Int>
 struct type_traits_base
 {
-    typedef TInt int_type;
+    typedef Int int_type;
     typedef int_type value_type;
+
+    // EXPERIMENTAL, name of spn
+    static constexpr const char* name() { return nullptr; }
+    static constexpr const char* description() { return nullptr; }
 };
 
 // Overrides value_type with enum_type
-template <class TEnum, class TInt = uint8_t>
-struct enum_traits_base : type_traits_base<TInt>
+template <class Enum, class Int = uint8_t>
+struct enum_traits_base : type_traits_base<Int>
 {
-    typedef TEnum enum_type;
-    typedef TEnum value_type;
+    typedef Enum enum_type;
+    typedef Enum value_type;
 };
 
 // helper for status command types
@@ -124,6 +128,10 @@ struct ascii_type_traits
 {
     static constexpr unsigned max_len = N;
     static constexpr char delimiter = delimiter_;
+
+    // EXPERIMENTAL, name of spn
+    static constexpr const char* name() { return nullptr; }
+    static constexpr const char* description() { return nullptr; }
 };
 
 
