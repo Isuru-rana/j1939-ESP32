@@ -27,15 +27,15 @@ bool network<AddressManager, TimePoint>::evaluate_contenders(Transport& t, const
                 evaluate_contender(t, p);
             break;
 
-            // Incoming address claim while we're trying to claim SA.  Could be someone
-            // specifically contending with our claim
+        // Incoming address claim while we're trying to claim SA.  Could be someone
+        // specifically contending with our claim
         case states::claiming:
             if(is_contender(p))
                 evaluate_contender(t, p);
             break;
 
-            // Incoming address claims after we do a request for address claim is expected.
-            // Contention possibility is still present.
+        // Incoming address claims after we do a request for address claim is expected.
+        // Contention possibility is still present.
         case states::requesting:
             if(is_contender(p))
                 evaluate_contender(t, p);
@@ -44,8 +44,8 @@ bool network<AddressManager, TimePoint>::evaluate_contenders(Transport& t, const
 
             break;
 
-            // If unstarted, we must ignore things until we DO start/init
-            // If claim_failed, we've given up trying to get on network
+        // If unstarted, we must ignore things until we DO start/init
+        // If claim_failed, we've given up trying to get on network
         case states::unstarted:
         case states::claim_failed:
             return false;
@@ -68,19 +68,11 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
             // DEBT: Arbitrary delay here, need something way more specific
             *wake += estd::chrono::milliseconds(500);
             next_event_ = current + estd::chrono::milliseconds(500);
-            break;
+            return true;
 
         case substates::bus_off_recover:
             send_claim(t);
             return update_state_after_send_claim(wake, current);
-
-            /*
-            next_event_ = current + address_claim_timeout();
-
-            substate_ = substates::waiting;
-            if(!schedule_address_claim_timeout(wake)) // set up 250ms next_event_
-                // don't wait for scheduling, immediately go to 'waiting' finish portion
-                return scheduled_claiming(t, wake, current);    */
             break;
 
         case substates::contending:
@@ -222,7 +214,7 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
             // Incoming address remembered so that we avoid RNG attempts at it
             address_manager().encountered(sa);
 
-            // Dormant
+            // FIX: Dormant, and 'contended' is not yet used
             contended();
 
             // [1] 4.4.4
@@ -241,15 +233,6 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
 
                 send_claim(t, *new_address);
                 update_state_after_send_claim(wake, current);
-
-                /*
-                // DEBT: Account for other states here also
-                if(state_ == states::claimed)
-                {
-                    // DEBT: Assigning state & substate at once is reasonable but clumsy
-                    // and easy to get wrong
-                    state(states::claiming, substates::waiting);
-                }   */
 
                 // We optimistically assign ourselves this new address, expecting someone
                 // will contend us necessary

@@ -98,6 +98,24 @@ struct network : network_base
     bool scheduled_claiming(Transport& t, time_point* wake, time_point current);
 
     template <class Transport>
+    bool scheduled_claimed(Transport& t, time_point* wake, time_point current);
+
+    template <class Transport>
+    bool scheduled(Transport& t, const context<TimePoint>& c)
+    {
+        // DEBT: Need to switch and handle states other than just 'claiming'
+        // though 'scheduled_claiming' confusingly handles claimed state also
+
+#if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
+        //return process_outgoing_internal(t, c);
+        return scheduled_claiming(t, c.next_, c.current);
+#else
+        time_stamp dummy;
+        return scheduled_claiming(t, &dummy, c.current);
+#endif
+    }
+
+    template <class Transport>
     void start(Transport& transport, time_point current);
 
     ///
@@ -150,13 +168,7 @@ struct network : network_base
 
         if(c.current < next_event_) return false;
 
-#if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
-        //return process_outgoing_internal(t, c);
-        scheduled_claiming(t, c.next_, c.current);
-#else
-        time_stamp dummy;
-        scheduled_claiming(t, &dummy, c.current);
-#endif
+        scheduled(t, c);
 
         // DEBT: process_outgoing returns a bool indicating whether further immediate processing is
         // expected.  scheduled_claiming returns a bool indicating whether a future event should be
