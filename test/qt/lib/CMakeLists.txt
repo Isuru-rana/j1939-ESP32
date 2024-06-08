@@ -12,14 +12,22 @@ include(FetchContent)
 
 add_subdirectory(../../../src/j1939 j1939)
 
+set(INCLUDES
+    cs/base.h
+    cs/network.h
+    cs/tp.h
+    NAME.h
+)
+
+list(TRANSFORM INCLUDES PREPEND  include/j1939/qt/)
+
 qt_add_library(${PROJECT_NAME} STATIC)
 qt_add_qml_module(${PROJECT_NAME}
     URI j1939.ui
     VERSION 1.0
     QML_FILES J1939LibControls.qml
     SOURCES
-        include/j1939/qt/cs/network.h
-        include/j1939/qt/cs/tp.h
+        ${INCLUDES}
         cs/network.cpp
         cs/tp.cpp
         j1939lib.cpp j1939lib.h

@@ -12,8 +12,7 @@
 using namespace embr::j1939;
 
 static esp_idf::log_ostream clog;   // Coming along well, almost ready
-using address_traits = spn::internal::address_type_traits_base;
-static uint8_t global_da = address_traits::null;
+static uint8_t global_da = addresses::null;
 
 extern transport_type t;
 extern sm::transport_protocol tp;

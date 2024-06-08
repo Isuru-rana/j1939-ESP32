@@ -2,7 +2,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 
-#include <j1939/qt/ca/network.h>
+#include <j1939/qt/cs/network.h>
 #include <j1939/qt/transport.h>
 
 int main(int argc, char *argv[])
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     );
     engine.loadFromModule("oel", "Main");
 
-    embr::j1939::qt::ca::Network network;
+    embr::j1939::qt::cs::Network network;
 
     if (QCanBus::instance()->plugins().contains(QStringLiteral("virtualcan"))) {
         QCanBusDevice *device = QCanBus::instance()->createDevice(

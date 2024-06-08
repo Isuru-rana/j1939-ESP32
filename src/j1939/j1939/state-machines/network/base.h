@@ -10,6 +10,7 @@
 
 #include "../../pdu.h"
 #include "../tp/context.h"
+#include "../../cs/base.h"
 #include "../../data_field/network.hpp"
 #include "../../data_field/request.hpp"
 
@@ -17,7 +18,8 @@
 
 namespace embr { namespace j1939 { namespace sm { inline namespace v1 {
 
-struct network_base : network_enum //,
+struct network_base : network_enum,
+    cs::v1::base
     //embr::Service   // Ready and waiting, premature to start migrating to this atm
 {
     template <class TimePoint>
@@ -26,7 +28,6 @@ struct network_base : network_enum //,
     states state_ = states::unstarted;
     substates substate_ = substates::unstarted;
 
-    using address_traits = spn::internal::address_type_traits_base;
     using address_type = estd::layer1::optional<uint8_t, addresses::null>;
 
 protected:
@@ -157,18 +158,7 @@ public:
         return true;
     }
 
-    // DEBT: Consolidate this with controller_application_base
-    template <class Transport, class Frame>
-    static constexpr bool process_incoming_default(const Transport&, const Frame&)
-    {
-        return false;
-    }
-
-    template <class Transport, pgns pgn>
-    constexpr bool process_incoming(const Transport&, pdu<pgn>) const { return false; }
-
-    template <class Transport, pgns pgn, class TimePoint>
-    constexpr bool process_incoming(const Transport&, pdu<pgn>, context<TimePoint>) const { return false; }
+    using cs::v1::base::process_incoming;
 
     template <class Transport>
     bool process_incoming(Transport& t, const pdu<pgns::request>& p);

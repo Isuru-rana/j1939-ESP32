@@ -15,7 +15,7 @@
 #include "network.h"
 
 #include "../data_field/request.hpp"
-#include "../state-machines/network.hpp"
+#include "../state-machines/network/network.hpp"
 
 namespace embr { namespace j1939 {
 

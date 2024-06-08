@@ -30,24 +30,42 @@ void Network::handler()
 void Network::frameReceived(const QCanBusFrame& frame)
 {
     process_incoming(sm_, transport_, frame);
-    //process_incoming(externalObserver_, transport, frame);
     updateState();
-
-    if(externalObserver_.observed_)
-    {
-        NAME test;
-
-        test.value_ = externalObserver_.pdu_.payload();
-
-        //unsigned v = test.vehicleSystem();
-
-        emit addressObserved(
-            externalObserver_.pdu_.source_address(),
-            test);
-    }
 
     // DEBT: Consider if next_event_ gets accellerated
 }
 
+
+ExternalAddressObserver::ExternalAddressObserver(QObject* parent) :
+    Base(parent)
+{
+
+}
+
+
+void ExternalAddressObserver::frameReceived(const QCanBusFrame& frame)
+{
+    embr::can::qt_transport t;
+
+    j1939::process_incoming(*this, t, frame);
+
+    NAME test;
+
+    test.value_ = pdu_.payload();
+
+    //unsigned v = test.vehicleSystem();
+
+    emit addressObserved(
+        pdu_.source_address(),
+        test);
+}
+
+
+bool ExternalAddressObserver::process_incoming(can::qt_transport&, const pdu<pgns::address_claimed>& p)
+{
+    pdu_ = p;
+
+    return true;
+}
 
 }}

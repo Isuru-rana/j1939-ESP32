@@ -2,26 +2,44 @@
 
 #include <QTimer>
 
+#include <j1939/cs/base.h>
 #include <j1939/cas/internal/prng_address_manager.h>
 #include <j1939/state-machines/network.hpp>
 
 #include "../transport.h"
 #include "../NAME.h"
 
+#include "base.h"
+
 // cs = controller service/subsystem
 // not a full CA, but a requisite peiece of helping a CA function
 
 namespace embr::j1939::qt::cs { inline namespace v1 {
 
-class Base : public QObject
+struct ExternalAddressObserver :
+    Base,
+    j1939::cs::v1::base
 {
+    using base_type = j1939::cs::v1::base;
+    using addr_type = uint8_t;
+
+    using base_type::process_incoming;
+
+    pdu<pgns::address_claimed> pdu_;
+    bool observed_ = false;
+
+    bool process_incoming(can::qt_transport&, const pdu<pgns::address_claimed>&);
+
     Q_OBJECT
 
-public:
-    Base(QObject* parent) : QObject(parent) {}
+    ExternalAddressObserver(QObject* parent);
 
-public slots:
-    virtual void frameReceived(const QCanBusFrame&) = 0;
+    void frameReceived(const QCanBusFrame&) override;
+
+signals:
+    // In addition to primary address acquisition duties, we also announce
+    // when external addresses appear (external Network cs's operating)
+    void addressObserved(addr_type, qt::v1::NAME);
 };
 
 class Network : public Base
@@ -31,20 +49,11 @@ class Network : public Base
     using addr_type = uint8_t;
     using state_type = sm::v1::network_enum::states;
 
-    struct ExternalAddressObserver
-    {
-        pdu<pgns::address_claimed> pdu_;
-        bool observed_ = false;
-
-        bool process_incoming(can::qt_transport&, const pdu<pgns::address_claimed>&);
-    };
-
     layer1::NAME name_;
     QTimer timer_;
     using addrmgr_type = internal::prng_address_manager;
     sm::v1::network<addrmgr_type, clock::time_point> sm_;
     can::qt_transport transport_;
-    ExternalAddressObserver externalObserver_;
 
     void schedule()
     {
@@ -99,10 +108,6 @@ public:
 signals:
     void stateChanged(state_type);
     void addressChanged(addr_type);
-
-    // In addition to primary address acquisition duties, we also announce
-    // when external addresses appear (external Network cs's operating)
-    void addressObserved(addr_type, qt::v1::NAME);
 
 private slots:
     void handler();

@@ -76,7 +76,6 @@ TEST_CASE("Controller Applications (network)")
     using frame = can::loopback_transport::frame;
     using frame_type = frame;
     using frame_traits = j1939::frame_traits<frame>;
-    using address_traits = spn::internal::address_type_traits_base;
     using milliseconds = estd::chrono::milliseconds;
 
     can::loopback_transport t;
@@ -154,11 +153,11 @@ TEST_CASE("Controller Applications (network)")
         frame_type f;
 
         r.payload().pgn((uint32_t)pgns::address_claimed);
-        r.destination_address(address_traits::global);
+        r.destination_address(addresses::global);
 
         // BAM message, synthetic external party announcing claim of address
         p_claim.source_address(123);
-        p_claim.destination_address(address_traits::global);
+        p_claim.destination_address(addresses::global);
         // Setup all the nifty NAME parameters for external synthetic CA
         test::setup_trailer_brake(p_claim.payload());
 

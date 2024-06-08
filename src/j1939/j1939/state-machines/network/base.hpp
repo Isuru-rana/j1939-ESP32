@@ -48,9 +48,6 @@ void network_base::send_claim(Transport& t, uint8_t sa)
     pdu<pgns::address_claimed> p(sa, addresses::global, name_);
 
     using traits = transport_traits<Transport>;
-    //p.can_id().destination_address(address_traits::global);
-    //p.payload() = name_;
-    //p.can_id().source_address(sa);
 
     // Turn off CAN transport auto retry as per [1] 4.4.4.3
 #if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
