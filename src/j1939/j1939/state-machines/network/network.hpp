@@ -255,6 +255,8 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
 
     if(result == false) return false;
 
+    if(state_ != states::claimed && state_ != states::claiming) return false;
+
     // Is our address in contest? [1] 4.4.3.3
     if(sa == address_)
     {
@@ -302,8 +304,7 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
                 {
                     // DEBT: Assigning state & substate at once is reasonable but clumsy
                     // and easy to get wrong
-                    state_ = states::claiming;
-                    substate_ = substates::waiting;
+                    state(states::claiming, substates::waiting);
                 }
 
                 // We optimistically assign ourselves this new address, expecting someone
@@ -335,5 +336,36 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
     return false;
 }
 
+// DORMANT: Kicking around idea of calling this right after send_claim
+// for more homogeneous state/wake updating
+template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
+bool network<AddressManager, TimePoint>::update_state_after_send_claim(time_point* wake, time_point current)
+{
+    switch(state_)
+    {
+        case states::claimed:
+        case states::claiming:
+            /* FIX: Disabled due to ambiguities in [1] 4.4.4.3
+            if(substate_ == substates::claim_send_error)
+            {
+
+            }
+            else */
+            if(skip_timeout())
+            {
+                state(states::claimed, substates::elapsed);
+            }
+            else
+            {
+                substate_ = substates::waiting;
+                next_event_ = current + address_claim_timeout();
+                *wake += address_claim_timeout();
+                return true;
+            }
+            break;
+    }
+
+    return false;
+}
 
 }}}}

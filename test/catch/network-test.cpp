@@ -316,6 +316,7 @@ TEST_CASE("Controller Applications (network)")
                 SyntheticAddressManager{},
                 test::names::trailer_brake<true>::sparse{j1939::null_t{}});
         time_point now;
+        bool r;
 
         SECTION("external incoming claim")
         {
@@ -326,10 +327,13 @@ TEST_CASE("Controller Applications (network)")
                 addresses::axle_steering,
                 addresses::global);
 
-            process_incoming(n, t,
+            r = process_incoming(n, t,
                 frame_traits::create(p_claim),
                 ctx
                 );
+
+            REQUIRE(r == false);
+            REQUIRE(n.state() == sm::network_base::states::claiming);
         }
     }
 }

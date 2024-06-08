@@ -68,12 +68,13 @@ void network_base::send_claim(Transport& t, uint8_t sa)
     // FIX: Most of the time this substate gets blown away with 'waiting' or 'elapsed'
     // DEBT: Do this pseudo asynchronously, since 'send' may not register an error
     // right away
+    // FIX: Intentionally left glitchy since [1] is unclear, we need non-draft version
     if(!t.good() || !send_result)
     {
         // If a bus error, schedule our own retry after "idle" 250ms
         // as per [1] 4.4.4.3 and [3] 1.1.4.
         // As per [3] 1.1.4.1 - "idle" MIGHT mean CAN idle - that will require a code change
-        substate_ = substates::claim_send_error;
+        state(states::claiming, substates::claim_send_error);
     }
 #endif
 }
@@ -85,7 +86,7 @@ void network_base::send_request_for_address_claimed(Transport& t, uint8_t da)
 {
     using traits = transport_traits<Transport>;
 
-    pdu<pgns::request> p(address_traits::null, da);
+    pdu<pgns::request> p(addresses::null, da);
 
     // DEBT: make this pgn param take enum
     p.payload().pgn((uint32_t)pgns::address_claimed);
@@ -149,8 +150,7 @@ bool network_base::process_incoming(Transport& t, const pdu<pgns::request>& p)
     {
         // [1] 4.2.1, 4.4.3 - request for address claimed
         case pgns::address_claimed:
-            process_request_for_address_claimed(t, p);
-            return false;
+            return process_request_for_address_claimed(t, p);
 
         default:
             return false;

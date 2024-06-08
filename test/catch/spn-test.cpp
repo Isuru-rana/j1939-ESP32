@@ -86,6 +86,8 @@ TEST_CASE("spn")
     {
         //auto d = spn_traits<pgns::lighting_command, spns::left_turn_signal_lights_cmd>::descriptor();
         auto d = spn::get_descriptor<spns::left_turn_signal_lights_cmd>();
+
+        REQUIRE(d.bitpos == 7);
     }
     SECTION("units")
     {

@@ -103,6 +103,8 @@ struct network : network_base
     template <class Transport>
     bool resend_claim(Transport& t, time_point current, uint8_t sa);
 
+    bool update_state_after_send_claim(time_point* wake, time_point current);
+
     template <class Transport>
     bool process_incoming_internal(Transport&, const pdu<pgns::address_claimed>&,
         time_point,
@@ -112,9 +114,17 @@ struct network : network_base
     bool process_incoming(Transport& t, const pdu<pgns::address_claimed>& p,
         const context<TimePoint>& c)
     {
-        bool do_schedule;
+        bool do_schedule = false;
 
-        return process_incoming_internal(t, p, c.current, &do_schedule);
+        bool r = process_incoming_internal(t, p, c.current, &do_schedule);
+
+        // EXPERIMENTAL
+#if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
+        if(do_schedule)
+            *c.next_ = next_event_;
+#endif
+
+        return r;
     }
 
 

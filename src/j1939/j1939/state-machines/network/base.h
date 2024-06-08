@@ -11,66 +11,21 @@
 #include "../tp/base.h"
 #include "../../data_field/network.hpp"
 
+#include "enum.h"
+
 namespace embr { namespace j1939 { namespace sm { inline namespace v1 {
 
-struct network_base //:
+struct network_base : network_enum //,
     //embr::Service   // Ready and waiting, premature to start migrating to this atm
 {
     template <class TimePoint>
     using context = sm::tp::v0::context<TimePoint>;
 
-    // DEBT: Upgrade this to embr 'service' architecture
-    enum class states
-    {
-        unstarted,
-        requesting,         ///< Request for address_claimed [2] A5, A6, A7 Initialize
-        claiming,           ///< Address Claim - emit and wait
-        claimed,            ///< Address Claim success without contention
-        claim_failed,       ///< No possibility of acquiring address
-
-        // EXPERIMENTAL
-        //bus_error           ///< Unless address != null, all bets are off and similar to 'unstarted'
-    };
-
-
-    // Guidance from [1] Appendix D: State Transition Diagrams
-    enum class substates
-    {
-        unstarted,
-
-        // generic reused states
-        sending,            ///< Indicate transport is in process of emitting something (see 'states' for what)
-        waiting,            ///< Indicate main state has done what it can, and now waiting for response traffic
-
-        // requesting state
-
-        /// Waiting period (1250ms) after we emit a request for address claim
-        request_waiting, // = waiting,  // DEBT: scheduled_claiming doesn't quite disambiguate enough here
-
-        // claiming state
-
-        /// Waiting period (250ms) after we emit a claim address
-        claim_waiting,  // = waiting,
-        contending,         ///< Evaluation period after we receive a contending address
-        claim_send_error,   ///< Same as 'waiting' but bus/send error occurred [3] 1.1.4
-        reclaim_waiting,    ///< Waiting period of 0-153ms preceding re-transmit of claim [1] 4.4.4.3
-        bus_off,            ///< FIX: These bus_off states appear to be in conflict with reclaim_waiting
-        bus_off_recover,
-
-        // claimed state
-        expired,            ///< Claim waiting period expired with no incident, meaning we succeeded
-        elapsed = expired,
-
-        // claim failed state
-        failed,             ///< Root substate when we've given up trying to get SA
-        cannot_claim_waiting,   ///< Waiting period of 0-153ms preceding the emit of "cannot claim" [1] 4.2.2.3
-    };
-
     states state_ = states::unstarted;
     substates substate_ = substates::unstarted;
 
     using address_traits = spn::internal::address_type_traits_base;
-    using address_type = estd::layer1::optional<uint8_t, address_traits::null>;
+    using address_type = estd::layer1::optional<uint8_t, addresses::null>;
 
 protected:
     // TODO: Optimize to use sparse/layer0/layer2 name but not at the exclusion
@@ -160,8 +115,8 @@ public:
     {
         pdu<pgns::address_claimed> p
         {
-            address_traits::null,
-            address_traits::global,
+            addresses::null,
+            addresses::global,
             name_
         };
 
