@@ -1,6 +1,12 @@
 #pragma once
 
+// Force a runtime error (assert/abort) if invalid state is reached.
+// Be advised, these should be exceptional, as opposed to validation-style errors
+// In particular, that means external inputs such as outside CAN traffic MUST NOT create a
+// state in which this feature then asserts/aborts.  This is only to catch our
+// own programmatic failures, not input validation issues.
 #define FEATURE_EMBR_J1939_STRICT_STATES 1
+
 #define FEATURE_EMBR_J1939_STRICT_PROTOCOL 1
 
 // NOTE: Discretely enabling/disabling originator & responder is an optimization for

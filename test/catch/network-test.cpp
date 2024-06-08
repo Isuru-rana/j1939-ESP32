@@ -55,6 +55,21 @@ struct PduDecomposer
 constexpr unsigned saddresses[] = { 197, 181, 133, 221 };
 
 
+// NOTE: Only used for diagnostics, since in real life we wouldn't call dispatcher if
+// we actually knew the pgn# already
+template <class Transport, class Impl, class Context, pgns pgn>
+inline bool process_incoming(Impl& impl, Transport& t, const j1939::pdu<pgn> pdu, Context&& context)
+{
+    using frame = typename Transport::frame;
+    using frame_traits = j1939::frame_traits<frame>;
+
+    frame f = frame_traits::create(pdu);
+
+    j1939::internal::app_state<Transport, Impl, const Context> state{t, impl, context};
+
+    return process_incoming(state, f);
+}
+
 TEST_CASE("Controller Applications (network)")
 {
     using namespace j1939;
@@ -62,6 +77,7 @@ TEST_CASE("Controller Applications (network)")
     using frame_type = frame;
     using frame_traits = j1939::frame_traits<frame>;
     using address_traits = spn::internal::address_type_traits_base;
+    using milliseconds = estd::chrono::milliseconds;
 
     can::loopback_transport t;
 
@@ -307,6 +323,7 @@ TEST_CASE("Controller Applications (network)")
     }
     SECTION("state machine only")
     {
+        // TODO: Try a time_point whose Rep/Period mismatches with 'now'
         using time_point = estd::chrono::system_clock::time_point;
         using context = sm::network_base::context<time_point>;
         sm::network<
@@ -318,22 +335,58 @@ TEST_CASE("Controller Applications (network)")
         time_point now;
         bool r;
 
-        SECTION("external incoming claim")
+        SECTION("external incoming non-contending claim")
         {
             n.start(t, now);
-            context ctx(now, addresses::null);
 
             pdu<pgns::address_claimed> p_claim(
                 addresses::axle_steering,
                 addresses::global);
 
-            r = process_incoming(n, t,
-                frame_traits::create(p_claim),
-                ctx
-                );
+            r = process_incoming(n, t, p_claim, context(now));
 
             REQUIRE(r == false);
             REQUIRE(n.state() == sm::network_base::states::claiming);
+
+            now += milliseconds(250);
+
+            r = n.process_outgoing(t, context(now));
+
+            REQUIRE(n.state() == sm::network_base::states::claimed);
+        }
+        SECTION("external incoming contending claim")
+        {
+            n.start(t, now);
+
+            // DEBT: implicit NAME of all 0xFF is not quite valid (I think) but at the moment
+            // counts as higher priority
+            pdu<pgns::address_claimed> p_claim(
+                saddresses[0],
+                addresses::global);
+
+            now += milliseconds(50);
+
+            r = process_incoming(n, t, p_claim, context(now));
+
+            // DEBT: Probably want to switch this to 'true' to indicate messages was noticed
+            // and something was done about it
+            REQUIRE(r == false);
+            REQUIRE(n.state() == sm::network_base::states::claiming);
+
+            now += milliseconds(200);       // would-be 250ms initial timeout
+
+            r = n.process_outgoing(t, context(now));
+
+            REQUIRE(r == false);
+            REQUIRE(n.state() == sm::network_base::states::claiming);
+            REQUIRE(n.next_event() == now + milliseconds(50));
+
+            now += milliseconds(50);
+
+            r = n.process_outgoing(t, context(now));
+
+            //REQUIRE(r);
+            REQUIRE(n.state() == sm::network_base::states::claimed);
         }
     }
 }

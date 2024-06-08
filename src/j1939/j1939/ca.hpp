@@ -20,7 +20,8 @@
 namespace embr { namespace j1939 {
 
 // DEBT: Although CA is an obvious category for these process_incoming helpers, they have
-// a bigger scope than that
+// a bigger scope than that.  Probably move these out to 'dispatcher' area, and move dispatcher
+// itself out of 'ca' area
 
 // NOTE: Impl::context trick is EXPERIMENTAL to help with initializer-list style trivial init
 template <class Transport, class Impl, class Context = typename Impl::context>

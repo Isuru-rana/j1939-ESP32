@@ -40,10 +40,11 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
     const pdu<pgns::address_claimed>& p)
 {
     const time_point current = scheduler.impl().now();
+    time_point wake;
 
     bool do_schedule = false;
 
-    bool r = nca_base_type::process_incoming_internal(t, p, current, &do_schedule);
+    bool r = nca_base_type::process_incoming_internal(t, p, &wake, current, &do_schedule);
 
     if(do_schedule)
         scheduler.schedule(next_event_, &wake_model);

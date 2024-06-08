@@ -12,11 +12,11 @@ struct context
     using time_point = TimePoint;
 
     const time_point current;
-    const uint8_t self_address;
+    const uint8_t self_address = addresses::null;
 #if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
     time_point* const next_;
 
-    constexpr context(time_point current, uint8_t sa, time_point* next = nullptr) :
+    constexpr context(time_point current, uint8_t sa = addresses::null, time_point* next = nullptr) :
         current{current},
         self_address{sa},
         next_{next}

@@ -37,6 +37,8 @@ struct network : network_base
     // NOTE: We miss old 'last_claim' but this is more efficient
     time_point next_event_;
 
+    constexpr time_point next_event() const { return next_event_; }
+
     address_type find_new_address()
     {
         if(address_manager().depleted())
@@ -98,16 +100,23 @@ struct network : network_base
     template <class Transport>
     void start(Transport& transport, time_point current);
 
-    // Emits address claim over transport and indicates whether a followup
-    // 250ms later is desired (returns true in that case)
-    template <class Transport>
-    bool resend_claim(Transport& t, time_point current, uint8_t sa);
-
+    ///
+    /// @param wake
+    /// @param current
+    /// @return true on schedule requested (wake updated), false on "done"
+    /// @remark claimed/claiming state is REQUIRED
     bool update_state_after_send_claim(time_point* wake, time_point current);
 
+    ///
+    /// @tparam Transport
+    /// @param wake EXPERIMENTAL - 1:1 with next_event_ at the moment
+    /// @param current
+    /// @param do_schedule
+    /// @return
     template <class Transport>
     bool process_incoming_internal(Transport&, const pdu<pgns::address_claimed>&,
-        time_point,
+        time_point* wake,
+        time_point current,
         bool* do_schedule);
 
     template <class Transport>
@@ -115,8 +124,14 @@ struct network : network_base
         const context<TimePoint>& c)
     {
         bool do_schedule = false;
+#if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
+        time_point* wake = c.next_;
+#else
+        time_point dummy;
+        time_point* wake = &dummy;
+#endif
 
-        bool r = process_incoming_internal(t, p, c.current, &do_schedule);
+        bool r = process_incoming_internal(t, p, wake, c.current, &do_schedule);
 
         // EXPERIMENTAL
 #if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
@@ -137,7 +152,13 @@ struct network : network_base
         if(c.current < next_event_) return false;
 
         //return process_outgoing_internal(t, c);
-        return scheduled_claiming(t, c.next_, c.current);
+        scheduled_claiming(t, c.next_, c.current);
+
+        // DEBT: process_outgoing returns a bool indicating whether further immediate processing is
+        // expected.  scheduled_claiming returns a bool indicating whether a future event should be
+        // scheduled.  At present, it NEVER requires further immediate processing
+
+        return false;
     }
 #endif
 

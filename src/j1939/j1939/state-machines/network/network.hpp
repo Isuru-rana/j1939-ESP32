@@ -67,22 +67,12 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
             substate_ = substates::bus_off_recover;
             // DEBT: Arbitrary delay here, need something way more specific
             *wake += estd::chrono::milliseconds(500);
+            next_event_ = current + estd::chrono::milliseconds(500);
             break;
 
         case substates::bus_off_recover:
             send_claim(t);
-
-            if(skip_timeout())
-            {
-                state(states::claimed, substates::elapsed);
-            }
-            else
-            {
-                substate_ = substates::waiting;
-                next_event_ = current + address_claim_timeout();
-                *wake += address_claim_timeout();
-                return true;
-            }
+            return update_state_after_send_claim(wake, current);
 
             /*
             next_event_ = current + address_claim_timeout();
@@ -107,15 +97,7 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
 
             // Handles 1 and partial 3
             send_claim(t);
-            if(skip_timeout())
-            {
-                state(states::claimed, substates::elapsed);
-                return false;
-            }
-
-            next_event_ = current + address_claim_timeout();
-            substate_ = substates::waiting;
-            *wake += address_claim_timeout();
+            return update_state_after_send_claim(wake, current);
 
             // DEBT: Getting here we sorta presume we're arbitrary capable, meaning
             // we always do 250ms wait
@@ -152,11 +134,8 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
         // Manually retry as per [3] 1.1.4
         case substates::reclaim_waiting:
             // Optimistically go back to 'waiting', presuming a good bus awaits us
-            substate_ = substates::waiting;
             send_claim(t);
-            next_event_ = current + address_claim_timeout();
-            *wake = next_event_;
-            return true;
+            return update_state_after_send_claim(wake, current);
 
 
         case substates::cannot_claim_waiting:
@@ -204,43 +183,8 @@ bool network<AddressManager, TimePoint>::contended()
 
 template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
 template <class Transport>
-bool network<AddressManager, TimePoint>::resend_claim(
-    Transport& t, time_point current, uint8_t sa)
-{
-    switch(state_)
-    {
-        // Use case here is we've comfortably sat on an address past negotiation phase,
-        // and a newcomer has arrived contending us.  Scheduler has spooled out
-        case states::claimed:
-            send_claim(t, sa);
-            next_event_ = current + address_claim_timeout();
-            // Indicate a reactivation of scheduler, if scheduler is present
-            return true;
-
-            // Use case here is we're underway performing a claim and someone has contended.
-            // In this case our scheduled item is still active
-        case states::claiming:
-            send_claim(t, sa);
-            next_event_ = current + address_claim_timeout();
-            // this implicitly reschedules by virtue of adjusting 'next_event_'
-            break;
-
-        default:
-            // unstarted = no actions
-            // cannot_claim = no point in attempting
-            // requesting = undefined behavior (address claim WITHOUT followup appropriate here [3] 1.2.1.1. )
-            // claim_send_error, reclaim_waiting = no action because whole different process emitting its own claims
-            break;
-    }
-
-    return false;
-}
-
-
-template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
-template <class Transport>
 bool network<AddressManager, TimePoint>::process_incoming_internal(
-    Transport& t, const pdu<pgns::address_claimed>& p, time_point current, bool* do_schedule)
+    Transport& t, const pdu<pgns::address_claimed>& p, time_point* wake, time_point current, bool* do_schedule)
 {
     const addresses::type sa = p.can_id().source_address();
     // we expect all address_claimed messages to be BAM
@@ -269,13 +213,7 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
             // we have the higher priority name
             // transmit our own address, basically re-announce our claim
             send_claim(t);
-
-            // TODO:
-            // If we're currently claiming, this extends the 250ms next_event_
-            // If we're fully claimed, this has no followup scheduled
-            if(state_ == states::claiming)  {}
-
-            // DEBT: Do we need to schedule a followup here?
+            *do_schedule = update_state_after_send_claim(wake, current);
         }
         else if(name_ > incoming_name)
         {
@@ -297,15 +235,21 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
                 // shouldn't respond right away but probably should still find_new_address
                 // DEBT: Do this output with a state machine.  Arguably cleaner to service in process_outgoing,
                 // and also gives us chance to decouple this whole function from scheduler
-                *do_schedule = resend_claim(t, current, *new_address);
+                //*do_schedule = resend_claim(t, current, *new_address);
 
+                *do_schedule = state_ == states::claimed;
+
+                send_claim(t, *new_address);
+                update_state_after_send_claim(wake, current);
+
+                /*
                 // DEBT: Account for other states here also
                 if(state_ == states::claimed)
                 {
                     // DEBT: Assigning state & substate at once is reasonable but clumsy
                     // and easy to get wrong
                     state(states::claiming, substates::waiting);
-                }
+                }   */
 
                 // We optimistically assign ourselves this new address, expecting someone
                 // will contend us necessary
@@ -336,14 +280,14 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
     return false;
 }
 
-// DORMANT: Kicking around idea of calling this right after send_claim
-// for more homogeneous state/wake updating
 template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
 bool network<AddressManager, TimePoint>::update_state_after_send_claim(time_point* wake, time_point current)
 {
     switch(state_)
     {
         case states::claimed:
+            state_ = states::claiming;
+
         case states::claiming:
             /* FIX: Disabled due to ambiguities in [1] 4.4.4.3
             if(substate_ == substates::claim_send_error)
@@ -359,10 +303,20 @@ bool network<AddressManager, TimePoint>::update_state_after_send_claim(time_poin
             {
                 substate_ = substates::waiting;
                 next_event_ = current + address_claim_timeout();
-                *wake += address_claim_timeout();
+
+                // DEBT: Want to mandate wake is always present, but for 'context' that's not practical
+                if(wake)
+                    *wake += address_claim_timeout();
                 return true;
             }
             break;
+
+        default:
+#if FEATURE_EMBR_J1939_STRICT_STATES
+            abort();
+#else
+            break;
+#endif
     }
 
     return false;
