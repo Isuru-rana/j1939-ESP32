@@ -8,8 +8,10 @@
  */
 #pragma once
 
-#include "../tp/base.h"
+#include "../../pdu.h"
+#include "../tp/context.h"
 #include "../../data_field/network.hpp"
+#include "../../data_field/request.hpp"
 
 #include "enum.h"
 

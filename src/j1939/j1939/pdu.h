@@ -14,8 +14,6 @@
 #include "pgn/enum.h"
 #include "data_field.h"
 
-#include <can/transport.h>
-
 // Deviates from [1] 5.3 in that we do not include data field in pdu1 or pdu2.
 // priority field is included.
 
@@ -131,43 +129,5 @@ class pdu<pgn, void, internal::Range<(pgn >= pgns::pdu2_boundary)> > : public pd
 public:
     ESTD_CPP_FORWARDING_CTOR(pdu)
 };
-
-// EXPERIMENTAL
-template <class TFrame>
-struct frame_traits
-{
-    typedef TFrame frame_type;
-
-    using can_frame_traits = embr::can::frame_traits<frame_type>;
-
-    // Create "plain old" CAN frame from pdu
-    template <pgns pgn>
-    static inline frame_type create(const pdu<pgn> p)
-    {
-        return can_frame_traits::create(
-            p.can_id(),
-            p.data(),
-            p.size());
-    }
-};
-
-
-// EXPERIMENTAL
-template <class TTransport>
-struct transport_traits
-{
-    using transport_type = TTransport;
-    using frame_type = typename transport_type::frame;
-
-    // DEBT: Consider a translated/specialized/more informative return code
-    template <pgns pgn>
-    inline static bool send(transport_type& t, const pdu<pgn>& p)
-    {
-        frame_type f = frame_traits<frame_type>::create(p);
-
-        return t.send(f);
-    }
-};
-
 
 }}

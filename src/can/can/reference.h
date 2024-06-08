@@ -2,6 +2,7 @@
 
 #include "fwd.h"
 
+#include <estd/algorithm.h>
 #include <estd/span.h>
 
 namespace embr { namespace can {
