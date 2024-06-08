@@ -6,14 +6,12 @@
 #include <j1939/state-machines/network.hpp>
 
 #include "../transport.h"
+#include "../NAME.h"
 
-namespace embr::j1939::qt::ca { inline namespace v1 {
+// cs = controller service/subsystem
+// not a full CA, but a requisite peiece of helping a CA function
 
-// DEBT: On reflection, this isn't really a CA.  This is more a frequent prerequisite
-// to a CA's normal operation.  Perhaps we need a new term like CS for support pieces
-// which a particular CA may need (controller services? controller support?).  As far
-// as Qt is concerned these aren't exactly state machines, since they are more
-// self sufficient
+namespace embr::j1939::qt::cs { inline namespace v1 {
 
 class Base : public QObject
 {
@@ -33,11 +31,20 @@ class Network : public Base
     using addr_type = uint8_t;
     using state_type = sm::v1::network_enum::states;
 
+    struct ExternalAddressObserver
+    {
+        pdu<pgns::address_claimed> pdu_;
+        bool observed_ = false;
+
+        bool process_incoming(can::qt_transport&, const pdu<pgns::address_claimed>&);
+    };
+
     layer1::NAME name_;
     QTimer timer_;
     using addrmgr_type = internal::prng_address_manager;
     sm::v1::network<addrmgr_type, clock::time_point> sm_;
     can::qt_transport transport_;
+    ExternalAddressObserver externalObserver_;
 
     void schedule()
     {
@@ -54,6 +61,8 @@ class Network : public Base
     }
 
     state_type last_state_ = state_type::unstarted;
+
+    void updateState();
 
     Q_OBJECT
 
@@ -90,6 +99,10 @@ public:
 signals:
     void stateChanged(state_type);
     void addressChanged(addr_type);
+
+    // In addition to primary address acquisition duties, we also announce
+    // when external addresses appear (external Network cs's operating)
+    void addressObserved(addr_type, qt::v1::NAME);
 
 private slots:
     void handler();

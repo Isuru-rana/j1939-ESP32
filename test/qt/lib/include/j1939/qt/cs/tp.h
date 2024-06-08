@@ -11,7 +11,7 @@
 // state machine other.  I suppose it sort of represents an actual transport
 // at this level.
 
-namespace embr::j1939::qt::ca { inline namespace v1 {
+namespace embr::j1939::qt::cs { inline namespace v1 {
 
 class TransportProtocol : public QObject
 {

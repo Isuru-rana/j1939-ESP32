@@ -18,10 +18,10 @@ qt_add_qml_module(${PROJECT_NAME}
     VERSION 1.0
     QML_FILES J1939LibControls.qml
     SOURCES
-        include/j1939/qt/ca/network.h
-        include/j1939/qt/ca/tp.h
-        ca/network.cpp
-        ca/tp.cpp
+        include/j1939/qt/cs/network.h
+        include/j1939/qt/cs/tp.h
+        cs/network.cpp
+        cs/tp.cpp
         j1939lib.cpp j1939lib.h
 )
 
