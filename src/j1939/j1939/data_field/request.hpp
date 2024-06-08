@@ -25,6 +25,8 @@ namespace pgn {
 template <>
 struct traits<pgns::request> : internal::traits_base
 {
+    using spns = internal::spns_list<s::parameter_group_number_rqst>;
+
     static constexpr const char* name()
     {
         return "Request";

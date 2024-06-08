@@ -46,6 +46,10 @@ struct type_traits<spns::turn_signal_switch>
     };
 
     typedef enum_type value_type;
+
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "turn_signal_switch"; }
+    static constexpr const char* description() { return nullptr; }
 };
 
 
@@ -71,6 +75,10 @@ struct type_traits<spns::high_low_beam_switch>
     };
 
     typedef enum_type value_type;
+
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "high_low_beam_switch"; }
+    static constexpr const char* description() { return nullptr; }
 };
 
 
@@ -156,6 +164,9 @@ struct type_traits<spns::main_light_switch> : internal::type_traits_base<uint8_t
     };
 
     typedef enum_type value_type;
+
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "main_light_switch"; }
 };
 
 template <>
