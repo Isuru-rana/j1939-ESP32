@@ -6,6 +6,8 @@
 #include <concepts>
 #endif
 
+#include "macro/push.h"
+
 namespace embr { namespace j1939 {
 
 #if __cpp_concepts
@@ -45,3 +47,5 @@ struct unit;
 }}
 
 }}
+
+#include "macro/pop.h"

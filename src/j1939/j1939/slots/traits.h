@@ -2,6 +2,8 @@
 
 #include "fwd.h"
 
+#include "macro/push.h"
+
 namespace embr { namespace j1939 {
 
 // DEBT: Move this out of spn namespace
@@ -39,3 +41,5 @@ constexpr typename slot_type_traits<slot>::value_type::rep get_offset()
 }}
 
 }}
+
+#include "macro/pop.h"

@@ -4,6 +4,7 @@
 #include "fwd.h"
 
 #include <estd/internal/macro/push.h>
+#include "macro/push.h"
 
 // EXPERIMENTAL
 
@@ -59,4 +60,5 @@ namespace embr { namespace j1939 { namespace spn { inline namespace v1 {
 
 }}}}
 
+#include "macro/pop.h"
 #include <estd/internal/macro/pop.h>

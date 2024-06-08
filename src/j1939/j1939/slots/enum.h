@@ -5,6 +5,8 @@
  */
 #pragma once
 
+#include "macro/push.h"
+
 namespace embr { namespace j1939 {
 
 enum class slots
@@ -85,3 +87,5 @@ enum class slots
 };
 
 }}
+
+#include "macro/pop.h"

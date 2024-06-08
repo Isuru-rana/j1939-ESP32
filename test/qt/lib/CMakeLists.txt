@@ -17,7 +17,9 @@ qt_add_qml_module(${PROJECT_NAME}
     URI j1939.ui
     VERSION 1.0
     QML_FILES J1939LibControls.qml
-    SOURCES j1939lib.cpp j1939lib.h
+    SOURCES
+        include/j1939/qt/ca/network.h
+        j1939lib.cpp j1939lib.h
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -33,9 +35,10 @@ target_compile_definitions(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PRIVATE Qt6::Quick)
 target_link_libraries(${PROJECT_NAME}
-    PUBLIC j1939)
+    PUBLIC embr::j1939)
 
 add_library(j1939::qt ALIAS ${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

@@ -2,6 +2,9 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 
+//#include <j1939/slots/enum.h>
+#include <j1939/qt/ca/network.h>
+
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
