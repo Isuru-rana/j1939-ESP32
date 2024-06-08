@@ -143,7 +143,6 @@ struct network : network_base
     }
 
 
-#if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
     template <class Transport>
     bool process_outgoing(Transport& t, const context<TimePoint>& c)
     {
@@ -151,8 +150,13 @@ struct network : network_base
 
         if(c.current < next_event_) return false;
 
+#if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
         //return process_outgoing_internal(t, c);
         scheduled_claiming(t, c.next_, c.current);
+#else
+        time_stamp dummy;
+        scheduled_claiming(t, &dummy, c.current);
+#endif
 
         // DEBT: process_outgoing returns a bool indicating whether further immediate processing is
         // expected.  scheduled_claiming returns a bool indicating whether a future event should be
@@ -160,7 +164,6 @@ struct network : network_base
 
         return false;
     }
-#endif
 
 };
 

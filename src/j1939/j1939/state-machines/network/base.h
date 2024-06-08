@@ -21,7 +21,7 @@ struct network_base : network_enum //,
     //embr::Service   // Ready and waiting, premature to start migrating to this atm
 {
     template <class TimePoint>
-    using context = sm::tp::v0::context<TimePoint>;
+    using context = sm::v0::context<TimePoint>;
 
     states state_ = states::unstarted;
     substates substate_ = substates::unstarted;

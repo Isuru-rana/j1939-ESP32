@@ -99,7 +99,7 @@ public:
 
     using time_point = unsigned;
     using duration = unsigned;
-    using context = tp::v0::context<time_point>;
+    using context = sm::v0::context<time_point>;
 
 private:
     time_point last_event_;
