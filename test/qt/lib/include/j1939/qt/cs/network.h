@@ -90,10 +90,11 @@ public:
 
     void start(QCanBusDevice* device)
     {
+        /*
         connect(device, &QCanBusDevice::framesReceived, this, [&, device]
         {
             frameReceived(device->readFrame());
-        });
+        }); */
         transport_.device_ = device;
         sm_.start(transport_, clock::now());
         schedule();
