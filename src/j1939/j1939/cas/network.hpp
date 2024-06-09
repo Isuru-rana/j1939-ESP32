@@ -22,8 +22,9 @@ namespace embr { namespace j1939 {
 namespace impl {
 
 
-template <class TTransport, class TScheduler, class TAddressManager>
-void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
+template <class Transport, class Scheduler,
+    ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
+void network_ca<Transport, Scheduler, AddressManager>::scheduled_claiming(
     time_point* wake, time_point current)
 {
     // Currently just a NOOP
@@ -34,8 +35,9 @@ void network_ca<TTransport, TScheduler, TAddressManager>::scheduled_claiming(
     nca_base_type::scheduled_claiming(*t, wake, current);
 }
 
-template <class TTransport, class TScheduler, class TAddressManager>
-bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
+template <class Transport, class Scheduler,
+    ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
+bool network_ca<Transport, Scheduler, AddressManager>::process_incoming(
     transport_type& t,
     const pdu<pgns::address_claimed>& p)
 {
@@ -52,8 +54,9 @@ bool network_ca<TTransport, TScheduler, TAddressManager>::process_incoming(
     return r;
 }
 
-template <class TTransport, class TScheduler, class TAddressManager>
-void network_ca<TTransport, TScheduler, TAddressManager>::start(transport_type& t)
+template <class Transport, class Scheduler,
+    ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
+void network_ca<Transport, Scheduler, AddressManager>::start(transport_type& t)
 {
     this->t = &t;
 

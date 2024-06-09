@@ -16,6 +16,7 @@ set(INCLUDES
     cs/base.h
     cs/network.h
     cs/tp.h
+    data_field.h
     NAME.h
 )
 
@@ -40,6 +41,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
+
+# We want fold expressions
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)

@@ -1,9 +1,12 @@
 #pragma once
 
+#include <estd/internal/utility.h>   // DEBT: Needed for complete certainty that we have std::forward.  Should be in variadic.h itself
 #include <estd/internal/variadic.h>
 
 #include "fwd.h"
 #include "enum.h"
+
+#include "../spn/enum.h"
 
 #include "../macros/progmem.h"
 
