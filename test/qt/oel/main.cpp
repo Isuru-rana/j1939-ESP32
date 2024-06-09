@@ -27,8 +27,9 @@ int main(int argc, char *argv[])
         QCanBusDevice *device = QCanBus::instance()->createDevice(
             QStringLiteral("virtualcan"), QStringLiteral("can0"));
 
-        // Just for the time being
+        // Just for the time being.  Looks like this is for OTHERS connected to can0... ?
         device->setConfigurationParameter(QCanBusDevice::LoopbackKey, true);
+        device->setConfigurationParameter(QCanBusDevice::ReceiveOwnKey, true);
 
         // Getting nothing here just yet.  Loopback not working?
         QObject::connect(device, &QCanBusDevice::framesReceived, device, [&]
@@ -37,7 +38,7 @@ int main(int argc, char *argv[])
             {
                 QCanBusFrame frame = device->readFrame();
 
-                qDebug() << "Got frame:" << frame.frameId();
+                qDebug() << "Got frame:" << Qt::hex << frame.frameId();
 
                 generic.frameReceived(frame);
                 network.frameReceived(frame);
