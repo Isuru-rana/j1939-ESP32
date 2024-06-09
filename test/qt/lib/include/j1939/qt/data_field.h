@@ -1,8 +1,10 @@
 #pragma once
 
 #include <QObject>
+#include <QVariant>
 
 #include <j1939/data_field.h>
+#include <j1939/internal/decompose.h>
 
 namespace embr::j1939::qt { inline namespace v0 {
 
@@ -26,6 +28,16 @@ class DataField : public QObject
     {
         (... && populate(spn::traits<s>{}));
     }
+
+    template <class T, spns spn>
+    void operator()(const T& value, j1939::spn::traits<spn>)
+    {
+        using traits = spn::traits<spn>;
+        QVariant v(value);
+
+        setProperty(traits::name(), v);
+    }
+
 #endif
 
 public:
@@ -37,9 +49,7 @@ public:
     void populate(const embr::j1939::data_field<pgn, Container>& v)
     {
 #if __cpp_fold_expressions
-        using traits = pgn::traits<pgn>;
-        // Waiting on estd 0.7.3 fix for estd::variadic::values
-        //populate(traits::spns{});
+        decompose(v, *this);
 #endif
     }
 };

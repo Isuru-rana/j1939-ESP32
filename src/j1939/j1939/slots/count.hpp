@@ -4,6 +4,8 @@
 #include "slots.h"
 #include <embr/units/base.h>
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 // DEBT: 'void' tag because this is a kind of generic unit, theoretically fluidly
@@ -24,3 +26,5 @@ struct slot_traits<slots::SAEct09>
 };
 
 }}
+
+#include "../slots/macro/pop.h"

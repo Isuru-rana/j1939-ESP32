@@ -2,6 +2,8 @@
 
 #include "base.hpp"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 namespace spn {
@@ -13,3 +15,5 @@ struct type_traits<spns::cab_interior_temperature> :
 }
 
 }}
+
+#include "../slots/macro/pop.h"

@@ -9,6 +9,7 @@
 
 #include "fwd.h"
 #include "../pdu/ostream.h"
+#include "../data_field/fwd.h"
 
 namespace embr { namespace j1939 {
 

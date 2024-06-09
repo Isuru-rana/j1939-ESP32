@@ -2,6 +2,9 @@
 
 #if __cpp_fold_expressions
 
+#include "../spn/fwd.h"
+#include "../data_field/base.hpp"
+
 namespace embr::j1939::internal { inline namespace v1 {
 
 // Very clever constexpr int to string, from

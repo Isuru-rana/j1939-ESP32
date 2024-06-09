@@ -14,6 +14,7 @@ add_subdirectory(../../../src/j1939 j1939)
 
 set(INCLUDES
     cs/base.h
+    cs/generic.h
     cs/network.h
     cs/tp.h
     data_field.h
@@ -29,6 +30,7 @@ qt_add_qml_module(${PROJECT_NAME}
     QML_FILES J1939LibControls.qml
     SOURCES
         ${INCLUDES}
+        cs/generic.cpp
         cs/network.cpp
         cs/tp.cpp
         j1939lib.cpp j1939lib.h

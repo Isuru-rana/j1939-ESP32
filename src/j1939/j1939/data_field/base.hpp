@@ -30,7 +30,7 @@ namespace internal {
 
 // length is processed from bit position towards msb, as per [lost reference]
 // binary data is little endian, "least significant byte first" [1] 5.1.2
-template <class Container, bits::endianness e = bits::little_endian>
+template <class Container, bits::endianness e>
 struct data_field_base :
     bits::internal::material<e, bits::lsb_to_msb, bits::lsb_to_msb,
         Container>

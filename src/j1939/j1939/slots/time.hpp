@@ -11,6 +11,8 @@
 //#include <estd/chrono.h>
 #include "../units/time.h"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 
@@ -134,3 +136,5 @@ struct slot_traits<slots::SAEcy01> : spn::ranges::valid_signal<uint8_t>
 
 
 }}
+
+#include "../slots/macro/pop.h"

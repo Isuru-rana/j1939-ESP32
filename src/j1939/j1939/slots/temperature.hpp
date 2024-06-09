@@ -4,6 +4,8 @@
 
 #include "slots.h"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 
@@ -28,3 +30,5 @@ struct slot_traits<slots::SAEtp02>
 
 
 }}
+
+#include "../slots/macro/pop.h"

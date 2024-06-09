@@ -10,6 +10,8 @@
 #include "base.hpp"
 #include "../slots/time.hpp"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 namespace spn {
@@ -223,3 +225,5 @@ struct payload_put<pgns::time_date> : estd::internal::ostream_functor_tag
 
 
 }}
+
+#include "../slots/macro/pop.h"

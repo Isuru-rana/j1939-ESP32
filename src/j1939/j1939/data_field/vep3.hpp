@@ -6,6 +6,8 @@
 #include <embr/units/amps.h>
 #include "../slots.hpp"
 
+#include "../slots/macro/push.h"
+
 #define EMBR_J1939_SPN_DECLARE_SAE(name, slot, bytepos, bitpos, bitwidth)  \
 template <> constexpr descriptor get_descriptor<spns::name>()   \
 { descriptor{bytepos, bitpos, bitwidth}; }  \
@@ -64,3 +66,5 @@ struct data_field<pgns::vehicle_electrical_power_3, TContainer> :
 };
 
 }}
+
+#include "../slots/macro/pop.h"

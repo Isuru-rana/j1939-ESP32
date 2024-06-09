@@ -3,6 +3,9 @@
 #include "slots.h"
 #include "../units/percent.h"
 
+#include "../slots/macro/push.h"
+
+
 namespace embr { namespace j1939 {
 
 
@@ -44,3 +47,5 @@ struct slot_traits<slots::SAEpc08>
 
 
 }}
+
+#include "../slots/macro/pop.h"

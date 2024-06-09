@@ -2,6 +2,8 @@
 
 #include "base.hpp"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 namespace spn {
@@ -37,3 +39,5 @@ constexpr descriptor get_descriptor<spns::sensor_supply_voltage_2>()
 }
 
 }}
+
+#include "../slots/macro/pop.h"

@@ -3,6 +3,8 @@
 #include <estd/array.h>
 #include <estd/span.h>
 
+#include <embr/bits/bits.h>
+
 #include "../pgn/fwd.h"
 
 namespace embr { namespace j1939 {
@@ -51,6 +53,9 @@ namespace internal {
 
 template <pgns pgn, class TContainer = typename data_field<pgn>::container_type>
 struct payload_put;
+
+template <class Container, bits::endianness e = bits::little_endian>
+struct data_field_base;
 
 }
 

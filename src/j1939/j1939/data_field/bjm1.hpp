@@ -5,6 +5,8 @@
 
 #include "../slots.hpp"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 namespace spn {
@@ -144,3 +146,5 @@ struct payload_put<pgns::basic_joystick_message_1> : estd::internal::ostream_fun
 }
 
 }}
+
+#include "../slots/macro/pop.h"

@@ -10,6 +10,8 @@
 #include <embr/units/volts.h>
 #include "../slots.hpp"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 namespace spn {
@@ -92,3 +94,5 @@ struct data_field<pgns::vehicle_electrical_power_1, TContainer> :
 };
 
 }}
+
+#include "../slots/macro/pop.h"

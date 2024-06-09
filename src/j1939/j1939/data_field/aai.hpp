@@ -4,6 +4,8 @@
 
 #include "../slots.hpp"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 namespace spn {
@@ -16,3 +18,5 @@ struct type_traits<spns::auxiliary_temperature_1> : internal::slot_type_traits<s
 }
 
 }}
+
+#include "../slots/macro/pop.h"

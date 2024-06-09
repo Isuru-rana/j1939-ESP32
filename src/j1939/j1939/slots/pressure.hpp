@@ -3,6 +3,8 @@
 #include "slots.h"
 #include <embr/units/pascals.h>
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 
@@ -21,3 +23,5 @@ struct slot_traits<slots::SAEpr13>
 
 
 }}
+
+#include "../slots/macro/pop.h"

@@ -23,6 +23,10 @@ namespace pgn {
 
 template <pgns>
 struct traits;
+// traits_wrapper does this for us
+//{
+//    static constexpr bool is_specialized = false;
+//};
 
 struct descriptor
 {

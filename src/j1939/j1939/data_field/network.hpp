@@ -45,6 +45,9 @@ namespace pgn {
 template <>
 struct traits<pgns::address_claimed> : internal::traits_base
 {
+    // Get specific SPN for this guy, don't think he's in our enum yet
+    //using spns = internal::spns_list<s::NAME_of_commanded_address_target>;
+
     static constexpr const char* name()
     {
         return "Address Claimed";
@@ -59,6 +62,8 @@ struct traits<pgns::address_claimed> : internal::traits_base
 template <>
 struct traits<pgns::commanded_address> : internal::traits_base
 {
+    using spns = internal::spns_list<s::address_assignment>;
+
     static constexpr const char* name()
     {
         return "Commanded Address";

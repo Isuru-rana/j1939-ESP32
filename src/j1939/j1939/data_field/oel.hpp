@@ -284,7 +284,9 @@ estd::detail::basic_ostream<Streambuf, Base>& operator<<(
     estd::detail::basic_ostream<Streambuf, Base>& out,
     spn::type_traits<spns::high_low_beam_switch>::enum_type v)
 {
-    return out << to_string(v);
+    // DEBT: For Qt compilation, ADL needed a nudge here with spn:: - see if we can remove that
+    // qualifier again
+    return out << spn::to_string(v);
 }
 
 template <>

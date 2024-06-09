@@ -7,6 +7,8 @@
 #include "slots.h"
 #include "../spn/ranges.h"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 
@@ -67,3 +69,5 @@ struct slot_traits<slots::SAEpw04> : spn::ranges::valid_signal<uint16_t>
 
 
 }}
+
+#include "../slots/macro/pop.h"

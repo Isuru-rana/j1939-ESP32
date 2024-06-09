@@ -3,6 +3,8 @@
 #include "base.hpp"
 #include "../slots/percent.hpp"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 namespace spn {
@@ -73,3 +75,5 @@ struct data_field<pgns::fan_drive_1, Container> :
 };
 
 }}
+
+#include "../slots/macro/pop.h"

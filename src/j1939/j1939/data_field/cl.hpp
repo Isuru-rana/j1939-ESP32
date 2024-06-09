@@ -4,6 +4,8 @@
 
 #include "../slots.hpp"
 
+#include "../slots/macro/push.h"
+
 namespace embr { namespace j1939 {
 
 namespace spn {
@@ -59,3 +61,5 @@ struct data_field<pgns::cab_illumination_message, TContainer> :
 
 
 }}
+
+#include "../slots/macro/pop.h"

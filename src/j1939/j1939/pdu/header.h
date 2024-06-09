@@ -1,6 +1,7 @@
 #pragma once
 
 #include "traits.h"
+#include "../can_id.h"
 
 namespace embr { namespace j1939 {
 
