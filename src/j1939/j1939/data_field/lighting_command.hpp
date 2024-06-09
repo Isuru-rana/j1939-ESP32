@@ -23,10 +23,18 @@ template <>
 struct type_traits<spns::center_stop_lights_cmd> : internal::status_type_traits {};
 
 template <>
-struct type_traits<spns::left_turn_signal_lights_cmd> : internal::status_type_traits {};
+struct type_traits<spns::left_turn_signal_lights_cmd> : internal::status_type_traits
+{
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "left_turn_signal"; }
+};
 
 template <>
-struct type_traits<spns::right_turn_signal_lights_cmd> : internal::status_type_traits {};
+struct type_traits<spns::right_turn_signal_lights_cmd> : internal::status_type_traits
+{
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "right_turn_signal"; }
+};
 
 template <>
 struct type_traits<spns::low_beam_headlight_cmd> : internal::status_type_traits {};
@@ -118,6 +126,22 @@ constexpr descriptor get_descriptor<spns::high_beam_headlight_cmd>()
 {
     return descriptor{1, 7, 2};
 };
+
+
+// FIX: Not working right yet, just here to satisfy compilation
+template <>
+constexpr descriptor get_descriptor<spns::backup_lights_and_alarm_horn_cmd>()
+{
+    return descriptor{1, 1, 0};
+};
+
+// FIX: Not working right yet, just here to satisfy compilation
+template <>
+constexpr descriptor get_descriptor<spns::rear_fog_lights_cmd>()
+{
+    return descriptor{1, 1, 0};
+};
+
 
 }
 
