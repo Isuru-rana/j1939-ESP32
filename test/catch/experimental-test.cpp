@@ -1,4 +1,5 @@
 #include <iostream>
+#include <map>
 
 #include <embr/units/feet.h>
 
@@ -20,11 +21,63 @@
 using namespace embr;
 
 #if __cpp_fold_expressions
+
+template <j1939::spns s>
+bool helper3()
+{
+    using namespace j1939;
+
+    using t1 = spn::traits<s>;
+    constexpr spn::descriptor d = spn::get_descriptor<s>();
+
+    INFO("name" << t1::name())
+
+    return {};
+}
+
 template <j1939::spns ...spns>
 void helper(estd::variadic::values<j1939::spns, spns...>)
 {
-
+    (... && helper3<spns>());
 }
+
+struct Helper1
+{
+    template <class Container>
+    using dfb = const j1939::internal::data_field_base<Container>;
+
+    std::map<std::string, std::string> properties_;
+
+    template <j1939::spns s, class Container>
+    bool decompose(dfb<Container>& d)
+    {
+        using traits = j1939::spn::traits<s>;
+        std::string value;
+
+        auto v = d.template get<s>();
+        value = std::to_string(int(v));
+
+        properties_[traits::name()] = value;
+
+        return true;
+    }
+
+    template <j1939::spns ...spns, class Container>
+    void decompose(estd::variadic::values<j1939::spns, spns...>, dfb<Container>& d)
+    {
+        (... && decompose<spns>(d));
+    }
+
+
+    template <j1939::pgns pgn, class Container>
+    void decompose(const j1939::data_field<pgn, Container>& d)
+    {
+        using traits = j1939::pgn::traits<pgn>;
+        using spns = typename traits::spns;
+
+        decompose(spns{}, d);
+    }
+};
 
 template <class T>
 struct helper2;
@@ -77,16 +130,29 @@ TEST_CASE("experimental")
     SECTION("names from spns")
     {
 #if __cpp_fold_expressions
-        using traits = j1939::pgn::traits<j1939::pgns::oel>;
-        using spns = traits::spns;
-        std::string s;
+        SECTION("constexpr stuff")
+        {
+            using traits = j1939::pgn::traits<j1939::pgns::oel>;
+            using spns = traits::spns;
+            std::string s;
 
-        // bug in estd prohibits this
-        //helper<spns>(spns{});
-        helper2<spns>::dostuff(s);
-        std::cout << s <<std::endl;
-        REQUIRE(s == "turn_signal_switch, high_low_beam_switch, work_light_switch, "
-                     "main_light_switch, hazard_light_switch, operators_desired_delay_lamp_off_time, ");
+            helper(spns{});
+            helper2<spns>::dostuff(s);
+            //std::cout << s <<std::endl;
+            REQUIRE(s == "turn_signal_switch, high_low_beam_switch, work_light_switch, "
+                         "main_light_switch, hazard_light_switch, operators_desired_delay_lamp_off_time, ");
+        }
+        SECTION("pdu")
+        {
+            Helper1 h;
+            j1939::pdu<j1939::pgns::oel> pdu{j1939::null_t{}};
+
+            h.decompose(pdu);
+
+            std::string v = h.properties_["turn_signal_switch"];
+
+            REQUIRE(v == "15");
+        }
 #endif
     }
 }
