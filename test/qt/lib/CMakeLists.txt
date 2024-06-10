@@ -15,10 +15,13 @@ add_subdirectory(../../../src/j1939 j1939)
 set(INCLUDES
     cs/base.h
     cs/generic.h
+    cs/generic.hpp
     cs/network.h
     cs/tp.h
     data_field.h
     NAME.h
+    pdu.h
+    session.h
 )
 
 list(TRANSFORM INCLUDES PREPEND  include/j1939/qt/)
@@ -33,6 +36,7 @@ qt_add_qml_module(${PROJECT_NAME}
         cs/generic.cpp
         cs/network.cpp
         cs/tp.cpp
+        session.cpp
         j1939lib.cpp j1939lib.h
 )
 
@@ -52,7 +56,7 @@ target_compile_definitions(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PRIVATE Qt6::Quick Qt6::SerialBus)
 target_link_libraries(${PROJECT_NAME}
-    PUBLIC embr::j1939)
+    PUBLIC Qt6::Core embr::j1939)
 
 add_library(j1939::qt ALIAS ${PROJECT_NAME})
 

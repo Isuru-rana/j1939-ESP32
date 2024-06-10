@@ -7,7 +7,7 @@
 #include <j1939/pgn/ostream.h>  // DEBT: For traits_wrapper
 
 #include "../transport.h"
-#include "../data_field.h"
+#include "../pdu.h"
 #include "base.h"
 
 namespace embr::j1939::qt::cs { inline namespace v1 {
@@ -31,7 +31,7 @@ public:
     bool process_incoming(can::qt_transport&, const pdu<pgn>& p);
 
 signals:
-    void pduReceived(const DataField&);
+    void pduReceived(const Pdu*);
 };
 
 }}

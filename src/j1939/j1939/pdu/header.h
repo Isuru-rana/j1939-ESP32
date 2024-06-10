@@ -2,6 +2,7 @@
 
 #include "traits.h"
 #include "../can_id.h"
+#include "../pgn/fwd.h"
 
 namespace embr { namespace j1939 {
 

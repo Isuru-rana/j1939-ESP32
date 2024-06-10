@@ -33,7 +33,6 @@
 
 namespace embr { namespace j1939 {
 
-// Group extension (pdu2) flavor only
 enum class pgns : uint32_t
 {
     // +++ pdu1 (PF+DP denoted) here
