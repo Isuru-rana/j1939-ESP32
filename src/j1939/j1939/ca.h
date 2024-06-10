@@ -18,6 +18,8 @@
 #include "pdu.h"
 #include "pgn.h"
 
+#include "cs/aggregate.h"
+
 namespace embr { namespace j1939 {
 
 namespace impl {
@@ -81,33 +83,8 @@ public:
 //#endif
     tuple child_cas;
 
-    template <class TTransport>
-    struct visitor
-    {
-        TTransport& transport;
-
-        template <size_t I, class TCA, pgns pgn>
-        bool operator()(estd::variadic::type<I, TCA>, tuple& ccas,
-            const pdu<pgn>& p) const
-        {
-            TCA& ca = estd::get<I>(ccas);
-
-            ca.process_incoming(transport, p);
-
-            return false;
-        }
-
-        template <size_t I, class TCA>
-        bool operator()(estd::variadic::type<I, TCA>, tuple& ccas,
-            const typename TTransport::frame& frame) const
-        {
-            TCA& ca = estd::get<I>(ccas);
-
-            ca.process_incoming_default(transport, frame);
-
-            return false;
-        }
-    };
+    template <class Transport>
+    using visitor = cs::internal::v1::incoming_visitor<Transport>;
 
     template <class TTransport, class ...TArgs>
     bool apply(TTransport& transport, TArgs&&...args)

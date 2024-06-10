@@ -35,6 +35,7 @@ set(SOURCE_FILES
     main.cpp
     bits2-test.cpp
     ca-test.cpp
+    cs-test.cpp
     dispatcher-test.cpp
     experimental-test.cpp
     ecu-test.cpp
