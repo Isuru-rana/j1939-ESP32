@@ -1,8 +1,13 @@
 #include "j1939/qt/cs/generic.h"
 
-#include <j1939/data_field/all.hpp>
+#include <j1939/data_field/cm1.hpp>
+#include <j1939/data_field/oel.hpp>
+#include <j1939/data_field/lighting_command.hpp>
+//#include <j1939/data_field/network.hpp>
 
 #include <j1939/internal/dispatcher/incoming.hpp>
+
+#include "j1939/qt/cs/generic.hpp"
 
 namespace embr::j1939::qt::cs { inline namespace v1 {
 

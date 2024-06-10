@@ -3,6 +3,7 @@
 
 #include <embr/units/feet.h>
 
+#include <j1939/data_field/bjm1.hpp>
 #include <j1939/data_field/cm1.hpp>
 #include <j1939/data_field/lighting_command.hpp>
 #include <j1939/data_field/lighting_data.hpp>
@@ -35,6 +36,14 @@ void helper(estd::variadic::values<j1939::spns, spns...>, std::string& s)
 struct Helper1
 {
     std::map<std::string, std::string> properties_;
+
+    template <class Rep, class Period, class Tag, class F, j1939::spns spn>
+    void operator()(j1939::spn::traits<spn>,
+        const estd::internal::units::unit_base<Rep, Period, Tag, F>& v)
+    {
+
+    }
+
 
     template <class T, j1939::spns spn>
     void operator()(j1939::spn::traits<spn>, const T& v)
@@ -136,6 +145,24 @@ TEST_CASE("experimental")
             std::string v = h.properties_["left_turn_signal"];
 
             REQUIRE(v == "1");
+        }
+        SECTION("pdu: bjm1")
+        {
+            j1939::pdu<j1939::pgns::bjm1> pdu{j1939::null_t{}};
+
+            pdu.button1_pressed(j1939::spn::measured::on);
+
+            decompose(pdu, h);
+
+            std::string v = h.properties_["left_turn_signal"];
+        }
+        SECTION("pdu: bjm1")
+        {
+            // Very sensitive to PDU/SPN and traits fully implemented
+            /*
+            j1939::pdu<j1939::pgns::cab_message1> pdu{j1939::null_t{}};
+
+            decompose(pdu, h);  */
         }
 #endif
     }

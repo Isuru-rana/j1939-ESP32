@@ -29,15 +29,6 @@ class DataField : public QObject
         (... && populate(spn::traits<s>{}));
     }
 
-    template <class T, spns spn>
-    void operator()(const T& value, j1939::spn::traits<spn>)
-    {
-        using traits = spn::traits<spn>;
-        QVariant v(value);
-
-        setProperty(traits::name(), v);
-    }
-
 #endif
 
 public:
@@ -45,11 +36,24 @@ public:
         QObject(parent)
     {}
 
+    template <class T, spns spn>
+    void operator()(j1939::spn::traits<spn>, const T& value)
+    {
+        using traits = spn::traits<spn>;
+        // DEBT: Do a special units & enum variety
+        auto v2 = int(value);
+        QVariant v(v2);
+
+        setProperty(traits::name(), v);
+    }
+
     template <pgns pgn, class Container>
     void populate(const embr::j1939::data_field<pgn, Container>& v)
     {
+        using traits = j1939::internal::traits_wrapper<pgn>;
+
 #if __cpp_fold_expressions
-        decompose(v, *this);
+        if constexpr(traits::specialized)   decompose(v, *this);
 #endif
     }
 };

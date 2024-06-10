@@ -9,7 +9,7 @@
 
 #include <estd/chrono.h>
 
-#include "base.hpp"
+#include "base.h"
 
 #include "../spn/fwd.h"
 #include "../spn/traits.h"
@@ -245,8 +245,6 @@ constexpr descriptor get_descriptor<spns::operators_desired_delay_lamp_off_time>
 }
 
 
-
-
 }
 
 
@@ -276,6 +274,30 @@ struct data_field<pgns::oel, TContainer> :
     EMBR_J1939_PROPERTY(main_light_switch);
     EMBR_J1939_PROPERTY(hazard_light_switch);
 };
+
+
+namespace pgn {
+
+template <>
+struct traits<pgns::oel> : internal::traits_base
+{
+    using spns = internal::spns_list<
+        s::turn_signal_switch,
+        s::high_low_beam_switch,
+        s::work_light_switch,
+        s::main_light_switch,
+        s::hazard_light_switch,
+        s::operators_desired_delay_lamp_off_time>;
+
+    static constexpr const char* name()
+    {
+        return "Operator External Light Controls";
+    }
+
+    static constexpr const char* abbrev() { return "OEL"; }
+};
+
+}
 
 namespace internal {
 

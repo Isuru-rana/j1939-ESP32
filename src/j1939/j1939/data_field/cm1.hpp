@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base.hpp"
+#include "base.h"
 
 #include "../slots/percent.hpp"
 #include "../slots/temperature.hpp"

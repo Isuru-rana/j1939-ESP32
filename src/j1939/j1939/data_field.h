@@ -18,7 +18,7 @@
 #include "pgn/enum.h"
 #include "spn/enum.h"
 
-#include "data_field/base.hpp"
+#include "data_field/base.h"
 
 #include "fwd.h"
 

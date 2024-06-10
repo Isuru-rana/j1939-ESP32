@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/variant.h>   // DEBT: Just for monostate
+
 #include "fwd.h"
 
 namespace embr { namespace j1939 {

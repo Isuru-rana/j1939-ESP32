@@ -3,7 +3,8 @@
 #if __cpp_fold_expressions
 
 #include "../spn/fwd.h"
-#include "../data_field/base.hpp"
+#include "../pgn/traits.h"
+#include "../data_field/fwd.h"
 
 namespace embr::j1939::internal { inline namespace v1 {
 

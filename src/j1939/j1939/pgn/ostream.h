@@ -9,6 +9,7 @@
 
 #include "fwd.h"
 #include "../pdu/ostream.h"
+#include "../pgn/traits.h"
 #include "../data_field/fwd.h"
 
 namespace embr { namespace j1939 {
@@ -46,26 +47,6 @@ struct payload_put : payload_put_base<TContainer>
 {
     constexpr explicit payload_put(const data_field<pgn>& payload) :
         payload_put_base<TContainer>{payload} {}
-};
-
-
-template <embr::j1939::pgns, typename = void>
-struct traits_wrapper
-{
-    static constexpr const char specialized = false;
-
-    static constexpr const char* name() { return "N/A"; }
-    static constexpr const char* abbrev() { return "NA"; }
-};
-
-// DEBT: Move this out to an .hpp which has included a ton of stuff already
-// to better check for specializations
-template <embr::j1939::pgns pgn>
-struct traits_wrapper<pgn, estd::enable_if_t<
-    (sizeof(embr::j1939::pgn::traits<pgn>) > 0)> > :
-    embr::j1939::pgn::traits<pgn>
-{
-    static constexpr const char specialized = true;
 };
 
 

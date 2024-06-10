@@ -28,20 +28,7 @@ public:
     void frameReceived(const QCanBusFrame&) override;
 
     template <pgns pgn>
-    bool process_incoming(can::qt_transport&, const pdu<pgn>& p)
-    {
-        using traits = j1939::internal::traits_wrapper<pgn>;
-
-        if constexpr(traits::specialized == false) return false;
-
-        DataField df(this);
-
-        //df.populate(p);
-
-        emit pduReceived(df);
-
-        return true;
-    }
+    bool process_incoming(can::qt_transport&, const pdu<pgn>& p);
 
 signals:
     void pduReceived(const DataField&);

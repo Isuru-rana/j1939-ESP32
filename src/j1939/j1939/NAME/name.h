@@ -12,7 +12,7 @@
 #include "industry_groups.h"
 #include "vehicle_systems.h"
 
-#include "../data_field/base.hpp"
+#include "../data_field/base.h"
 
 #include "layer0.h"
 #include "ostream.h"

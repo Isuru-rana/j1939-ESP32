@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#include "base.hpp"
+#include "base.h"
 
 namespace embr { namespace j1939 {
 
