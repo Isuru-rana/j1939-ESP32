@@ -11,7 +11,7 @@
  */
 #pragma once
 
-#include "base.hpp"
+#include "base.h"
 #include "../NAME/name.h"
 #include "../pdu/header.h"
 
@@ -35,6 +35,12 @@ constexpr descriptor get_descriptor<spns::address_assignment>()
     return descriptor{9, 1, 8};
 }
 
+template <>
+constexpr descriptor get_descriptor<spns::NAME_of_controller_application>()
+{
+    return descriptor{1, 1, 64};
+}
+
 
 }
 
@@ -45,8 +51,7 @@ namespace pgn {
 template <>
 struct traits<pgns::address_claimed> : internal::traits_base
 {
-    // Get specific SPN for this guy, don't think he's in our enum yet
-    //using spns = internal::spns_list<s::NAME_of_commanded_address_target>;
+    using spns = internal::spns_list<s::NAME_of_controller_application>;
 
     static constexpr const char* name()
     {

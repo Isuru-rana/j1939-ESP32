@@ -22,34 +22,6 @@ struct traits<pgns::fan_drive_1>
 
 
 template <>
-struct traits<pgns::cab_message1> : internal::traits_base
-{
-    using spns = internal::spns_list<
-        s::requested_percent_fan_speed,
-        s::cab_interior_temperature_command,
-        s::battery_main_switch_hold_request,
-        s::operator_seat_direction_switch,
-        s::seat_belt_switch,
-        s::park_brake_command,
-        s::engine_automatic_start_enable_switch,
-        s::auxiliary_heater_mode_request,
-        s::request_cab_zone_heating>;
-
-    static constexpr const char* name()
-    {
-        return "Cab Message 1";
-    }
-
-    static constexpr const char* description()
-    {
-        return "Message containing parameters originating from the vehicle cab.";
-    }
-
-    static constexpr const char* abbrev() { return "CM1"; }
-};
-
-
-template <>
 struct traits<pgns::fms_identity> : internal::traits_base
 {
     static constexpr unsigned priority = 7;

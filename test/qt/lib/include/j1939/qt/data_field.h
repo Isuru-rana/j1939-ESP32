@@ -31,16 +31,30 @@ class DataField : public QObject
 
 #endif
 
+    template <class Rep, class Period, class Tag, class F = estd::internal::units::passthrough<Rep>>
+    using unit = estd::internal::units::unit_base<Rep, Period, Tag, F>;
+
 public:
     DataField(QObject* parent = nullptr) :
         QObject(parent)
     {}
 
+    template <class Rep, class Period, class Tag, class F, spns spn>
+    void operator()(j1939::spn::traits<spn>, const unit<Rep, Period, Tag, F>& value)
+    {
+        using traits = spn::traits<spn>;
+        unit<double, estd::ratio<1>, Tag> converted(value);
+
+        QVariant v(converted.count());
+
+        setProperty(traits::name(), v);
+    }
+
     template <class T, spns spn>
     void operator()(j1939::spn::traits<spn>, const T& value)
     {
         using traits = spn::traits<spn>;
-        // DEBT: Do a special units & enum variety
+        // DEBT: Do a special enum variety
         auto v2 = int(value);
         QVariant v(v2);
 

@@ -17,11 +17,17 @@ namespace spn {
 
 template <>
 struct type_traits<spns::requested_percent_fan_speed> :
-    internal::slot_type_traits<slots::SAEpc03> {};
+    internal::slot_type_traits<slots::SAEpc03>
+{
+    static constexpr const char* name() { return "requested_percent_fan_speed"; }
+};
 
 template <>
 struct type_traits<spns::cab_interior_temperature_command> :
-    internal::slot_type_traits<slots::SAEtp02> {};
+    internal::slot_type_traits<slots::SAEtp02>
+{
+    static constexpr const char* name() { return "cab_interior_temperature_command"; }
+};
 
 template <>
 struct type_traits<spns::battery_main_switch_hold_request> :
@@ -76,6 +82,39 @@ struct data_field<pgns::cab_message1, Container> :
         return base_type::template get<spns::cab_interior_temperature_command>();
     }
 };
+
+
+namespace pgn {
+
+template <>
+struct traits<pgns::cab_message1> : internal::traits_base
+{
+    using spns = internal::spns_list<
+        s::requested_percent_fan_speed,
+        s::cab_interior_temperature_command,
+        s::battery_main_switch_hold_request,
+        s::operator_seat_direction_switch,
+        s::seat_belt_switch,
+        s::park_brake_command,
+        s::engine_automatic_start_enable_switch,
+        s::auxiliary_heater_mode_request,
+        s::request_cab_zone_heating>;
+
+    static constexpr const char* name()
+    {
+        return "Cab Message 1";
+    }
+
+    static constexpr const char* description()
+    {
+        return "Message containing parameters originating from the vehicle cab.";
+    }
+
+    static constexpr const char* abbrev() { return "CM1"; }
+};
+
+
+}
 
 #if FEATURE_EMBR_J1939_OSTREAM_FULL_CM1
 namespace internal {

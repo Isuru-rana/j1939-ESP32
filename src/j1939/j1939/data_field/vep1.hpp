@@ -5,7 +5,7 @@
  */
 #pragma once
 
-#include "base.hpp"
+#include "base.h"
 
 #include <embr/units/volts.h>
 #include "../slots.hpp"
