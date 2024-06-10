@@ -13,7 +13,7 @@ Window {
         target: Session.generic
 
         function onPduReceived(pdu) {
-            console.log(pdu.pgn)
+            console.log(pdu)
         }
     }
 }

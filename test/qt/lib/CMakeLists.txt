@@ -56,7 +56,7 @@ target_compile_definitions(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PRIVATE Qt6::Quick Qt6::SerialBus)
 target_link_libraries(${PROJECT_NAME}
-    PUBLIC Qt6::Core embr::j1939)
+    PUBLIC Qt6::Core embr::can embr::j1939)
 
 add_library(j1939::qt ALIAS ${PROJECT_NAME})
 

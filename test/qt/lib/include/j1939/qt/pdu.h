@@ -1,19 +1,38 @@
 #pragma once
 
 #include <QObject>
+#include <QMetaEnum>
 
 #include <j1939/pdu/header.h>
 #include <j1939/pdu.h>
+
+#include <j1939/internal/dispatcher/dispatch.hpp>
 
 #include "data_field.h"
 
 namespace embr::j1939 {
 
+struct pgn_to_string_functor
+{
+    template <pgns pgn>
+    constexpr const char* operator()(internal::in_place_pgn<pgn>)
+    {
+        return internal::traits_wrapper<pgn>::name();
+    }
+
+    constexpr const char* operator()() const { return nullptr; }
+};
+
+constexpr const char* to_string(pgns pgn)
+{
+    return internal::dispatch(pgn_to_string_functor{}, pgn);
+}
 
 }
 
 namespace embr::j1939::qt { inline namespace v1 {
 
+// No love
 Q_NAMESPACE
 //using pgns = embr::j1939::pgns;
 enum pgns2
@@ -28,7 +47,7 @@ class Pdu : public QObject
     can_id can_id_;
     DataField data_field_;
 
-    using pgns = pgns2;
+    //using pgns = pgns2;
 
     Q_OBJECT
 
@@ -76,6 +95,19 @@ public:
     }
 
     DataField* payload() { return &data_field_; }
+
+    Q_INVOKABLE QString toString() const
+    {
+        QString s("pgn: ");
+
+        // Rather agitating we cannot get QMetaEnum to work comfortably without touching
+        // pgn/enum itself.  Fortunately, type traits may be able to help us here
+        //auto pgn2 = QMetaEnum::fromType<pgns>().valueToKey(int(pgn()));
+
+        s += to_string(pgn());
+
+        return s;
+    }
 };
 
 }}

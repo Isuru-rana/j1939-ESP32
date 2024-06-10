@@ -1,5 +1,9 @@
 #pragma once
 
+#include <estd/utility.h>
+
+#include <can/fwd.h>
+
 #include "../../pdu.h"
 #include "../../pgn.h"
 
@@ -7,6 +11,8 @@
 #include "incoming.h"
 
 namespace embr { namespace j1939 {
+
+// TODO: Utilize new 'dispatch.hpp' here
 
 template <class Transport, class Impl, class Context>
 bool process_incoming(internal::app_state<Transport, Impl, Context> state, const typename Transport::frame& f)
