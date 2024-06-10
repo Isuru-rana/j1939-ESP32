@@ -77,6 +77,7 @@ class Network : public Base
 
     Q_PROPERTY(addr_type address READ address NOTIFY addressChanged)
     Q_PROPERTY(state_type state READ state NOTIFY stateChanged)
+    Q_PROPERTY(bool isClaimed READ isClaimed NOTIFY stateChanged)
 
 public:
     Network(QObject* parent = nullptr) :
@@ -88,21 +89,11 @@ public:
         connect(&timer_, &QTimer::timeout, this, &Network::handler);
     }
 
-    void start(QCanBusDevice* device)
-    {
-        /*
-        connect(device, &QCanBusDevice::framesReceived, this, [&, device]
-        {
-            frameReceived(device->readFrame());
-        }); */
-        transport_.device_ = device;
-        sm_.start(transport_, clock::now());
-        schedule();
-        emit stateChanged(sm_.state());
-    }
+    void start(QCanBusDevice* device);
 
     addr_type address() const { return *sm_.address(); }
     state_type state() const { return sm_.state(); }
+    bool isClaimed() const { return sm_.state() == state_type::claimed; }
 
     void frameReceived(const QCanBusFrame&) override;
 

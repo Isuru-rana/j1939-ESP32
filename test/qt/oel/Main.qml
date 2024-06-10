@@ -2,6 +2,7 @@ import QtQuick
 
 import j1939 1.0
 import j1939.cs 1.0
+import j1939.ui 1.0
 
 Window {
     width: 640
@@ -17,12 +18,8 @@ Window {
         }
     }
 
-    Connections {
-        target: Session.network
-
-        // DEBT: This is really a fully bound property, so render it that way
-        function addressChanged(addr) {
-            console.log("addr: ", addr);
-        }
+    CAContainer {
+        network: Session.network
+        anchors.fill: parent
     }
 }

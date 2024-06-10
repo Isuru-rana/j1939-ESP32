@@ -13,6 +13,7 @@ include(FetchContent)
 add_subdirectory(../../../src/j1939 j1939)
 
 set(INCLUDES
+    ca.h
     cs/base.h
     cs/generic.h
     cs/generic.hpp
@@ -26,11 +27,15 @@ set(INCLUDES
 
 list(TRANSFORM INCLUDES PREPEND  include/j1939/qt/)
 
+set(PLUGIN_NAME ${PROJECT_NAME}plugin)
+
 qt_add_library(${PROJECT_NAME} STATIC)
 qt_add_qml_module(${PROJECT_NAME}
     URI j1939.ui
     VERSION 1.0
-    QML_FILES J1939LibControls.qml
+    QML_FILES
+        CAContainer.qml
+        J1939LibControls.qml
     SOURCES
         ${INCLUDES}
         cs/generic.cpp
@@ -62,4 +67,5 @@ add_library(j1939::qt ALIAS ${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(${PLUGIN_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

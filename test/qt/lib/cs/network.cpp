@@ -36,6 +36,21 @@ void Network::frameReceived(const QCanBusFrame& frame)
 }
 
 
+void Network::start(QCanBusDevice* device)
+{
+    /*
+        connect(device, &QCanBusDevice::framesReceived, this, [&, device]
+        {
+            frameReceived(device->readFrame());
+        }); */
+    transport_.device_ = device;
+    sm_.start(transport_, clock::now());
+    schedule();
+    emit stateChanged(sm_.state());
+}
+
+
+
 ExternalAddressObserver::ExternalAddressObserver(QObject* parent) :
     Base(parent)
 {
