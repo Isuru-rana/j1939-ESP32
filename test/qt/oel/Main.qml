@@ -16,4 +16,13 @@ Window {
             console.log(pdu)
         }
     }
+
+    Connections {
+        target: Session.network
+
+        // DEBT: This is really a fully bound property, so render it that way
+        function addressChanged(addr) {
+            console.log("addr: ", addr);
+        }
+    }
 }

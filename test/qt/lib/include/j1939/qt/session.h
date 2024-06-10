@@ -21,6 +21,7 @@ class Session : public QObject
     Q_OBJECT
 
     Q_PROPERTY(cs::v1::Generic* generic READ generic CONSTANT)
+    Q_PROPERTY(cs::v1::Network* network READ network CONSTANT)
 
 public:
     Session(QObject* parent = nullptr);
@@ -28,6 +29,7 @@ public:
     void setDevice(QCanBusDevice*);
 
     cs::v1::Generic* generic() { return &generic_; }
+    cs::v1::Network* network() { return &network_; }
 };
 
 }}

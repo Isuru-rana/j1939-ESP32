@@ -98,13 +98,14 @@ public:
 
     Q_INVOKABLE QString toString() const
     {
-        QString s("pgn: ");
+        QString s = QString("pgn=%1 (%2) sa=%3").
+            arg(to_string(pgn())).
+            arg(int(pgn()), 0, 16).
+            arg(int(source_address()), 0, 16);
 
         // Rather agitating we cannot get QMetaEnum to work comfortably without touching
         // pgn/enum itself.  Fortunately, type traits may be able to help us here
         //auto pgn2 = QMetaEnum::fromType<pgns>().valueToKey(int(pgn()));
-
-        s += to_string(pgn());
 
         return s;
     }
