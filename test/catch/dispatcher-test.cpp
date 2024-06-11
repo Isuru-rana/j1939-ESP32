@@ -3,6 +3,10 @@
 
 #include <embr/observer.h>
 
+// DEBT: Be very careful, if this guy doesn't appear before "implementors" such as dispatch.hpp,
+// OEL specializations get ignored
+#include <j1939/data_field/oel.hpp>
+
 // 11JUN24 Such an early take on this, I forgot all about this guy
 #include <j1939/dispatcher.hpp>
 
@@ -23,7 +27,9 @@ struct dispatch_functor
     template <pgns pgn>
     int operator()(j1939::internal::in_place_pgn<pgn>) const
     {
-        return 1;
+        using traits = j1939::internal::traits_wrapper<pgn>;
+
+        return traits::specialized;
     }
 
     int operator()(pgns) { return 0; }
@@ -79,6 +85,8 @@ TEST_CASE("dispatcher")
 
         id.range((uint32_t)pgns::oel);
 
-        j1939::internal::dispatch(dispatch_functor{}, id);
+        int specialized = j1939::internal::dispatch(dispatch_functor{}, id);
+
+        REQUIRE(specialized == 1);
     }
 }

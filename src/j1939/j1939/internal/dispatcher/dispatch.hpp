@@ -37,15 +37,18 @@ void dispatch_assist(estd::integer_sequence<Key, keys...>, F&& f, Key key)
 }
 #endif
 
+// DEBT: Eventually I want this to be just traits
 template <pgns pgn>
 using in_place_pgn = j1939::internal::traits_wrapper<pgn>;
 
 #define J1939_DISPATCH_TARGET(n)    \
-    case pgns::n:   return f(in_place_pgn<pgns::n>{});
+case pgns::n:   return f(in_place_pgn<pgns::n>{}, std::forward<Args>(args)...);
 
 
-template <ESTD_CPP_CONCEPT(concepts::Functor) F>
-auto dispatch(F&& f, pgns pgn_) -> decltype(f(pgns{}))
+// Want to do this, but the variadic portion is a little tricky
+//template <ESTD_CPP_CONCEPT(concepts::Functor) F>
+template <class F, class ...Args>
+auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}))
 {
     // NOTE: Would be interesting to do this with estd::variadic and/or a fold expression, but I am concerned that it would
     // destroy the optimizer
@@ -61,32 +64,53 @@ auto dispatch(F&& f, pgns pgn_) -> decltype(f(pgns{}))
     {
         J1939_DISPATCH_TARGET(acknowledgement)
         J1939_DISPATCH_TARGET(address_claimed)
+        J1939_DISPATCH_TARGET(ambient_conditions)
+        J1939_DISPATCH_TARGET(auxiliary_analog_information)
+        J1939_DISPATCH_TARGET(auxiliary_input_output_status_1)
+        J1939_DISPATCH_TARGET(battery_status)
+        J1939_DISPATCH_TARGET(brakes)
+        J1939_DISPATCH_TARGET(cab_illumination_message)
+        J1939_DISPATCH_TARGET(charger_status)
         J1939_DISPATCH_TARGET(cm1)
         J1939_DISPATCH_TARGET(cm3)
+        J1939_DISPATCH_TARGET(commanded_address)
+        J1939_DISPATCH_TARGET(dc_detailed_status)
         J1939_DISPATCH_TARGET(bjm1)
         J1939_DISPATCH_TARGET(bjm2)
-        J1939_DISPATCH_TARGET(oel)
+        J1939_DISPATCH_TARGET(extended_joystick_message_1)
+        J1939_DISPATCH_TARGET(gnss_position_data)
         J1939_DISPATCH_TARGET(lighting_command)
         J1939_DISPATCH_TARGET(lighting_data)
+        J1939_DISPATCH_TARGET(oel)
+        J1939_DISPATCH_TARGET(operator_indicators)
         J1939_DISPATCH_TARGET(sensor_electrical_power_1)
         J1939_DISPATCH_TARGET(sensor_electrical_power_2)
+        J1939_DISPATCH_TARGET(switch_bank_control)
+        J1939_DISPATCH_TARGET(switch_bank_status)
+        J1939_DISPATCH_TARGET(system_time)
+        J1939_DISPATCH_TARGET(time_date)
+        J1939_DISPATCH_TARGET(time_date_adjust)
+        J1939_DISPATCH_TARGET(trip_fan_information)
+        J1939_DISPATCH_TARGET(vehicle_direction_speed)
+        J1939_DISPATCH_TARGET(vehicle_hours)
+        J1939_DISPATCH_TARGET(vehicle_position)
         J1939_DISPATCH_TARGET(vep1)
         J1939_DISPATCH_TARGET(vep2)
         J1939_DISPATCH_TARGET(vep3)
 
-        default:    return f(pgn_);
+        default:    return f(pgn_, std::forward<Args>(args)...);
     }
 }
 
 #undef J1939_DISPATCH_TARGET
 
-template <class F>
-auto dispatch(F&& f, can_id id) -> decltype(f(pgns{}))
+template <class F, class ...Args>
+auto dispatch(F&& f, can_id id, Args&&...args) -> decltype(f(pgns{}))
 {
     const uint16_t pgn_ = id.is_pdu1() ?
         pdu1_header(id).range() :
         pdu2_header(id).range();
-    return dispatch(std::forward<F>(f), pgns(pgn_));
+    return dispatch(std::forward<F>(f), pgns(pgn_), std::forward<Args>(args)...);
 }
 
 

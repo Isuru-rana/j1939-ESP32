@@ -318,8 +318,8 @@ struct payload_put<pgns::oel> : estd::internal::ostream_functor_tag
 
     constexpr explicit payload_put(const data_field<pgns::oel>& payload) : payload{payload} {}
 
-    template <class TStreambuf, class TBase>
-    void operator()(estd::detail::basic_ostream<TStreambuf, TBase>& out) const
+    template <class Streambuf, class Base>
+    void operator()(estd::detail::basic_ostream<Streambuf, Base>& out) const
     {
         out << "high beam=" << payload.high_low_beam_switch();
     }
