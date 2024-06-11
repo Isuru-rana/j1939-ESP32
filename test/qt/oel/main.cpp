@@ -6,6 +6,7 @@
 
 #include <j1939/qt/session.h>
 #include <j1939/qt/ca/oel.h>
+#include <j1939/qt/ca/lighting_command.h>
 
 using namespace embr;
 
@@ -27,8 +28,10 @@ int main(int argc, char *argv[])
     auto session = new embr::j1939::qt::Session(&engine);
 
     auto oel = new j1939::qt::ca::OEL(session);
+    auto lcmd = new j1939::qt::ca::LightingCommand(session);
 
     session->clients().push_back(oel);
+    session->clients().push_back(lcmd);
 
     qmlRegisterSingletonInstance("j1939", 1, 0, "Session", session);
 
@@ -45,6 +48,7 @@ int main(int argc, char *argv[])
 
         session->setDevice(device);
         oel->start(device);
+        lcmd->start(device);
 
         device->connectDevice();
     }

@@ -42,6 +42,7 @@ enum pgns2
 
 Q_ENUM_NS(pgns2)
 
+// Consider deriving this from QQmlPropertyMap so that we can bypass 'payload' property
 class Pdu : public QObject
 {
     can_id can_id_;
@@ -54,7 +55,7 @@ class Pdu : public QObject
     Q_PROPERTY(pgns pgn READ pgn CONSTANT)
     Q_PROPERTY(uint8_t source_address READ source_address CONSTANT)
     Q_PROPERTY(uint8_t destination_address READ destination_address CONSTANT)
-    Q_PROPERTY(DataField* payload READ payload CONSTANT)
+    Q_PROPERTY(QQmlPropertyMap* payload READ payload CONSTANT)
     //Q_PROPERTY(uint8_t destination_address READ source_address CONSTANT)
 
 public:
@@ -94,7 +95,12 @@ public:
         return h.destination_address();
     }
 
-    DataField* payload() { return &data_field_; }
+    // DEBT: Needed from Generic::process_incoming for populate.  Confusing and probably
+    // we can rework the populate into the constructor
+    DataField& data_field() { return data_field_; }
+
+    //DataField* payload() { return &data_field_; }
+    QQmlPropertyMap* payload() { return data_field_.map(); }
 
     Q_INVOKABLE QString toString() const
     {

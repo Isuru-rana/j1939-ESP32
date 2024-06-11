@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QQmlPropertyMap>
 #include <QVariant>
 
 #include <j1939/data_field.h>
@@ -10,10 +11,16 @@ namespace embr::j1939::qt { inline namespace v0 {
 
 // EXPERIMENTAL
 // Auto population of PGN data field
+// TODO: setProperty & friends aren't visible from QML (wow)
+// See https://stackoverflow.com/questions/34379524/how-to-dynamically-add-remove-qml-properties-inside-c
+// Need https://doc.qt.io/qt-6.5/qqmlpropertymap.html
 class DataField : public QObject
 {
+    QQmlPropertyMap map_;
+
     Q_OBJECT
 
+    // DEBT - this guy is dormant I think, document or get rid of him
 #if __cpp_fold_expressions
     template <spns spn>
     void populate(spn::traits<spn>)
@@ -34,10 +41,14 @@ class DataField : public QObject
     template <class Rep, class Period, class Tag, class F = estd::internal::units::passthrough<Rep>>
     using unit = estd::internal::units::unit_base<Rep, Period, Tag, F>;
 
+    Q_PROPERTY(QQmlPropertyMap* map READ map CONSTANT)
+
 public:
     DataField(QObject* parent = nullptr) :
         QObject(parent)
     {}
+
+    QQmlPropertyMap* map() { return &map_; }
 
     template <class Rep, class Period, class Tag, class F, spns spn>
     void operator()(j1939::spn::traits<spn>, const unit<Rep, Period, Tag, F>& value)
@@ -47,7 +58,10 @@ public:
 
         QVariant v(converted.count());
 
+        // DEBT: Whole thing was set up to use setProperty, but QML can't see it.
+        // a little clunky now since we're doing both and I just tossed map in there
         setProperty(traits::name(), v);
+        map_[traits::name()] = v;
     }
 
     template <class T, spns spn>
@@ -59,6 +73,7 @@ public:
         QVariant v(v2);
 
         setProperty(traits::name(), v);
+        map_[traits::name()] = v;
     }
 
     template <pgns pgn, class Container>

@@ -15,16 +15,18 @@ template <class TimePoint>
 void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
 {
     constexpr const estd::chrono::milliseconds flash_delay(500);
-    bool on_already = state_ != STATE_FLASH_ON;
+    bool on_already = state_ == STATE_FLASH_ON;
 
     using signal = enum_type<spns::turn_signal_switch>;
     using hazard = enum_type<spns::hazard_light_switch>;
+
+    // TODO: Switch these next_event_ to +=
 
     switch(last_oel_.turn_signal_switch())
     {
         case signal::right_turn_to_be_flashing:
             next_event_ = c.current + flash_delay;
-            c.next(flash_delay);
+            //c.next(flash_delay);
             out_p.right_turn_signal(
                 on_already ?
                     spn::control_commands::disable :
@@ -33,7 +35,7 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
 
         case signal::left_turn_to_be_flashing:
             next_event_ = c.current + flash_delay;
-            c.next(flash_delay);
+            //c.next(flash_delay);
             out_p.left_turn_signal(
                 on_already ?
                     spn::control_commands::disable :
@@ -44,6 +46,8 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
             out_p.right_turn_signal(spn::control_commands::disable);
             out_p.left_turn_signal(spn::control_commands::disable);
             break;
+
+        default: break;
     }
 
     switch(last_oel_.hazard_light_switch())
@@ -52,6 +56,8 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
             //out_p.right_turn_signal(spn::control_commands::enable);
             //out_p.left_turn_signal(spn::control_commands::enable);
             break;
+
+        default: break;
     }
 
     state_ = on_already ? STATE_FLASH_OFF : STATE_FLASH_ON;
@@ -67,7 +73,7 @@ bool lighting_command<TimePoint>::process_incoming(Transport& t, const pdu<pgns:
 
     using traits = transport_traits<Transport>;
 
-    pdu<pgns::lcmd> out_p(c.self_address, addresses::global);
+    pdu<pgns::lcmd> out_p(c.self_address);
 
     prep(out_p, c);
 
@@ -84,7 +90,7 @@ bool lighting_command<TimePoint>::process_outgoing(Transport& t, const context& 
 
     using traits = transport_traits<Transport>;
 
-    pdu<pgns::lcmd> out_p(c.self_address, addresses::global);
+    pdu<pgns::lcmd> out_p(c.self_address);
 
     prep(out_p, c);
 

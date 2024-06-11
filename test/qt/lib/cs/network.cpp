@@ -10,7 +10,7 @@ void Network::updateState()
     const state_type state = sm_.state();
     if(state != last_state_)
     {
-        //qDebug() << this << "state=" << int(state);
+        qDebug() << this << "state=" << int(state);
 
         emit stateChanged(state);
 
@@ -38,9 +38,10 @@ void Network::handler()
 void Network::frameReceived(QCanBusDevice* device, const QCanBusFrame& frame)
 {
     //qDebug() << this << "frameReceived";
+    context_type c(clock::now());
 
     can::qt_transport t{device};
-    process_incoming(sm_, t, frame);
+    process_incoming(sm_, t, frame, c);
     updateState();
 
     // DEBT: Consider if next_event_ gets accellerated

@@ -15,11 +15,9 @@ class lighting_command : public cs::v1::base
 
     TimePoint next_event_;
 
+public:
     using context = sm::v0::context<TimePoint>;
 
-    void prep(pdu<pgns::lcmd>&, const context&);
-
-public:
     enum states
     {
         STATE_IDLE,
@@ -28,12 +26,16 @@ public:
     };
 
 protected:
+    void prep(pdu<pgns::lcmd>&, const context&);
+
     data_field<pgns::oel> last_oel_;
 
     states state_;
 
 public:
     using time_point = TimePoint;
+
+    constexpr states state() const { return state_; }
 
     using base_type::process_incoming;
 

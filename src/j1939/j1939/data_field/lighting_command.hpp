@@ -14,13 +14,25 @@ namespace embr { namespace j1939 {
 namespace spn {
 
 template <>
-struct type_traits<spns::left_stop_lights_cmd> : internal::status_type_traits {};
+struct type_traits<spns::left_stop_lights_cmd> : internal::status_type_traits
+{
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "left_stop_lights"; }
+};
 
 template <>
-struct type_traits<spns::right_stop_lights_cmd> : internal::status_type_traits {};
+struct type_traits<spns::right_stop_lights_cmd> : internal::status_type_traits
+{
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "right_stop_lights"; }
+};
 
 template <>
-struct type_traits<spns::center_stop_lights_cmd> : internal::status_type_traits {};
+struct type_traits<spns::center_stop_lights_cmd> : internal::status_type_traits
+{
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "center_stop_lights"; }
+};
 
 template <>
 struct type_traits<spns::left_turn_signal_lights_cmd> : internal::status_type_traits
@@ -37,10 +49,18 @@ struct type_traits<spns::right_turn_signal_lights_cmd> : internal::status_type_t
 };
 
 template <>
-struct type_traits<spns::low_beam_headlight_cmd> : internal::status_type_traits {};
+struct type_traits<spns::low_beam_headlight_cmd> : internal::status_type_traits
+{
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "low_beam_headlight"; }
+};
 
 template <>
-struct type_traits<spns::high_beam_headlight_cmd> : internal::status_type_traits {};
+struct type_traits<spns::high_beam_headlight_cmd> : internal::status_type_traits
+{
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "high_beam_headlight"; }
+};
 
 template <>
 struct type_traits<spns::front_fog_lights_cmd> : internal::status_type_traits {};

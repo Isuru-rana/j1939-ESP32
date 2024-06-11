@@ -24,7 +24,7 @@ bool Generic::process_incoming(can::qt_transport&, const pdu<pgn>& p)
     }
     else
     {
-        p2->payload()->populate(p);
+        p2->data_field().populate(p);
         //DataField df(this);
 
         //df.populate(p);

@@ -4,7 +4,7 @@
 
 #include <j1939/cs/base.h>
 #include <j1939/cas/internal/prng_address_manager.h>
-#include <j1939/state-machines/network.hpp>
+#include <j1939/state-machines/network/network.hpp>
 
 #include "../transport.h"
 #include "../NAME.h"
@@ -49,11 +49,13 @@ class Network : public Base
     using addr_type = uint8_t;
     using state_type = sm::v1::network_enum::states;
     using substates = sm::v1::network_enum::substates;
+    using addrmgr_type = internal::prng_address_manager;
+    using sm_type = sm::v1::network<addrmgr_type, clock::time_point>;
+    using context_type = sm_type::context<clock::time_point>;
 
     //layer1::NAME name_;
     QTimer timer_;
-    using addrmgr_type = internal::prng_address_manager;
-    sm::v1::network<addrmgr_type, clock::time_point> sm_;
+    sm_type sm_;
     can::qt_transport transport_;
 
     void schedule()

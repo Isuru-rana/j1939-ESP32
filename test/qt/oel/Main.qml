@@ -15,7 +15,8 @@ Window {
         target: Session.generic
 
         function onPduReceived(pdu) {
-            console.log(pdu)
+            // Works great, just done by Debug1 now
+            //console.log(pdu)
         }
     }
 
@@ -29,6 +30,7 @@ Window {
         }
 
         Debug1 {
+            generic: Session.generic
             ca: Session.clients[0]
             Layout.fillWidth: true
 
