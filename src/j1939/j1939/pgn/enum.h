@@ -49,6 +49,7 @@ enum class pgns : uint32_t
     time_date_adjust = 0xD5,                    // [11] aka TDA
     anti_theft_status = 0xDC,                   // [13]
     cab_message1 = 0xE0,                        ///< [11] - "Message containing parameters originating from the vehicle cab."
+    cm1 = cab_message1,
     vt12 = 0xE6,                                ///< Virtual Terminal-to-Node (ISO 11783-6) [8]
     vt21 = 0xE7,                                ///< Virtual Node-to-Terminal (ISO 11783-6) [8]
     acknowledgement = 0xE8,                     // [7], [15]
@@ -97,6 +98,7 @@ enum class pgns : uint32_t
     fms_identity = 64977,                       // [13]
     ecu_performance = 64978,                    // [13]
     cab_message_3 = 64980,                      // [8]
+    cm3 = cab_message_3,
     basic_joystick_message_1 = 64982,           // [13]
     bjm1 = basic_joystick_message_1,
     extended_joystick_message_1 = 64983,        // [13]

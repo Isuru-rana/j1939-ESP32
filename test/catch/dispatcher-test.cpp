@@ -3,7 +3,11 @@
 
 #include <embr/observer.h>
 
+// 11JUN24 Such an early take on this, I forgot all about this guy
 #include <j1939/dispatcher.hpp>
+
+// 11JUN24 New flavor
+#include <j1939/internal/dispatcher/dispatch.hpp>
 
 #include <j1939/pgn.h>
 
@@ -13,6 +17,17 @@
 
 using namespace embr;
 using namespace embr::j1939;
+
+struct dispatch_functor
+{
+    template <pgns pgn>
+    int operator()(j1939::internal::in_place_pgn<pgn>) const
+    {
+        return 1;
+    }
+
+    int operator()(pgns) { return 0; }
+};
 
 struct SyntheticObserver
 {
@@ -32,7 +47,7 @@ struct SyntheticObserver
 
 TEST_CASE("dispatcher")
 {
-    SECTION("dispatcher")
+    SECTION("early version")
     {
         pdu2_header id{0};
 
@@ -57,5 +72,13 @@ TEST_CASE("dispatcher")
         {
 
         }
+    }
+    SECTION("functor flavor")
+    {
+        pdu2_header id{0};
+
+        id.range((uint32_t)pgns::oel);
+
+        j1939::internal::dispatch(dispatch_functor{}, id);
     }
 }
