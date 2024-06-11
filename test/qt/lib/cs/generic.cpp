@@ -12,7 +12,7 @@
 
 namespace embr::j1939::qt::cs { inline namespace v1 {
 
-void Generic::frameReceived(const QCanBusFrame& frame)
+void Generic::frameReceived(QCanBusDevice*, const QCanBusFrame& frame)
 {
     embr::can::qt_transport t;
 

@@ -34,7 +34,7 @@ struct ExternalAddressObserver :
 
     ExternalAddressObserver(QObject* parent);
 
-    void frameReceived(const QCanBusFrame&) override;
+    void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
 
 signals:
     // In addition to primary address acquisition duties, we also announce
@@ -95,7 +95,7 @@ public:
     state_type state() const { return sm_.state(); }
     bool isClaimed() const { return sm_.state() == state_type::claimed; }
 
-    void frameReceived(const QCanBusFrame&) override;
+    void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
 
 signals:
     void stateChanged(state_type);

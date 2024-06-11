@@ -14,6 +14,8 @@ add_subdirectory(../../../src/j1939 j1939)
 
 set(INCLUDES
     ca.h
+    ca/lighting_command.h
+    ca/oel.h
     cs/base.h
     cs/generic.h
     cs/generic.hpp
@@ -38,6 +40,8 @@ qt_add_qml_module(${PROJECT_NAME}
         J1939LibControls.qml
     SOURCES
         ${INCLUDES}
+        ca/lighting_command.cpp
+        ca/oel.cpp
         cs/generic.cpp
         cs/network.cpp
         cs/tp.cpp

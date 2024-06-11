@@ -20,8 +20,9 @@ qt_add_qml_module(${TARGET_NAME}
     URI oel
     VERSION 1.0
     QML_FILES
+        Dash.qml
+        Debug1.qml
         Main.qml
-        QML_FILES Dash.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

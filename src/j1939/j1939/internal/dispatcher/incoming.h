@@ -32,5 +32,13 @@ inline bool process_incoming(Impl& impl, Transport& t, const typename Transport:
     return process_incoming(state, f);
 }
 
+// FIX: Not ready yet.  Eventually all will be Transport&&
+template <class Transport, class Impl>
+inline bool process_incoming(Impl& impl, Transport&& t, const typename Transport::frame& f)
+{
+    internal::app_state<Transport, Impl, estd::monostate> state{std::forward<Transport>(t), impl};
+
+    return process_incoming(state, f);
+}
 
 }}

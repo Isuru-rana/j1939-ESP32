@@ -25,7 +25,7 @@ class Generic : public Base,
 public:
     Generic(QObject* parent = nullptr) : Base(parent)   {}
 
-    void frameReceived(const QCanBusFrame&) override;
+    void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
 
     template <pgns pgn>
     bool process_incoming(can::qt_transport&, const pdu<pgn>& p);

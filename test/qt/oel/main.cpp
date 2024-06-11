@@ -6,6 +6,8 @@
 #include <j1939/qt/cs/network.h>
 #include <j1939/qt/transport.h>
 #include <j1939/qt/session.h>
+#include <j1939/qt/ca/oel.h>
+#include <j1939/qt/ca/lighting_command.h>
 
 int main(int argc, char *argv[])
 {
@@ -16,6 +18,8 @@ int main(int argc, char *argv[])
     //qmlRegisterType<embr::j1939::qt::Session>("j1939", 1, 0, "Session");
     qmlRegisterType<embr::j1939::qt::cs::v1::Generic>("j1939.cs", 1, 0, "Generic");
     qmlRegisterType<embr::j1939::qt::cs::v1::Network>("j1939.cs", 1, 0, "Network");
+    qmlRegisterType<embr::j1939::qt::ca::v1::LightingCommand>("j1939.ca", 1, 0, "LCMD");
+    qmlRegisterType<embr::j1939::qt::ca::v1::OEL>("j1939.ca", 1, 0, "OEL");
 
     QQmlApplicationEngine engine;
     QObject::connect(
@@ -26,9 +30,9 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection
     );
 
-    embr::j1939::qt::Session session(&engine);
+    auto session = new embr::j1939::qt::Session(&engine);
 
-    qmlRegisterSingletonInstance("j1939", 1, 0, "Session", &session);
+    qmlRegisterSingletonInstance("j1939", 1, 0, "Session", session);
 
     engine.loadFromModule("oel", "Main");
 
@@ -40,7 +44,7 @@ int main(int argc, char *argv[])
         device->setConfigurationParameter(QCanBusDevice::LoopbackKey, true);
         device->setConfigurationParameter(QCanBusDevice::ReceiveOwnKey, true);
 
-        session.setDevice(device);
+        session->setDevice(device);
 
         device->connectDevice();
     }

@@ -138,6 +138,7 @@ enum class pgns : uint32_t
     ecm_information = 0xFDC9,                   // [14]
     lighting_data = 0xFE40,
     lighting_command = 0xFE41,                  // [8]  ISO 11783-7
+    lcmd = lighting_command,
     commanded_address = 0xFED8,                 // [7], [8], [10]
     software_identification = 0xFEDA,           // [7]
     component_identification = 0xFEEB,          // [7]

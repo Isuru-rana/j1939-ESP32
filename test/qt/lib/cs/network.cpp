@@ -27,7 +27,7 @@ void Network::handler()
 }
 
 
-void Network::frameReceived(const QCanBusFrame& frame)
+void Network::frameReceived(QCanBusDevice*, const QCanBusFrame& frame)
 {
     process_incoming(sm_, transport_, frame);
     updateState();
@@ -58,7 +58,7 @@ ExternalAddressObserver::ExternalAddressObserver(QObject* parent) :
 }
 
 
-void ExternalAddressObserver::frameReceived(const QCanBusFrame& frame)
+void ExternalAddressObserver::frameReceived(QCanBusDevice*, const QCanBusFrame& frame)
 {
     embr::can::qt_transport t;
 

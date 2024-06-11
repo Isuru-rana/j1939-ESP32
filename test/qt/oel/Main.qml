@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 
 import j1939 1.0
 import j1939.cs 1.0
@@ -18,8 +19,18 @@ Window {
         }
     }
 
-    CAContainer {
-        network: Session.network
+    ColumnLayout {
+
         anchors.fill: parent
+
+        CAContainer {
+            network: Session.network
+            Layout.fillWidth: true
+        }
+
+        Debug1 {
+            Layout.fillWidth: true
+
+        }
     }
 }

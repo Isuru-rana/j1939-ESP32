@@ -23,8 +23,8 @@ void Session::setDevice(QCanBusDevice* device)
 
             //qDebug() << "Got frame:" << Qt::hex << frame.frameId();
 
-            generic_.frameReceived(frame);
-            network_.frameReceived(frame);
+            generic_.frameReceived(can_, frame);
+            network_.frameReceived(can_, frame);
         }
     });
 

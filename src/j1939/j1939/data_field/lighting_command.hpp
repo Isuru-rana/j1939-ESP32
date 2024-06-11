@@ -146,11 +146,11 @@ constexpr descriptor get_descriptor<spns::rear_fog_lights_cmd>()
 }
 
 // Represents [reference broken] Section 5.2. generally and [1] Section 5.2.7.1. specifically
-template<class TContainer>
-struct data_field<pgns::lighting_command, TContainer> :
-    internal::data_field_base<TContainer>
+template<class Container>
+struct data_field<pgns::lighting_command, Container> :
+    internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
     ESTD_CPP_FORWARDING_CTOR(data_field)
 
