@@ -69,6 +69,7 @@ public:
     const address_type& address() const { return address_; }
 
     constexpr states state() const { return state_; }
+    constexpr substates substate() const { return substate_; }
 
     void state(states s, substates ss)
     {
@@ -80,7 +81,8 @@ public:
     // preferred.  See layer2::NAME in fwd for more details as to
     // why it doesn't work yet
     //const layer2::NAME name() { return { name_.data() }; }
-    const layer1::NAME& name() { return name_; }
+    layer1::NAME& name() { return name_; }
+    const layer1::NAME& name() const { return name_; }
 
     using milliseconds = estd::chrono::milliseconds;
 

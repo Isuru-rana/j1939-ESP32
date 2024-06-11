@@ -15,16 +15,18 @@ class Session : public QObject
 {
     QCanBusDevice* can_ = nullptr;
 
+    using cs_type = cs::v1::Base*;
+
     cs::v1::Generic generic_;
     cs::v1::Network network_;
 
-    QList<cs::v1::Base*> css_;
+    QList<cs_type> css_;
 
     Q_OBJECT
 
     Q_PROPERTY(cs::v1::Generic* generic READ generic CONSTANT)
     Q_PROPERTY(cs::v1::Network* network READ network CONSTANT)
-    Q_PROPERTY(QList<cs::v1::Base*> clients READ clients CONSTANT)
+    Q_PROPERTY(QList<cs_type> clients READ clients CONSTANT)
 
 public:
     Session(QObject* parent = nullptr);
@@ -33,7 +35,7 @@ public:
 
     cs::v1::Generic* generic() { return &generic_; }
     cs::v1::Network* network() { return &network_; }
-    QList<cs::v1::Base*> clients() { return css_; }
+    QList<cs_type>& clients() { return css_; }
 };
 
 }}

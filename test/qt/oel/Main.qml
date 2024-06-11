@@ -29,6 +29,7 @@ Window {
         }
 
         Debug1 {
+            ca: Session.clients[0]
             Layout.fillWidth: true
 
         }

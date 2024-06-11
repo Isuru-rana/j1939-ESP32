@@ -12,12 +12,17 @@ class OEL : public ControllerApplication
 {
     using clock = std::chrono::system_clock;
 
+    Q_OBJECT
+
 public:
-    OEL(QObject* parent = nullptr) :
-        ControllerApplication(parent)
-    {}
+    OEL(QObject* parent = nullptr);
 
     void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
+
+    Q_INVOKABLE void leftSignal();
+    Q_INVOKABLE void rightSignal();
+
+    void start(QCanBusDevice*);
 };
 
 }}

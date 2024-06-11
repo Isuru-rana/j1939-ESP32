@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../pdu.h"
+
 #include "../data_field/oel.hpp"
 #include "../data_field/lighting_command.hpp"
 

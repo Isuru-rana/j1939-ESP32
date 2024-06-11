@@ -11,6 +11,9 @@ class ControllerApplication : public cs::v1::Base
 protected:
     cs::v1::Network network_;
 
+    template <pgns pgn>
+    bool send(const pdu<pgn>& p);
+
     Q_PROPERTY(cs::v1::Network* network READ network CONSTANT)
 
 public:
@@ -24,5 +27,13 @@ public:
         return &network_;
     }
 };
+
+template <pgns pgn>
+bool ControllerApplication::send(const pdu<pgn>& p)
+{
+    using traits = j1939::transport_traits<can::qt_transport>;
+
+    return traits::send(network_.transport(), p);
+}
 
 }}

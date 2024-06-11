@@ -48,8 +48,9 @@ class Network : public Base
     using milliseconds = std::chrono::milliseconds;
     using addr_type = uint8_t;
     using state_type = sm::v1::network_enum::states;
+    using substates = sm::v1::network_enum::substates;
 
-    layer1::NAME name_;
+    //layer1::NAME name_;
     QTimer timer_;
     using addrmgr_type = internal::prng_address_manager;
     sm::v1::network<addrmgr_type, clock::time_point> sm_;
@@ -70,6 +71,7 @@ class Network : public Base
     }
 
     state_type last_state_ = state_type::unstarted;
+    substates last_substate_ = substates::unstarted;
 
     void updateState();
 
@@ -77,13 +79,24 @@ class Network : public Base
 
     Q_PROPERTY(addr_type address READ address NOTIFY addressChanged)
     Q_PROPERTY(state_type state READ state NOTIFY stateChanged)
+    Q_PROPERTY(substates substate READ substate NOTIFY substateChanged)
     Q_PROPERTY(bool isClaimed READ isClaimed NOTIFY stateChanged)
 
 public:
+    // DEBT: Dedup these two constructors
     Network(QObject* parent = nullptr) :
         Base(parent),
         timer_{parent},
-        sm_{addrmgr_type{}, name_}
+        sm_{addrmgr_type{}, layer1::NAME{j1939::null_t{}}}
+    {
+        timer_.setSingleShot(true);
+        connect(&timer_, &QTimer::timeout, this, &Network::handler);
+    }
+
+    Network(layer1::NAME name, QObject* parent = nullptr) :
+        Base(parent),
+        timer_{parent},
+        sm_{addrmgr_type{}, name}
     {
         timer_.setSingleShot(true);
         connect(&timer_, &QTimer::timeout, this, &Network::handler);
@@ -93,12 +106,16 @@ public:
 
     addr_type address() const { return *sm_.address(); }
     state_type state() const { return sm_.state(); }
+    substates substate() const { return sm_.substate(); }
     bool isClaimed() const { return sm_.state() == state_type::claimed; }
+    layer1::NAME& name() { return sm_.name(); }
+    can::qt_transport& transport() { return transport_; }
 
     void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
 
 signals:
     void stateChanged(state_type);
+    void substateChanged(substates);
     void addressChanged(addr_type);
 
 private slots:

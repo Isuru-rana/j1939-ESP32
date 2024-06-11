@@ -10,12 +10,20 @@ void Network::updateState()
     const state_type state = sm_.state();
     if(state != last_state_)
     {
+        //qDebug() << this << "state=" << int(state);
+
         emit stateChanged(state);
 
         if(state == state_type::claimed)
             emit addressChanged(address());
 
         last_state_ = state;
+    }
+    else if(sm_.substate() != last_substate_)
+    {
+        //qDebug() << this << "substate=" << int(sm_.substate());
+        emit sm_.substate();
+        last_substate_ = sm_.substate();
     }
 }
 
@@ -27,9 +35,12 @@ void Network::handler()
 }
 
 
-void Network::frameReceived(QCanBusDevice*, const QCanBusFrame& frame)
+void Network::frameReceived(QCanBusDevice* device, const QCanBusFrame& frame)
 {
-    process_incoming(sm_, transport_, frame);
+    //qDebug() << this << "frameReceived";
+
+    can::qt_transport t{device};
+    process_incoming(sm_, t, frame);
     updateState();
 
     // DEBT: Consider if next_event_ gets accellerated

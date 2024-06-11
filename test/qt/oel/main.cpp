@@ -2,24 +2,16 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 
-#include <j1939/qt/cs/generic.h>
-#include <j1939/qt/cs/network.h>
-#include <j1939/qt/transport.h>
+#include <j1939/qt/plugin.h>
+
 #include <j1939/qt/session.h>
 #include <j1939/qt/ca/oel.h>
-#include <j1939/qt/ca/lighting_command.h>
+
+using namespace embr;
 
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
-
-    qmlRegisterType<embr::j1939::qt::DataField>("j1939", 1, 0, "DataField");
-    qmlRegisterType<embr::j1939::qt::Pdu>("j1939", 1, 0, "Pdu");
-    //qmlRegisterType<embr::j1939::qt::Session>("j1939", 1, 0, "Session");
-    qmlRegisterType<embr::j1939::qt::cs::v1::Generic>("j1939.cs", 1, 0, "Generic");
-    qmlRegisterType<embr::j1939::qt::cs::v1::Network>("j1939.cs", 1, 0, "Network");
-    qmlRegisterType<embr::j1939::qt::ca::v1::LightingCommand>("j1939.ca", 1, 0, "LCMD");
-    qmlRegisterType<embr::j1939::qt::ca::v1::OEL>("j1939.ca", 1, 0, "OEL");
 
     QQmlApplicationEngine engine;
     QObject::connect(
@@ -30,13 +22,20 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection
     );
 
+    j1939::qt::Plugin::init();
+
     auto session = new embr::j1939::qt::Session(&engine);
+
+    auto oel = new j1939::qt::ca::OEL(session);
+
+    session->clients().push_back(oel);
 
     qmlRegisterSingletonInstance("j1939", 1, 0, "Session", session);
 
     engine.loadFromModule("oel", "Main");
 
-    if (QCanBus::instance()->plugins().contains(QStringLiteral("virtualcan"))) {
+    if (QCanBus::instance()->plugins().contains(QStringLiteral("virtualcan")))
+    {
         QCanBusDevice *device = QCanBus::instance()->createDevice(
             QStringLiteral("virtualcan"), QStringLiteral("can0"));
 
@@ -45,6 +44,7 @@ int main(int argc, char *argv[])
         device->setConfigurationParameter(QCanBusDevice::ReceiveOwnKey, true);
 
         session->setDevice(device);
+        oel->start(device);
 
         device->connectDevice();
     }

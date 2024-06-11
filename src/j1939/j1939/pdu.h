@@ -105,6 +105,15 @@ public:
         data_field_type{data}
     {}
 
+    // EXPERIMENTAL
+    template <class ...Args>
+    pdu2(uint8_t sa, Args&&...args) :
+        id{descriptor().default_priority, pgn},
+        data_field_type{std::forward<Args>(args)...}
+    {
+        source_address(sa);
+    }
+
     const pdu2_header& can_id() const { return *this; }
     pdu2_header& can_id() { return *this; }
     const data_field_type& payload() const { return *this; }

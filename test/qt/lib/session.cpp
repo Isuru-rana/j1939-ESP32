@@ -25,6 +25,11 @@ void Session::setDevice(QCanBusDevice* device)
 
             generic_.frameReceived(can_, frame);
             network_.frameReceived(can_, frame);
+
+            for(cs_type cs : css_)
+            {
+                cs->frameReceived(can_, frame);
+            }
         }
     });
 
