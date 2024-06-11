@@ -14,6 +14,7 @@ protected:
     using spns = embr::j1939::spns;
 
 public:
+    // DEBT: Need a Context variety of this one too
     // Undefined/unhandled CAN frame
     template <class Transport, class Frame>
     static constexpr bool process_incoming_default(const Transport&, const Frame&)

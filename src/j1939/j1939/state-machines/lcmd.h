@@ -15,6 +15,10 @@ class lighting_command : public cs::v1::base
 
     TimePoint next_event_;
 
+    // DEBT: Clumsy way to enforce the necessity of context
+    template <class Transport, pgns pgn>
+    bool process_incoming(Transport&, const pdu<pgn>&);
+
 public:
     using context = sm::v0::context<TimePoint>;
 
