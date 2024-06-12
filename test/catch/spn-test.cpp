@@ -41,6 +41,13 @@ TEST_CASE("spn")
 
         REQUIRE(traits_type::noop(3, false) == true);
 
+        SECTION("specialized detect")
+        {
+            // DEBT: Make this work with spn::traits, overcome get_descriptor
+            using traits = spn::type_traits<spns::fms_diagnostic_supported>;
+
+            REQUIRE(traits::is_specialized == false);
+        }
         SECTION("runtime compare")
         {
             SECTION("lighting")

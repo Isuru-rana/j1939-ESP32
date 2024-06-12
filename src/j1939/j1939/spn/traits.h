@@ -106,6 +106,10 @@ struct type_traits_base
     // EXPERIMENTAL, name of spn
     static constexpr const char* name() { return nullptr; }
     static constexpr const char* description() { return nullptr; }
+
+    // EXPERIMENTAL -
+    // true here so that specializers can easily derive from this
+    static constexpr bool is_specialized = true;
 };
 
 // Overrides value_type with enum_type
@@ -193,6 +197,8 @@ struct type_traits :
     internal::type_traits_base<uint8_t>,
     intrinsic_tag
 {
+    // EXPERIMENTAL
+    static constexpr bool is_specialized = false;
 };
 
 
