@@ -51,7 +51,7 @@ struct get_helper;
 
 namespace internal {
 
-template <pgns pgn, class TContainer = typename data_field<pgn>::container_type>
+template <pgns pgn, class Container = typename data_field<pgn>::container_type>
 struct payload_put;
 
 template <class Container, bits::endianness e = bits::little_endian>

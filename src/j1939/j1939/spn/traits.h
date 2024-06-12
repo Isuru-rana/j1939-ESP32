@@ -57,6 +57,16 @@ struct range_traits
 
 namespace internal {
 
+
+// EXPERIMENTAL
+enum traits_enum
+{
+    TRAITS_NONE     =   0x0000,
+    TRAITS_ENUM     =   0x0001,
+    TRAITS_ASCII    =   0x0002,
+    TRAITS_NAME     =   0x0003
+};
+
 template <>
 struct numeric_traits<2>
 {
@@ -110,6 +120,7 @@ struct type_traits_base
     // EXPERIMENTAL -
     // true here so that specializers can easily derive from this
     static constexpr bool is_specialized = true;
+    static constexpr traits_enum features = TRAITS_NONE;
 };
 
 // Overrides value_type with enum_type
@@ -118,6 +129,11 @@ struct enum_traits_base : type_traits_base<Int>
 {
     typedef Enum enum_type;
     typedef Enum value_type;
+
+    // EXPERIMENTAL
+    static constexpr traits_enum features =
+        type_traits_base<Int>::features |
+        TRAITS_ENUM;
 };
 
 // helper for status command types
@@ -136,6 +152,9 @@ struct ascii_type_traits
     // EXPERIMENTAL, name of spn
     static constexpr const char* name() { return nullptr; }
     static constexpr const char* description() { return nullptr; }
+
+    // EXPERIMENTAL
+    static constexpr traits_enum features = TRAITS_ASCII;
 };
 
 
@@ -145,6 +164,8 @@ struct address_type_traits_base :
     internal::type_traits_base<uint8_t>,
     j1939::internal::address_type_traits_base
 {
+    // EXPERIMENTAL
+    static constexpr traits_enum features = TRAITS_NAME;
 };
 
 

@@ -14,19 +14,25 @@ enum class pgns : uint32_t;
 
 namespace internal {
 
-template <pgns pgn>
+template <pgns pgn, class Enabled = void>
 struct pgn_put;
 
 }
 
 namespace pgn {
 
+#define FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER 0
+
+#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
+template <pgns>
+struct traits
+{
+    static constexpr bool is_specialized = false;
+};
+#else
 template <pgns>
 struct traits;
-// traits_wrapper does this for us
-//{
-//    static constexpr bool is_specialized = false;
-//};
+#endif
 
 struct descriptor
 {

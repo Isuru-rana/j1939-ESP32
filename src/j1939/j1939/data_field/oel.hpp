@@ -248,12 +248,12 @@ constexpr descriptor get_descriptor<spns::operators_desired_delay_lamp_off_time>
 }
 
 
-template<class TContainer>
-struct data_field<pgns::oel, TContainer> :
-    internal::data_field_base<TContainer>
+template<class Container>
+struct data_field<pgns::oel, Container> :
+    internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
-    typedef estd::chrono::duration<uint16_t, estd::ratio<1> > seconds_type;
+    typedef internal::data_field_base<Container> base_type;
+    typedef estd::chrono::duration<uint16_t> seconds_type;
 
     ESTD_CPP_FORWARDING_CTOR(data_field);
 
@@ -311,12 +311,12 @@ estd::detail::basic_ostream<Streambuf, Base>& operator<<(
     return out << spn::to_string(v);
 }
 
-template <>
-struct payload_put<pgns::oel> : estd::internal::ostream_functor_tag
+template <class Container>
+struct payload_put<pgns::oel, Container> : estd::internal::ostream_functor_tag
 {
-    const data_field<pgns::oel>& payload;
+    const data_field<pgns::oel, Container>& payload;
 
-    constexpr explicit payload_put(const data_field<pgns::oel>& payload) : payload{payload} {}
+    constexpr explicit payload_put(const data_field<pgns::oel, Container>& payload) : payload{payload} {}
 
     template <class Streambuf, class Base>
     void operator()(estd::detail::basic_ostream<Streambuf, Base>& out) const

@@ -64,15 +64,20 @@ void out_helper(const char* abbrev,
 }
 
 template <pgns pgn>
-struct pgn_put : estd::internal::ostream_functor_tag
+struct pgn_put<pgn, void> : estd::internal::ostream_functor_tag
 {
     const pdu<pgn>& pdu_;
+
+#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
+    using traits = pgn::traits<pgn>;
+#else
     using traits = traits_wrapper<pgn>;
+#endif
 
     constexpr pgn_put(const pdu<pgn>& p) : pdu_{p} {}
 
-    template <class TStreambuf, class TBase>
-    void operator()(estd::detail::basic_ostream<TStreambuf, TBase>& out) const
+    template <class Streambuf, class Base>
+    void operator()(estd::detail::basic_ostream<Streambuf, Base>& out) const
     {
         // DEBT: Consolidate this into a helper function to avoid code bloat
 #if FEATURE_EMBR_J1939_OSTREAM_PGN_ABBREV

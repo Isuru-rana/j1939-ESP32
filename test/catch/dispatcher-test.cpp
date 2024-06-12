@@ -4,8 +4,11 @@
 #include <embr/observer.h>
 
 // DEBT: Be very careful, if this guy doesn't appear before "implementors" such as dispatch.hpp,
-// OEL specializations get ignored
+// OEL & associated specializations somehow are ignored.  I think it's related to 'Container'
 #include <j1939/data_field/oel.hpp>
+//#include <j1939/data_field/all.hpp>
+
+#include <j1939/data_field/base.h>
 
 // 11JUN24 Such an early take on this, I forgot all about this guy
 #include <j1939/dispatcher.hpp>
@@ -28,6 +31,7 @@ struct dispatch_functor
     int operator()(j1939::internal::in_place_pgn<pgn>) const
     {
         using traits = j1939::internal::traits_wrapper<pgn>;
+        //using traits = j1939::pgn::traits<pgn>;
 
         return traits::specialized;
     }
