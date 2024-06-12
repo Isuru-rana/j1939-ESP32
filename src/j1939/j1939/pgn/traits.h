@@ -12,6 +12,8 @@
 
 namespace embr { namespace j1939 { namespace internal {
 
+#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
+#else
 template <embr::j1939::pgns, typename = void>
 struct traits_wrapper
 {
@@ -30,6 +32,7 @@ struct traits_wrapper<pgn, estd::enable_if_t<
 {
     static constexpr const char specialized = true;
 };
+#endif
 
 
 }}}

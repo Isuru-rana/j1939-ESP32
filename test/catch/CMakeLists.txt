@@ -31,25 +31,30 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
-set(SOURCE_FILES
-    main.cpp
-    bits2-test.cpp
-    ca-test.cpp
-    cs-test.cpp
-    dispatcher-test.cpp
-    experimental-test.cpp
-    ecu-test.cpp
-    name-test.cpp
-    network-test.cpp
-    pdu-test.cpp
-    pgn-test.cpp
-    ostream-test.cpp
-    slots-test.cpp
-    spn-test.cpp
-    transport-test.cpp
-    transport-protocol-test.cpp
-    units-test.cpp
-    )
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/sources.cmake)
+    # Help narrow down testing if necessary
+    include(sources.cmake)
+else()
+    set(SOURCE_FILES
+        main.cpp
+        bits2-test.cpp
+        ca-test.cpp
+        cs-test.cpp
+        dispatcher-test.cpp
+        experimental-test.cpp
+        ecu-test.cpp
+        name-test.cpp
+        network-test.cpp
+        pdu-test.cpp
+        pgn-test.cpp
+        ostream-test.cpp
+        slots-test.cpp
+        spn-test.cpp
+        transport-test.cpp
+        transport-protocol-test.cpp
+        units-test.cpp
+        )
+endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 

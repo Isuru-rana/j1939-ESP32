@@ -39,7 +39,11 @@ void dispatch_assist(estd::integer_sequence<Key, keys...>, F&& f, Key key)
 
 // DEBT: Eventually I want this to be just traits
 template <pgns pgn>
+#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
+using in_place_pgn = j1939::pgn::traits<pgn>;
+#else
 using in_place_pgn = j1939::internal::traits_wrapper<pgn>;
+#endif
 
 #define J1939_DISPATCH_TARGET(n)    \
 case pgns::n:   return f(in_place_pgn<pgns::n>{}, std::forward<Args>(args)...);
