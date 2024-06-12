@@ -3,7 +3,7 @@
 #include "data_field/network.hpp"
 #include "data_field/oel.hpp"
 
-// DEBT: Not sure if we really want these above, but without them we encounter partial specialization
+// DEBT: We really don't want these above, but without them we encounter partial specialization
 // issues
 
 // TODO: Consider a ostream_type_traits or similar which indicates behavior overrides (i.e. treat

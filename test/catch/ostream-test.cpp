@@ -4,6 +4,7 @@
 
 #include "test-data.h"
 
+#include <j1939/data_field/oel.hpp>
 #include <j1939/data_field/time.hpp>
 
 using ostringstream = estd::detail::basic_ostream<estd::layer1::stringbuf<128>>;
@@ -87,6 +88,13 @@ TEST_CASE("ostream")
     }
     SECTION("pdu")
     {
+        SECTION("unspecialized")
+        {
+            pdu<pgns::cm1> p{null_t{}};
 
+            out << p;
+
+            //REQUIRE(out_s == "");
+        }
     }
 }

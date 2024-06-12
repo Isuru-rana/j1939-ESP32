@@ -188,10 +188,8 @@ struct data_field<pgns::lighting_command, Container> :
 namespace pgn {
 
 template <>
-struct traits<pgns::lighting_command>
+struct traits<pgns::lighting_command> : internal::traits_base
 {
-    using s = embr::j1939::spns;
-
     using spns = internal::spns_list<
         s::alternate_headlights_cmd,
         s::low_beam_headlight_cmd,

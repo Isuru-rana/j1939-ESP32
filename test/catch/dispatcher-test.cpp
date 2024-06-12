@@ -1,12 +1,13 @@
 #include <map>
 
+#include <estd/sstream.h>
 
 #include <embr/observer.h>
 
 // DEBT: Be very careful, if this guy doesn't appear before "implementors" such as dispatch.hpp,
 // OEL & associated specializations somehow are ignored.  I think it's related to 'Container'
 #include <j1939/data_field/oel.hpp>
-//#include <j1939/data_field/all.hpp>
+#include <j1939/data_field/all.hpp>
 
 #include <j1939/data_field/base.h>
 

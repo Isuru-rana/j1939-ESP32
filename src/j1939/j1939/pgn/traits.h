@@ -57,9 +57,7 @@ struct traits_base
     // NOTE: Occasionally some = true variants have fixed modes
     static constexpr bool variable = false;
 
-    // DEBT: Dormant, right now traits_wrapper does this for us.  If possible, I'd prefer
-    // the less exotic explicitly stated variety here (presumption is anyone inheriting traits_base
-    // IS specialized)
+    // This relies on a specialized child class inheriting it
     static constexpr bool is_specialized = true;
 };
 

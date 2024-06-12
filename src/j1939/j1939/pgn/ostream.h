@@ -63,6 +63,18 @@ void out_helper(const char* abbrev,
     out << estd::hex << can_id << ' ';
 }
 
+// DEBT: Sloppy
+template <class PduHeader, class Payload, class Streambuf, class Base>
+void out_pdu_helper(estd::detail::basic_ostream<Streambuf, Base>& out,
+    uint32_t pgn, const PduHeader& can_id, const Payload& payload)
+{
+    out << pgn << ' ' << estd::hex << can_id << ' ';
+
+    using data_field_type = estd::remove_cvref_t<decltype(payload)>;
+
+    payload_put_base<typename data_field_type::container_type>{payload}(out);
+}
+
 template <pgns pgn>
 #if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
 struct pgn_put<pgn, estd::enable_if_t<pgn::traits<pgn>::is_specialized> > :
@@ -112,6 +124,7 @@ struct pgn_put<pgn, void> :
 };
 
 #if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
+// NOTE: Not well tested
 template <pgns pgn>
 struct pgn_put<pgn, estd::enable_if_t<!pgn::traits<pgn>::is_specialized> > :
     estd::internal::ostream_functor_tag
@@ -125,17 +138,7 @@ struct pgn_put<pgn, estd::enable_if_t<!pgn::traits<pgn>::is_specialized> > :
     void operator()(estd::detail::basic_ostream<Streambuf, Base>& out) const
     {
         // Keep an eye on AVR code spew
-
-        out << (uint32_t) pgn << ' ';
-
-        // Outputs PDU header portion
-        out << estd::hex << pdu_.can_id() << ' ';
-
-        const auto& payload = pdu_.payload();
-
-        using data_field_type = estd::remove_cvref_t<decltype(payload)>;
-
-        payload_put_base<typename data_field_type::container_type>{payload}(out);
+        out_pdu_helper(out, (uint32_t)pgn, pdu_.can_id(), pdu_.payload());
     }
 };
 #endif

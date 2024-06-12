@@ -21,7 +21,7 @@ struct pgn_put;
 
 namespace pgn {
 
-#define FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER 0
+#define FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER 1
 
 #if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
 template <pgns>

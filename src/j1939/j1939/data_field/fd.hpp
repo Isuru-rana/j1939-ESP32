@@ -74,6 +74,21 @@ struct data_field<pgns::fan_drive_1, Container> :
     EMBR_J1939_PROPERTY(fan_drive_state);
 };
 
+namespace pgn {
+
+template <>
+struct traits<pgns::fan_drive_1> : internal::traits_base
+{
+    static constexpr const char* name()
+    {
+        return "Fan Drive 1";
+    }
+
+    static constexpr const char* abbrev() { return "FD1"; }
+};
+
+}
+
 }}
 
 #include "../slots/macro/pop.h"

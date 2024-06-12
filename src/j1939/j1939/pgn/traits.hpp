@@ -10,18 +10,6 @@ namespace embr { namespace j1939 { namespace pgn {
 
 
 template <>
-struct traits<pgns::fan_drive_1>
-{
-    static constexpr const char* name()
-    {
-        return "Fan Drive 1";
-    }
-
-    static constexpr const char* abbrev() { return "FD1"; }
-};
-
-
-template <>
 struct traits<pgns::fms_identity> : internal::traits_base
 {
     static constexpr unsigned priority = 7;

@@ -36,7 +36,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/sources.cmake)
     include(sources.cmake)
 else()
     set(SOURCE_FILES
-        main.cpp
         bits2-test.cpp
         ca-test.cpp
         cs-test.cpp
@@ -56,7 +55,7 @@ else()
         )
 endif()
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES})
 
 target_compile_definitions(j1939 PUBLIC FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT=0)
 target_compile_definitions(${PROJECT_NAME} PUBLIC FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT=0)

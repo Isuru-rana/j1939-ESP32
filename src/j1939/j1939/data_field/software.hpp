@@ -33,7 +33,7 @@ struct type_traits<spns::software_identification> :
 namespace pgn {
 
 template <>
-struct traits<pgns::software_identification>
+struct traits<pgns::software_identification> : internal::traits_base
 {
     static constexpr const char* name()
     {
