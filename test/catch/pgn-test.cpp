@@ -1,4 +1,13 @@
-#include <j1939/data_field/all.hpp>
+#include <j1939/data_field/disp1.hpp>
+#include <j1939/data_field/bjm1.hpp>
+#include <j1939/data_field/oel.hpp>
+#include <j1939/data_field/lighting_command.hpp>
+#include <j1939/data_field/vep1.hpp>
+#include <j1939/data_field/bt1.hpp>
+#include <j1939/data_field/network.hpp>
+#include <j1939/data_field/transport_protocol.hpp>
+#include <j1939/data_field/time.hpp>
+
 
 #include <j1939/pgn.h>
 #include <j1939/spn.h>

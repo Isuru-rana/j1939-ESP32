@@ -7,7 +7,9 @@
 
 #include <j1939/spn/descriptors.h>
 
-#include <j1939/data_field/all.hpp>
+#include <j1939/data_field/bjm1.hpp>
+#include <j1939/data_field/cm1.hpp>
+#include <j1939/data_field/lighting_command.hpp>
 #include <j1939/spn/units.h>
 
 
@@ -116,7 +118,7 @@ TEST_CASE("spn")
 
             REQUIRE(v == spn::control_commands::enable);
 
-            spn::control_commands v2 = v;
+            //spn::control_commands v2 = v;
         }
         SECTION("measured (discrete parameters)")
         {

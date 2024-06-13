@@ -90,7 +90,7 @@ TEST_CASE("ostream")
     }
     SECTION("pdu")
     {
-        SECTION("unspecialized")
+        SECTION("unspecialized (SHOULD be unincluded)")
         {
             pdu<pgns::cm1> p{null_t{}};
 
@@ -98,6 +98,14 @@ TEST_CASE("ostream")
 
             // FIX: Mysterious how cm1 specialization sneaks into here
             //REQUIRE(out_s == "");
+        }
+        SECTION("unspecialized (unincluded)")
+        {
+            pdu<pgns::anti_theft_status> p{null_t{}};
+
+            out << p;
+
+            REQUIRE(out_s == "220 SA:0 DA:0 ff ff ff ff ff ff ff ff ");
         }
     }
 }

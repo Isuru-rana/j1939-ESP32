@@ -46,20 +46,4 @@ struct traits<pgns::ecu_performance> : internal::traits_base
 };
 
 
-template <>
-struct traits<pgns::cab_message_3> : internal::traits_base
-{
-    static constexpr const char* name()
-    {
-        return "Cab Message 3";
-    }
-
-    static constexpr const char* description()
-    {
-        return "Provides information from Cab mounted operator inputs.";
-    }
-
-    static constexpr const char* abbrev() { return "CM3"; }
-};
-
 }}}

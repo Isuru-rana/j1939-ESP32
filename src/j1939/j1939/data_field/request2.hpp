@@ -1,5 +1,7 @@
 #pragma once
 
+#include "base.h"
+
 namespace embr { namespace j1939 {
 
 template<class Container>
