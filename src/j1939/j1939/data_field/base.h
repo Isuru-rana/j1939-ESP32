@@ -56,7 +56,9 @@ protected:
 
     explicit data_field_base(const uint8_t* copy_from)
     {
-        estd::copy_n(copy_from, 8, container_type::begin());
+        // DEBT: Really might be better to pass in copy_from explicit length here,
+        // though this is technically an internal high speed call
+        estd::copy_n(copy_from, container_type::size(), container_type::begin());
     }
 
     explicit data_field_base(experimental::layer2_tag, uint8_t* init_from) : base_type(init_from)

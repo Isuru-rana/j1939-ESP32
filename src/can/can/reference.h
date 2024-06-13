@@ -1,5 +1,7 @@
 #pragma once
 
+#include <assert.h>
+
 #include "fwd.h"
 
 #include <estd/algorithm.h>
@@ -29,6 +31,8 @@ struct transport
         frame(uint32_t id, uint8_t dlc, const uint8_t* p) :
             id{id}, dlc{dlc}
         {
+            assert(dlc <= 8);
+
             estd::copy_n(p, dlc, payload);
         }
 
@@ -38,6 +42,8 @@ struct transport
             dlc{(uint8_t)data.size()}
         {
             const uint8_t* c = data.begin();
+
+            assert(dlc <= 8);
 
             estd::copy_n(c, dlc, payload);
         }

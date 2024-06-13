@@ -1,6 +1,10 @@
 #pragma once
 
-#include "base.hpp"
+#include "base.h"
+
+// NOTE: Very unusual in that
+// "The CAN frame for this PG shall set the DLC to 3."
+// j1939-21 (2006) Section 5.4.1 Figure 8
 
 namespace embr { namespace j1939 {
 

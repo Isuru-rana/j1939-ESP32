@@ -48,7 +48,9 @@ struct dispatch_functor
 
 struct SyntheticObserver
 {
+    int marker_ = 7;
     std::map<pgns, int> counters;
+    int marker2_ = 77;
 
     void on_notify(events::received<pgns::oel> e)
     {
