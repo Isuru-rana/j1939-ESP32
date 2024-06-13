@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../can_id.h"
+#include "../../pdu/header.h"
 #include "../../pgn/enum.h"
 #include "../../spn/enum.h"
 #include "../../pgn/traits.h"
@@ -40,7 +42,11 @@ void dispatch_assist(estd::integer_sequence<Key, keys...>, F&& f, Key key)
 // DEBT: Eventually I want this to be just traits
 template <pgns pgn>
 #if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
-using in_place_pgn = j1939::pgn::traits<pgn>;
+// Requires too much specialization knowledge up front
+//using in_place_pgn = j1939::pgn::traits<pgn>;
+// This guy auto-converts to pgns value, which we don't want
+//using in_place_pgn = estd::integral_constant<pgns, pgn>;
+using in_place_pgn = j1939::internal::pdu_traits<pgn>;
 #else
 using in_place_pgn = j1939::internal::traits_wrapper<pgn>;
 #endif

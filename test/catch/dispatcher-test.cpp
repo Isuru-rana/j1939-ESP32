@@ -4,18 +4,14 @@
 
 #include <embr/observer.h>
 
-// DEBT: Be very careful, if this guy doesn't appear before "implementors" such as dispatch.hpp,
-// OEL & associated specializations somehow are ignored.  I think it's related to 'Container'.
-// It's also definitely related to the 'traits' appearance in data_field fwd
-#include <j1939/data_field/oel.hpp>
+// 11JUN24 New flavor
+#include <j1939/internal/dispatcher/dispatch.hpp>
+
 
 // 11JUN24 Such an early take on this, I forgot all about this guy
 #include <j1939/dispatcher.hpp>
 
-// 11JUN24 New flavor
-#include <j1939/internal/dispatcher/dispatch.hpp>
-
-#include <j1939/pgn.h>
+#include <j1939/data_field/oel.hpp>
 
 #include <can/loopback.h>
 

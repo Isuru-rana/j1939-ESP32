@@ -9,12 +9,14 @@
 #include "../units/fwd.h"
 
 #include <embr/bits/bits.hpp>
+
+#include "../pgn/traits.h"
+
+
 #include "../spn.h"
 
 #include "../spn/traits.h"
 #include "../spn/units.h"
-
-#include "../pgn/traits.h"
 
 #if __cpp_concepts
 #include <concepts>
