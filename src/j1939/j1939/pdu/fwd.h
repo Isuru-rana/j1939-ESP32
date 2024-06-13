@@ -1,7 +1,7 @@
 #pragma once
 
-#include <estd/internal/deduce_fixed_size.h>    // For 'Range'
 #include "../pgn/enum.h"
+#include "../internal/traits.h"
 
 // DEBT: Move these FEATURE_* to a feature area
 
@@ -29,14 +29,6 @@
 #endif
 
 namespace embr { namespace j1939 {
-
-namespace internal {
-
-// DEBT: Use estd flavor directly out in code
-template <bool v>
-using Range = estd::internal::Range<v>;
-
-}
 
 // TODO: Consider further specializing these based on transport, so that we can use native
 // types to avoid copying and unnecessary allocating.  If so, it makes sense to do that by policy

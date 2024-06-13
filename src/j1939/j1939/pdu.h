@@ -14,6 +14,8 @@
 #include "pgn/enum.h"
 #include "data_field.h"
 
+#include "internal/traits.h"
+
 // Deviates from [1] 5.3 in that we do not include data field in pdu1 or pdu2.
 // priority field is included.
 
