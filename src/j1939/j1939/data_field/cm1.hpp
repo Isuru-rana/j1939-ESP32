@@ -134,10 +134,10 @@ estd::detail::basic_ostream<Streambuf, Base>& put_unit_j1939(
 }
 
 
-template <>
-struct payload_put<pgns::cab_message1> : estd::internal::ostream_functor_tag
+template <class C>
+struct payload_put<pgns::cab_message1, C> : estd::internal::ostream_functor_tag
 {
-    const data_field<pgns::cab_message1>& payload;
+    const data_field<pgns::cab_message1, C>& payload;
 
     constexpr explicit payload_put(const data_field<pgns::cab_message1>& payload) :
         payload{payload} {}

@@ -85,6 +85,8 @@ struct pgn_put<pgn, void> :
 {
     const pdu<pgn>& pdu_;
 
+    using container_type = typename pdu<pgn>::container_type;
+
 #if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
     using traits = pgn::traits<pgn>;
 #else
@@ -113,7 +115,7 @@ struct pgn_put<pgn, void> :
         const auto& payload = pdu_.payload();
 
 #if FEATURE_EMBR_J1939_OSTREAM_FULL_PAYLOAD
-        payload_put<pgn>{payload}(out);
+        payload_put<pgn, container_type>{payload}(out);
 #else
         // Saves over 1k of code space easily
         using data_field_type = estd::remove_cvref_t<decltype(payload)>;

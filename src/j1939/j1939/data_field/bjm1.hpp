@@ -133,12 +133,12 @@ struct data_field<pgns::basic_joystick_message_1, TContainer> :
 
 namespace internal {
 
-template <>
-struct payload_put<pgns::basic_joystick_message_1> : estd::internal::ostream_functor_tag
+template <class C>
+struct payload_put<pgns::basic_joystick_message_1, C> : estd::internal::ostream_functor_tag
 {
-    const data_field<pgns::basic_joystick_message_1>& payload;
+    const data_field<pgns::basic_joystick_message_1, C>& payload;
 
-    constexpr explicit payload_put(const data_field<pgns::basic_joystick_message_1>& payload) :
+    constexpr explicit payload_put(const data_field<pgns::bjm1, C>& payload) :
         payload{payload} {}
 
     template <class Streambuf, class Base>

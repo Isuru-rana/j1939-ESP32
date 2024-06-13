@@ -197,12 +197,13 @@ struct data_field<pgns::time_date_adjust, TContainer> : internal::data_field_bas
 
 namespace internal {
 
-template <>
-struct payload_put<pgns::time_date> : estd::internal::ostream_functor_tag
+template <class C>
+struct payload_put<pgns::time_date, C> : estd::internal::ostream_functor_tag
 {
-    const data_field<pgns::time_date>& payload;
+    const data_field<pgns::time_date, C>& payload;
 
-    constexpr explicit payload_put(const data_field<pgns::time_date>& payload) : payload{payload} {}
+    constexpr explicit payload_put(const data_field<pgns::time_date, C>& payload) :
+        payload{payload} {}
 
     template <class TStreambuf, class TBase>
     void operator()(estd::detail::basic_ostream<TStreambuf, TBase>& out) const

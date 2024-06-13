@@ -60,7 +60,9 @@ struct get_helper;
 
 namespace internal {
 
-template <pgns pgn, class Container = typename data_field<pgn>::container_type>
+// NOTE: Can't do Container = data_field<pgn>::container type because that's not quite available
+// early in the forwards
+template <pgns pgn, class Container>
 struct payload_put;
 
 template <class Container, bits::endianness e = bits::little_endian>

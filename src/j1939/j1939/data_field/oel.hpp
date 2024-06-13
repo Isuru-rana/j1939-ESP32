@@ -311,12 +311,12 @@ estd::detail::basic_ostream<Streambuf, Base>& operator<<(
     return out << spn::to_string(v);
 }
 
-template <class Container>
-struct payload_put<pgns::oel, Container> : estd::internal::ostream_functor_tag
+template <class C>
+struct payload_put<pgns::oel, C> : estd::internal::ostream_functor_tag
 {
-    const data_field<pgns::oel, Container>& payload;
+    const data_field<pgns::oel, C>& payload;
 
-    constexpr explicit payload_put(const data_field<pgns::oel, Container>& payload) : payload{payload} {}
+    constexpr explicit payload_put(const data_field<pgns::oel, C>& payload) : payload{payload} {}
 
     template <class Streambuf, class Base>
     void operator()(estd::detail::basic_ostream<Streambuf, Base>& out) const

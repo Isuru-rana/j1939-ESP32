@@ -51,11 +51,13 @@ TEST_CASE("ostream")
     }
     SECTION("data_field")
     {
+        using container_type = estd::array<uint8_t, 8>;
+
         SECTION("oel")
         {
             data_field<pgns::oel> payload{null_t{}};
 
-            out << estd::hex << j1939::internal::payload_put<pgns::oel>{payload};
+            out << estd::hex << j1939::internal::payload_put<pgns::oel, container_type>{payload};
 
             //REQUIRE(out_s == "ff ff ff ff ff ff ff ff ");
             REQUIRE(out_s == "high beam=no change");
@@ -73,7 +75,7 @@ TEST_CASE("ostream")
             payload.minutes(30);
             payload.seconds(55);
 
-            out << j1939::internal::payload_put<pgns::time_date>{payload};
+            out << j1939::internal::payload_put<pgns::time_date, container_type>{payload};
 
             REQUIRE(out_s == "1990-12-25T10:30:55");
         }
@@ -94,6 +96,7 @@ TEST_CASE("ostream")
 
             out << p;
 
+            // FIX: Mysterious how cm1 specialization sneaks into here
             //REQUIRE(out_s == "");
         }
     }

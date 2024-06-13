@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../data_field/base.h"
 #include "ostream.h"
 #include "name.h"
 
@@ -20,8 +21,8 @@ void NAME_payload_put::operator()(estd::detail::basic_ostream<TStreambuf, TBase>
     out << "id=" << estd::hex << name.identity_number().value();
 }
 
-template <>
-struct payload_put<pgns::address_claimed> : NAME_payload_put
+template <class C>
+struct payload_put<pgns::address_claimed, C> : NAME_payload_put
 {
     using base_type = NAME_payload_put;
 
