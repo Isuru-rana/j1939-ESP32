@@ -38,6 +38,9 @@ struct traits<pgns::request> : internal::traits_base
 
     // DEBT: J1939-21 (REV2006) Table D1 implies this, but not 100% sure
     static constexpr const char* abbrev() { return "RQST"; }
+
+    // [1] Section 5.4.1
+    static constexpr unsigned length = 3;
 };
 
 

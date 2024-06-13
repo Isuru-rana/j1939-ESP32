@@ -23,22 +23,17 @@ namespace pgn {
 
 #define FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER 1
 
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
-template <pgns>
-struct traits
-{
-    static constexpr bool is_specialized = false;
-};
-#else
 template <pgns>
 struct traits;
-#endif
 
+// DEBT
 struct descriptor
 {
     const unsigned length;
     const unsigned default_priority;
 };
+
+#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER == 0
 
 // DEBT: We need to break out get_descriptor and use ranges and other constexpr inspections
 // to reveal proper priority, and length itself will naturally vary depending on the specific
@@ -67,7 +62,7 @@ constexpr descriptor get_descriptor<pgns::commanded_address>()
 {
     return descriptor{9, 6};
 }
-
+#endif
 
 }
 

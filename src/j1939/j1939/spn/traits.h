@@ -132,7 +132,7 @@ struct enum_traits_base : type_traits_base<Int>
 
     // EXPERIMENTAL
     static constexpr traits_enum features =
-        type_traits_base<Int>::features |
+        //type_traits_base<Int>::features |
         TRAITS_ENUM;
 };
 
