@@ -39,7 +39,7 @@ enum class pgns : uint32_t
     tim12 = 0x23,                               ///< Tractor Implement Management (TIM) Server to TIM Client [8]
     auth21 = 0x6F,                              // [8] "Authentication Client to Authentication Server"
     ctpc = 0x71,                                // [8] "Configurable Transmit PGNs Command"
-    NAME_mgmtmsg_experimental = 0x93,           // Unknown, I believe this goes here
+    NAME_management_message = 0x93,             // Unknown, I believe this goes here
     proprietary_method_identification = 0x9B,   // [17]
     text_display = 0xA8,                        // [13]
     disp1 = text_display,                       // [17]
@@ -65,8 +65,8 @@ enum class pgns : uint32_t
     CANopen_app_message2 = 0x600,               // [14]
     // ---
 
-    NAME_management_message = 37632,            // [8] - FIX: Pretty sure this needs to go into pgn_pdu1
-    transfer = 51712,                           // [8] - FIX: Pretty sure this needs to go into pgn_pdu1
+    //NAME_management_message_exp = 37632,            // [8] - FIX: Pretty sure this needs to go into pgn_pdu1
+    //transfer = 51712,                           // [8] - FIX: Pretty sure this needs to go into pgn_pdu1
     pdu2_boundary = 0xF000,                     // EXPERIMENTAL
     electronic_engine_controller_2 = 61443,     // [5]
     electronic_engine_controller_1 = 61444,     // [3], [5]
