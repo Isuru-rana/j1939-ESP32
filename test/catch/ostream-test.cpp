@@ -1,11 +1,15 @@
 #include <estd/sstream.h>
 
+#define DIAGNOSTIC1 0
+
+#if !DIAGNOSTIC1
 #include <j1939/ostream.h>
 
 #include "test-data.h"
 
 #include <j1939/data_field/oel.hpp>
 #include <j1939/data_field/time.hpp>
+#endif
 
 using ostringstream = estd::detail::basic_ostream<estd::layer1::stringbuf<128>>;
 
@@ -17,6 +21,7 @@ TEST_CASE("ostream")
     ostringstream out;
     const auto& out_s = out.rdbuf()->str();
 
+#if !DIAGNOSTIC1
     SECTION("NAME")
     {
         test::names::trailer_brake<true>::sparse name1{j1939::null_t{}};
@@ -88,11 +93,12 @@ TEST_CASE("ostream")
 
         REQUIRE(out_s == "SA:0");
     }
+#endif
     SECTION("pdu")
     {
         SECTION("unspecialized (SHOULD be unincluded)")
         {
-            pdu<pgns::cm1> p{null_t{}};
+            pdu<pgns::cm3> p{null_t{}};
 
             out << p;
 
