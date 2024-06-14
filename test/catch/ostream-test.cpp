@@ -1,5 +1,6 @@
 #include <estd/sstream.h>
 
+// Things getting pretty odd
 #define DIAGNOSTIC1 0
 
 #if !DIAGNOSTIC1
@@ -9,6 +10,15 @@
 
 #include <j1939/data_field/oel.hpp>
 #include <j1939/data_field/time.hpp>
+#else
+//#include <j1939/pgn/ostream.h>
+//#include <j1939/pgn/traits.h>
+#include <j1939/pdu/ostream.h>
+#include <j1939/units/ostream.h>
+#include <j1939/pdu.h>
+#include <j1939/data_field/cm1.hpp>
+
+#include <catch2/catch.hpp>
 #endif
 
 using ostringstream = estd::detail::basic_ostream<estd::layer1::stringbuf<128>>;
@@ -98,7 +108,9 @@ TEST_CASE("ostream")
     {
         SECTION("unspecialized (SHOULD be unincluded)")
         {
-            pdu<pgns::cm3> p{null_t{}};
+            pdu<pgns::cm1> p{null_t{}};
+
+            //auto v1 = p.request_cab_zone_heating();
 
             out << p;
 
