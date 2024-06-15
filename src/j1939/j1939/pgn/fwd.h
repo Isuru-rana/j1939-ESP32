@@ -12,13 +12,6 @@ namespace embr { namespace j1939 {
 
 enum class pgns : uint32_t;
 
-namespace internal {
-
-template <pgns pgn, class Enabled = void>
-struct pgn_put;
-
-}
-
 namespace pgn {
 
 #define FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER 1
@@ -67,8 +60,5 @@ constexpr descriptor get_descriptor<pgns::commanded_address>()
 }
 
 }
-
-template <j1939::pgns pgn>
-constexpr j1939::internal::pgn_put<pgn> put_pdu(const j1939::pdu<pgn>& pdu_);
 
 }

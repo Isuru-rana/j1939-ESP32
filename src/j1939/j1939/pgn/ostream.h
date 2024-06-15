@@ -8,6 +8,7 @@
 #include <estd/ostream.h>
 
 #include "fwd.h"
+#include "../pdu/ostream/fwd.h"
 #include "../pdu/ostream.h"
 #include "../pgn/traits.h"
 #include "../data_field/fwd.h"
@@ -16,39 +17,7 @@ namespace embr { namespace j1939 {
 
 // DEBT: All this stuff seems better suited to a pdu specific area, not pgn
 
-template <pgns pgn, class TStreambuf, class TBase>
-constexpr estd::detail::basic_ostream<TStreambuf, TBase>& operator <<(
-    estd::detail::basic_ostream<TStreambuf, TBase>& out,
-    const pdu<pgn>& p)
-{
-    return out << embr::put_pdu(p);
-}
-
-
 namespace internal {
-
-template <class TContainer>
-struct payload_put_base : estd::internal::ostream_functor_tag
-{
-    using payload_type = internal::data_field_base<TContainer>;
-    const payload_type& payload;
-
-    constexpr explicit payload_put_base(const payload_type& payload) : payload{payload} {}
-
-    template <class TStreambuf, class TBase>
-    void operator()(estd::detail::basic_ostream<TStreambuf, TBase>& out) const
-    {
-        for(unsigned v : payload)   out << v << ' ';
-    }
-};
-
-template <pgns pgn, class TContainer>
-struct payload_put : payload_put_base<TContainer>
-{
-    constexpr explicit payload_put(const data_field<pgn>& payload) :
-        payload_put_base<TContainer>{payload} {}
-};
-
 
 // DEBT: Not great naming
 // Helper to reduce code bloat slightly (this has better change of not inlining)
@@ -148,12 +117,6 @@ struct pgn_put<pgn, estd::enable_if_t<!pgn::traits<pgn>::is_specialized> > :
 
 }
 
-}
-
-template <j1939::pgns pgn>
-constexpr j1939::internal::pgn_put<pgn> put_pdu(const j1939::pdu<pgn>& pdu_)
-{
-    return { pdu_ };
 }
 
 }

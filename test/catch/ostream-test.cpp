@@ -1,7 +1,7 @@
 #include <estd/sstream.h>
 
 // Things getting pretty odd
-#define DIAGNOSTIC1 0
+#define DIAGNOSTIC1 1
 
 #if !DIAGNOSTIC1
 #include <j1939/ostream.h>
@@ -11,7 +11,7 @@
 #include <j1939/data_field/oel.hpp>
 #include <j1939/data_field/time.hpp>
 #else
-//#include <j1939/pgn/ostream.h>
+#include <j1939/pgn/ostream.h>
 //#include <j1939/pgn/traits.h>
 #include <j1939/pdu/ostream.h>
 #include <j1939/units/ostream.h>
