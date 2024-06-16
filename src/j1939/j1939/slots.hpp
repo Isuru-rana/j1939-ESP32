@@ -10,3 +10,4 @@
 #include "slots/temperature.hpp"
 #include "slots/time.hpp"
 #include "slots/units.h"
+#include "slots/velocity.hpp"

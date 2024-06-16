@@ -204,6 +204,18 @@ TEST_CASE("slots")
         using h = slot_traits_helper<int16_t, 1985>;
         using type = embr::units::years<uint8_t, h::offset>;
     }
+    SECTION("SAEvl02")
+    {
+        // Kph 1/256 precision
+        using traits = slot_traits<slots::SAEvl02>;
+
+        traits::type kph1{200 * 256};
+        embr::units::meters_per_second<unsigned> v{kph1};
+        embr::units::kilometers_per_hour<unsigned> v2{kph1};
+
+        REQUIRE(v.count() == 55);
+        REQUIRE(v2.count() == 200);
+    }
     SECTION("internal")
     {
         using type = internal::offset_resolver<int, -5000>::offset<>;

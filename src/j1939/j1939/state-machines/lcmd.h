@@ -17,7 +17,7 @@ class lighting_command : public cs::v1::base
 
     // DEBT: Clumsy way to enforce the necessity of context
     template <class Transport, pgns pgn>
-    bool process_incoming(Transport&, const pdu<pgn>&);
+    static constexpr bool process_incoming(Transport&, const pdu<pgn>&) { return {}; }
 
 public:
     using context = sm::v0::context<TimePoint>;
@@ -37,6 +37,13 @@ protected:
     states state_;
 
 public:
+    constexpr estd::chrono::milliseconds flash_delay() const
+    {
+        return estd::chrono::milliseconds{500};
+    }
+
+    constexpr lighting_command();
+
     using time_point = TimePoint;
 
     constexpr states state() const { return state_; }
@@ -47,6 +54,9 @@ public:
 
     template <class Transport>
     bool process_incoming(Transport&, const pdu<pgns::oel>&, const context&);
+
+    template <class Transport>
+    bool process_incoming(Transport&, const pdu<pgns::ccvs>&, const context&);
 
     template <class Transport>
     bool process_outgoing(Transport&, const context&);

@@ -42,6 +42,8 @@ enum class slots
     SAEtp01 = 67,           ///< -40 to 210 deg C
     SAEtp02 = 68,
     SAEtq01 = 69,
+    SAEvl02 = 71,           ///< km/h 0-250.996
+    SAEvl03 = 72,
     SAEev01 = 80,
     SAEpr03 = 85,
     SAEtm07 = 99,
@@ -51,6 +53,7 @@ enum class slots
     SAEatad0005 = 109,      ///< ASCII up to 5 bytes, '*' delimited
     SAEatad1728 = 111,      ///< ASCII up to 1728 bytes, '*' delimited
     SAEpg00 = 116,          ///< PGN
+    SAEvl01 = 125,
     SAEpc04 = 128,
     SAEds02 = 142,
     SAEec06 = 143,          ///< 0-64.255A

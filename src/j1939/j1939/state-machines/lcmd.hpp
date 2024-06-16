@@ -2,6 +2,7 @@
 
 #include "../pdu.h"
 
+#include "../data_field/ccvs.hpp"
 #include "../data_field/oel.hpp"
 #include "../data_field/lighting_command.hpp"
 
@@ -12,9 +13,15 @@
 namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 
 template <class TimePoint>
+constexpr lighting_command<TimePoint>::lighting_command() :
+    state_{STATE_IDLE}
+{
+
+}
+
+template <class TimePoint>
 void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
 {
-    constexpr const estd::chrono::milliseconds flash_delay(500);
     bool on_already = state_ == STATE_FLASH_ON;
 
     using signal = enum_type<spns::turn_signal_switch>;
@@ -29,13 +36,13 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
     switch(last_oel_.turn_signal_switch())
     {
         case signal::right_turn_to_be_flashing:
-            next_event_ = c.current + flash_delay;
+            next_event_ = c.current + flash_delay();
             //c.next(flash_delay);
             out_p.right_turn_signal(cmd);
             break;
 
         case signal::left_turn_to_be_flashing:
-            next_event_ = c.current + flash_delay;
+            next_event_ = c.current + flash_delay();
             //c.next(flash_delay);
             out_p.left_turn_signal(cmd);
             break;
@@ -55,6 +62,7 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
     switch(last_oel_.hazard_light_switch())
     {
         case hazard::enabled:
+            next_event_ = c.current + flash_delay();
             out_p.right_turn_signal(cmd);
             out_p.left_turn_signal(cmd);
             break;
@@ -80,7 +88,7 @@ bool lighting_command<TimePoint>::process_incoming(Transport& t, const pdu<pgns:
 
     using traits = transport_traits<Transport>;
 
-    pdu<pgns::lcmd> out_p(c.self_address);
+    pdu<pgns::lcmd> out_p(c.self_address, null_t{});
 
     prep(out_p, c);
 
@@ -91,7 +99,38 @@ bool lighting_command<TimePoint>::process_incoming(Transport& t, const pdu<pgns:
 
 template <class TimePoint>
 template <class Transport>
-bool lighting_command<TimePoint>::process_outgoing(Transport& t, const context& c)
+bool lighting_command<TimePoint>::process_incoming(Transport& t, const pdu<pgns::ccvs>& p, const context& c)
+{
+    using traits = transport_traits<Transport>;
+
+    pdu<pgns::lcmd> out_p(c.self_address, null_t{});
+
+    switch(p.brake_switch())
+    {
+        case spn::measured::on:
+            out_p.left_stop(spn::control_commands::enable);
+            out_p.right_stop(spn::control_commands::enable);
+            out_p.center_stop(spn::control_commands::enable);
+            traits::send(t, out_p);
+            break;
+
+        case spn::measured::off:
+            out_p.left_stop(spn::control_commands::disable);
+            out_p.right_stop(spn::control_commands::disable);
+            out_p.center_stop(spn::control_commands::disable);
+            traits::send(t, out_p);
+            break;
+
+        default: break;
+    }
+
+    return {};
+}
+
+
+template <class TimePoint>
+template <class Transport>
+bool lighting_command<TimePoint>::process_outgoing(Transport& t, const context& c)  // NOLINT
 {
     if(c.current < next_event_) return false;
 
