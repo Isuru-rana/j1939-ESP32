@@ -127,7 +127,7 @@ public:
         id{descriptor().default_priority, pgn},
         data_field_type{std::forward<Args>(args)...}
     {
-        source_address(sa);
+        pdu2_header::source_address(sa);
     }
 
     const pdu2_header& can_id() const { return *this; }

@@ -46,7 +46,9 @@ static transport t(10);     // CS pin
 static transport t;
 #endif
 
-embr::j1939::impl::network_ca_base::states nca_last_state {};
+using nca_states = embr::j1939::sm::v1::network_base::states;
+
+nca_states nca_last_state {};
 // DEBT: Can't alias directly frame_traits due to ambiguity
 // with one in embr::j1939
 using ft = embr::can::frame_traits<transport::frame>;
@@ -102,7 +104,7 @@ estd::layer1::string<128> input;
 
 uint8_t source_address()
 {
-    if(nca.state == impl::network_ca_base::states::claimed)
+    if(nca.state() == nca_states::claimed)
         return nca.address().value();
     else
         return source_address_;
@@ -372,7 +374,7 @@ class InitiateNetworkCAAction : public menu::Action
 
     void action(ostream& out) override
     {
-        if(nca.state == impl::network_ca_base::states::unstarted)
+        if(nca.state() == nca_states::unstarted)
         {
             out << F("Starting network CA...");
             nca.start(t);
@@ -381,7 +383,7 @@ class InitiateNetworkCAAction : public menu::Action
         {
             out << F("Already started");
 
-            if(nca.state == impl::network_ca_base::states::claimed)
+            if(nca.state() == nca_states::claimed)
             {
                 out << endl;
                 out << F("Claimed address: ") << (unsigned) nca.address().value();
@@ -530,7 +532,8 @@ void setup()
     topLevel.items.push_back(&subitem1);
     topLevel.items.push_back(&item4);
     topLevel.items.push_back(&item5);
-    topLevel.items.push_back(&item6);
+    // Not fitting, bleh
+    //topLevel.items.push_back(&item6);
     //topLevel.items.push_back(&item7);
 
     submenu.items.push_back(&subitem1_1);
@@ -550,24 +553,24 @@ void setup()
 
 void nca_report()
 {
-    if(nca_last_state != nca.state)
+    if(nca_last_state != nca.state())
     {
         // DEBT: I think ostream isn't reverting back to default hex/dec states properly
         cout << estd::dec;
 
-        switch(nca.state)
+        switch(nca.state())
         {
-            case impl::network_ca_base::states::claimed:
+            case nca_states::claimed:
                 cout << F("Claimed address: ") << nca.address().value() << endl;
                 break;
 
             default:
-                if(nca_last_state != impl::network_ca_base::states::unstarted)
+                if(nca_last_state != nca_states::unstarted)
                     cout << F("Lost address") << endl;
                 break;
         }
 
-        nca_last_state = nca.state;
+        nca_last_state = nca.state();
     }
 }
 

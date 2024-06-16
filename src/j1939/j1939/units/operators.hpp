@@ -17,12 +17,14 @@ constexpr amps<Rep, Period3> operator /(
     // DEBT: Tag::tag2 is a cheap and nasty callout to compound_tag.  We can do better
     const detail::unit<Rep2, Period2, typename Tag::tag2, F2>& rhs)
 {
+    /*
     typedef detail::unit<Rep, Period, Tag, F> lhs_type;
     typedef detail::unit<Rep2, Period2, typename Tag::tag2, F2> rhs_type;
 
     typedef typename estd::promoted_type<Rep,Rep2>::type p_type;
 
     p_type v = lhs.count() / rhs.count();
+     */
     // TBD
     return 0;
 }
