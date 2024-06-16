@@ -11,18 +11,26 @@ Item {
 
     RowLayout {
         Button {
+            checkable: true
             id: btnLeft
             text: "left"
-            onClicked: ca.leftSignal()
+            onClicked: {
+                ca.leftSignal()
+                btnRight.checked = false;
+            }
             palette {
                 id: btnLeftP
             }
         }
 
         Button {
+            checkable: true
             id: btnRight
             text: "right"
-            onClicked: ca.rightSignal()
+            onClicked: {
+                ca.rightSignal()
+                btnLeft.checked = false
+            }
             palette {
                 id: btnRightP
             }
@@ -51,14 +59,14 @@ Item {
 
                 switch(pdu.payload.left_turn_signal)
                 {
-                    case 0: btnLeftP.button = "green"; break;
-                    case 1: btnLeftP.button = "white"; break;
+                    case 1: btnLeftP.button = "green"; break;
+                    case 0: btnLeftP.button = "white"; break;
                 }
 
                 switch(pdu.payload.right_turn_signal)
                 {
-                    case 0: btnRightP.button = "green"; break;
-                    case 1: btnRightP.button = "white"; break;
+                    case 1: btnRightP.button = "green"; break;
+                    case 0: btnRightP.button = "white"; break;
                 }
             }
         }

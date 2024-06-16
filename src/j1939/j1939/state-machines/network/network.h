@@ -153,7 +153,7 @@ struct network : network_base
 
         // EXPERIMENTAL
 #if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
-        if(do_schedule)
+        if(do_schedule && c.next_ != nullptr)
             *c.next_ = next_event_;
 #endif
 

@@ -52,14 +52,7 @@ void LightingCommand::handler()
 
 void LightingCommand::start(QCanBusDevice* device)
 {
-    QObject::connect(device, &QCanBusDevice::stateChanged, [&, device]
-        (QCanBusDevice::CanBusDeviceState state)
-    {
-        if(state == QCanBusDevice::ConnectedState)
-        {
-            network_.start(device);
-        }
-    });
+    connect_network(device);
 }
 
 }}

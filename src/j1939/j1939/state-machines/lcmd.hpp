@@ -44,12 +44,14 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
             next_event_ += flash_delay();
             //c.next(flash_delay);
             out_p.right_turn_signal(cmd);
+            out_p.left_turn_signal(spn::control_commands::disable); // DEBT: Cache this to know to leave this as noop
             break;
 
         case signal::left_turn_to_be_flashing:
             next_event_ += flash_delay();
             //c.next(flash_delay);
             out_p.left_turn_signal(cmd);
+            out_p.right_turn_signal(spn::control_commands::disable);
             break;
 
         case signal::no_turn_being_signaled:

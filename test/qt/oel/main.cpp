@@ -5,6 +5,7 @@
 #include <j1939/qt/plugin.h>
 
 #include <j1939/qt/session.h>
+#include <j1939/qt/ca/ccvs.h>
 #include <j1939/qt/ca/oel.h>
 #include <j1939/qt/ca/lighting_command.h>
 
@@ -29,9 +30,11 @@ int main(int argc, char *argv[])
 
     auto oel = new j1939::qt::ca::OEL(session);
     auto lcmd = new j1939::qt::ca::LightingCommand(session);
+    auto ccvs = new j1939::qt::ca::CCVS(session);
 
     session->clients().push_back(oel);
     session->clients().push_back(lcmd);
+    session->clients().push_back(ccvs);
 
     qmlRegisterSingletonInstance("j1939", 1, 0, "Session", session);
 
@@ -49,6 +52,7 @@ int main(int argc, char *argv[])
         session->setDevice(device);
         oel->start(device);
         lcmd->start(device);
+        ccvs->start(device);
 
         device->connectDevice();
     }

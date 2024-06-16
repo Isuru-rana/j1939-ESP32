@@ -14,6 +14,20 @@ protected:
     template <pgns pgn>
     bool send(const pdu<pgn>& p);
 
+    // DEBT: Feels wrong on the whole
+    void connect_network(QCanBusDevice* device)
+    {
+        QObject::connect(device, &QCanBusDevice::stateChanged, [&, device]
+            (QCanBusDevice::CanBusDeviceState state)
+        {
+            if(state == QCanBusDevice::ConnectedState)
+            {
+                network_.start(device);
+            }
+        });
+
+    }
+
     Q_PROPERTY(cs::v1::Network* network READ network CONSTANT)
 
 public:

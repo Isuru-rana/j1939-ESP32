@@ -35,5 +35,12 @@ Window {
             Layout.fillWidth: true
 
         }
+
+        CCVS {
+            generic: Session.generic
+            ca: Session.clients[2]
+            Layout.fillWidth: true
+
+        }
     }
 }

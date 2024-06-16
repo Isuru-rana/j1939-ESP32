@@ -18,7 +18,7 @@ OEL::OEL(QObject* parent) :
 {
     network_.name().arbitrary_address_capable(true);
     network_.name().function_instance(0);
-    network_.name().function((int)function_fields::cab_controller);
+    network_.name().function((int)function_fields::lighting_operator_controls);
 }
 
 bool OEL::process_incoming(can::qt_transport&, const pdu<pgns::lcmd>& p)
@@ -79,14 +79,7 @@ void OEL::rightSignal()
 
 void OEL::start(QCanBusDevice* device)
 {
-    QObject::connect(device, &QCanBusDevice::stateChanged, [&, device]
-        (QCanBusDevice::CanBusDeviceState state)
-    {
-        if(state == QCanBusDevice::ConnectedState)
-        {
-            network_.start(device);
-        }
-    });
+    connect_network(device);
 }
 
 }}
