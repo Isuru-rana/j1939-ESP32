@@ -22,6 +22,7 @@ public:
 
     void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
 
+    Q_INVOKABLE void hazardPressed();
     Q_INVOKABLE void leftSignal();
     Q_INVOKABLE void rightSignal();
 

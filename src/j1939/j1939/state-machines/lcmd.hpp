@@ -18,7 +18,11 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
     bool on_already = state_ == STATE_FLASH_ON;
 
     using signal = enum_type<spns::turn_signal_switch>;
-    using hazard = enum_type<spns::hazard_light_switch>;
+    using hazard = enum_type<spns::hazard_light_switch>;    // aka spn::measured
+
+    const spn::control_commands cmd = on_already ?
+        spn::control_commands::disable :
+        spn::control_commands::enable;
 
     // TODO: Switch these next_event_ to +=
 
@@ -27,19 +31,13 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
         case signal::right_turn_to_be_flashing:
             next_event_ = c.current + flash_delay;
             //c.next(flash_delay);
-            out_p.right_turn_signal(
-                on_already ?
-                    spn::control_commands::disable :
-                    spn::control_commands::enable);
+            out_p.right_turn_signal(cmd);
             break;
 
         case signal::left_turn_to_be_flashing:
             next_event_ = c.current + flash_delay;
             //c.next(flash_delay);
-            out_p.left_turn_signal(
-                on_already ?
-                    spn::control_commands::disable :
-                    spn::control_commands::enable);
+            out_p.left_turn_signal(cmd);
             break;
 
         case signal::no_turn_being_signaled:
@@ -50,11 +48,20 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
         default: break;
     }
 
+    //const hazard hcmd = on_already ?
+    //    hazard::disabled :
+    //    hazard::enabled;
+
     switch(last_oel_.hazard_light_switch())
     {
         case hazard::enabled:
-            //out_p.right_turn_signal(spn::control_commands::enable);
-            //out_p.left_turn_signal(spn::control_commands::enable);
+            out_p.right_turn_signal(cmd);
+            out_p.left_turn_signal(cmd);
+            break;
+
+        case hazard::disabled:
+            out_p.right_turn_signal(spn::control_commands::disable);
+            out_p.left_turn_signal(spn::control_commands::disable);
             break;
 
         default: break;

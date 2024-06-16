@@ -8,6 +8,7 @@
 
 namespace embr::j1939::qt::ca { inline namespace v1 {
 
+// Listens for OEL and emits LCMD
 class LightingCommand : public ControllerApplication
 {
     using clock = std::chrono::system_clock;

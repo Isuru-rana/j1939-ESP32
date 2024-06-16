@@ -23,6 +23,18 @@ Item {
             id: btnRight
             text: "right"
             onClicked: ca.rightSignal()
+            palette {
+                id: btnRightP
+            }
+        }
+
+        Button {
+            id: btnHazard
+            text: "hazard"
+            onClicked: ca.hazardPressed()
+            palette {
+                id: btnHazardP
+            }
         }
     }
 
@@ -41,6 +53,12 @@ Item {
                 {
                     case 0: btnLeftP.button = "green"; break;
                     case 1: btnLeftP.button = "white"; break;
+                }
+
+                switch(pdu.payload.right_turn_signal)
+                {
+                    case 0: btnRightP.button = "green"; break;
+                    case 1: btnRightP.button = "white"; break;
                 }
             }
         }

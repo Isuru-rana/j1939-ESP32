@@ -19,4 +19,12 @@ void Generic::frameReceived(QCanBusDevice*, const QCanBusFrame& frame)
     j1939::process_incoming(*this, t, frame);
 }
 
+
+// DEBT: I can't remember if there's a different, better place to emit a PDU - I think
+// this is a good one though
+void Generic::send(const Pdu*)
+{
+    // TBD
+}
+
 }}

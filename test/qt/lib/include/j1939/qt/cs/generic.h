@@ -30,6 +30,11 @@ public:
     template <pgns pgn>
     bool process_incoming(can::qt_transport&, const pdu<pgn>& p);
 
+    // DEBT: Prefer to emit this way, but we can send directly via cached transport if needed
+    void process_outgoing(can::qt_transport&);
+
+    Q_INVOKABLE void send(const Pdu*);
+
 signals:
     void pduReceived(const Pdu*);
 };

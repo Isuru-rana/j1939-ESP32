@@ -48,6 +48,15 @@ void OEL::frameReceived(QCanBusDevice* device, const QCanBusFrame& frame)
     j1939::process_incoming(*this, t, frame);
 }
 
+void OEL::hazardPressed()
+{
+    pdu<pgns::oel> p(network_.address());
+
+    p.hazard_light_switch(spn::measured::on);
+
+    send(p);
+}
+
 void OEL::leftSignal()
 {
     pdu<pgns::oel> p(network_.address());
