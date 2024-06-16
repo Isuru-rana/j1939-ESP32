@@ -22,6 +22,11 @@ constexpr lighting_command<TimePoint>::lighting_command() :
 template <class TimePoint>
 void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
 {
+    if(state_ == STATE_IDLE)
+    {
+        next_event_ = c.current;
+    }
+
     bool on_already = state_ == STATE_FLASH_ON;
 
     using signal = enum_type<spns::turn_signal_switch>;
@@ -36,13 +41,13 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
     switch(last_oel_.turn_signal_switch())
     {
         case signal::right_turn_to_be_flashing:
-            next_event_ = c.current + flash_delay();
+            next_event_ += flash_delay();
             //c.next(flash_delay);
             out_p.right_turn_signal(cmd);
             break;
 
         case signal::left_turn_to_be_flashing:
-            next_event_ = c.current + flash_delay();
+            next_event_ += flash_delay();
             //c.next(flash_delay);
             out_p.left_turn_signal(cmd);
             break;
@@ -50,6 +55,7 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
         case signal::no_turn_being_signaled:
             out_p.right_turn_signal(spn::control_commands::disable);
             out_p.left_turn_signal(spn::control_commands::disable);
+            state_ = STATE_IDLE;
             break;
 
         default: break;
@@ -62,7 +68,7 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
     switch(last_oel_.hazard_light_switch())
     {
         case hazard::enabled:
-            next_event_ = c.current + flash_delay();
+            next_event_ += flash_delay();
             out_p.right_turn_signal(cmd);
             out_p.left_turn_signal(cmd);
             break;
@@ -70,6 +76,7 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
         case hazard::disabled:
             out_p.right_turn_signal(spn::control_commands::disable);
             out_p.left_turn_signal(spn::control_commands::disable);
+            state_ = STATE_IDLE;
             break;
 
         default: break;
@@ -84,6 +91,8 @@ template <class TimePoint>
 template <class Transport>
 bool lighting_command<TimePoint>::process_incoming(Transport& t, const pdu<pgns::oel>& p, const context& c)
 {
+    // DEBT: Looks like we might not really care.  Caching to (potentially) minimize output response traffic
+    // seems a very narrow edge case
     last_oel_ = p.payload();
 
     using traits = transport_traits<Transport>;
