@@ -17,13 +17,25 @@ struct pgn_to_string_functor
     template <pgns pgn>
     constexpr const char* operator()(internal::in_place_pgn<pgn>)
     {
+#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
+        using traits = j1939::pgn::traits<pgn>;
+
+        if constexpr(traits::is_specialized)
+            return traits::name();
+        else
+            return "N/A";
+#else
         return internal::traits_wrapper<pgn>::name();
+#endif
     }
 
-    constexpr const char* operator()() const { return nullptr; }
+    constexpr const char* operator()(pgns) const { return nullptr; }
 };
 
-constexpr const char* to_string(pgns pgn)
+// NOTE: Beware!  This commits to whatever specialized pdus are available
+//constexpr
+inline
+    const char* to_string(pgns pgn)
 {
     return internal::dispatch(pgn_to_string_functor{}, pgn);
 }

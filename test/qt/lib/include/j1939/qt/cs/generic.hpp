@@ -11,10 +11,17 @@ namespace embr::j1939::qt::cs { inline namespace v1 {
 template <pgns pgn>
 bool Generic::process_incoming(can::qt_transport&, const pdu<pgn>& p)
 {
+#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
+    using traits = j1939::pgn::traits<pgn>;
+
+    if constexpr(traits::is_specialized == false)
+        return false;
+#else
     using traits = j1939::internal::traits_wrapper<pgn>;
 
     if constexpr(traits::specialized == false)
         return false;
+#endif
 
     auto p2 = new Pdu(p.can_id(), this);
 
