@@ -96,11 +96,16 @@ TEST_CASE("transport (can)")
         const char* cmd = "C";
 
         p.parse(cmd);
-        p.serialize("0000000A412345678", &frame, false);
+        estd::errc ec = p.deserialize("0000000A412345678", &frame, true);
+
+        REQUIRE(ec == 0);
 
         REQUIRE(frame.id == 10);
-        //REQUIRE(frame.dlc == 4);
-        //REQUIRE(frame.payload[0] == 0x12);
+        REQUIRE(frame.dlc == 4);
+        REQUIRE(frame.payload[0] == 0x12);
+        REQUIRE(frame.payload[3] == 0x78);
+
+
     }
 }
 

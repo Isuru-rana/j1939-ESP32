@@ -1,12 +1,32 @@
 #pragma once
 
 #include <estd/charconv.h>
+#include <estd/locale.h>
 #include <estd/string_view.h>
 
 #include <can/reference.h>
 #include <can/loopback.h>
 
+#if __cpp_lib_concepts
+#include <concepts>
+#endif
+
 namespace embr { namespace can { namespace slcan { inline namespace v0 {
+
+#if __cpp_lib_concepts
+namespace concepts {
+
+template <class T>
+concept Impl = requires(T t)
+{
+    T::bitrates_;
+
+    t.open();
+    t.close();
+};
+
+}
+#endif
 
 namespace impl {
 
@@ -22,6 +42,10 @@ struct base
 struct loopback : base
 {
     using transport_type = can::loopback_transport;
+
+    transport_type transport_;
+
+    transport_type& transport() { return transport_; }
 
     const char* open()
     {
@@ -41,7 +65,7 @@ struct loopback : base
 
 }
 
-template <class Impl = impl::loopback>
+template <ESTD_CPP_CONCEPT(concepts::Impl) Impl = impl::loopback>
 class parser : impl::base   // DEBT
 {
     Impl impl_;
@@ -66,17 +90,24 @@ protected:
     Impl& impl() { return impl_; }
 
     // Turn ASCII representation into native frame
-    void serialize(view in, frame_type* out, bool extended)
+    estd::errc deserialize(view in, frame_type* out, bool extended)
     {
         uint32_t v;
-        unsigned pos = 8;
+        unsigned bump = extended ? 8 : 4;
+        const char* current = in.begin();
+        //const char* const end = in.end();
 
-        estd::from_chars_result r = estd::from_chars(in.begin(), in.begin() + pos, v, 16);
+        estd::from_chars_result r = estd::from_chars(current, current + bump, v, 16);
 
         frame_traits::id(*out, v);
 
-        // FIX: Looks like we have a bug
-        r = estd::from_chars(in.begin() + pos, in.begin() + (++pos), v, 16);
+        current += bump;
+
+        r = estd::from_chars(current, current + 1, v, 16);
+
+        if(r.ec != 0) return r.ec;
+
+        ++current;
 
         frame_traits::length(*out, v);
 
@@ -86,18 +117,37 @@ protected:
         {
             uint8_t v2;
 
-            r = estd::from_chars(in.begin() + pos, in.begin() + (pos += 2), v2, 16);
+            r = estd::from_chars(current, current + 2, v2, 16);
+
+            if(r.ec != 0) return r.ec;
+
+            current += 2;
 
             *payload++ = v2;
         }
+
+        return estd::errc{0};
+    }
+
+    void serialize(const frame_type& in, char* out)
+    {
+        // Holding off until https://github.com/malachi-iot/estdlib/issues/42 so that we don't
+        // reinvent formatting/padding code
+        //estd::to_chars_result r = estd::to_chars(out, out + 8, frame_traits::id(in), 16);
+
+        //r.
     }
 
     const char* transmit(view v, bool extended, bool rtr)
     {
+        // Not supported yet
+        if(rtr) return  ERROR;
+
         frame_type frame;
 
-        serialize(v, &frame, extended);
-        return ERROR;
+        deserialize(v, &frame, extended);
+
+        return impl().transport().send(frame) ? OK : ERROR;
     }
 
     const char* bitrate(view s)
