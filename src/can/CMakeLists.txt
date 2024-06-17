@@ -14,6 +14,9 @@ include(tools/cmake/sources.cmake)
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(embr::can ALIAS ${PROJECT_NAME})
 
+list(TRANSFORM SOURCE_FILES PREPEND ${CMAKE_CURRENT_LIST_DIR}/)
+target_sources(${PROJECT_NAME} INTERFACE ${SOURCE_FILES})
+
 target_include_directories(${PROJECT_NAME} INTERFACE .)
 
 target_link_libraries(${PROJECT_NAME} INTERFACE estd malachi-iot::embr)

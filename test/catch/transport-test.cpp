@@ -2,6 +2,7 @@
 
 #include <can/loopback.h>
 #include <can/aggregated_transport.h>
+#include <can/internal/slcan/parser.h>
 
 #include <j1939/ca.hpp>
 
@@ -86,6 +87,13 @@ TEST_CASE("transport (can)")
         using frame_type = loopback_transport::frame;
         using frame_traits = embr::j1939::frame_traits<frame_type>;
         using address_traits = spn::internal::address_type_traits_base;
+    }
+    SECTION("slcan")
+    {
+        embr::can::slcan::parser<> p;
+        const char* cmd = "C";
+
+        p.parse(cmd);
     }
 }
 
