@@ -1,11 +1,17 @@
 #pragma once
 
+#include <estd/charconv.h>
 #include <estd/string_view.h>
+
 #include <can/reference.h>
+#include <can/loopback.h>
 
 namespace embr { namespace can { namespace slcan { inline namespace v0 {
 
 namespace impl {
+
+// Transport abstraction is very hard.  Do up impl pattern for some auxiliary
+// transport specifics rather than a full on transport abstraction
 
 struct base
 {
@@ -15,6 +21,18 @@ struct base
 
 struct loopback : base
 {
+    using transport_type = can::loopback_transport;
+
+    const char* open()
+    {
+        return "\r";
+    }
+
+    const char* close()
+    {
+        return "\r";
+    }
+
     const char*  bitrate(unsigned v)
     {
         return "\r";
@@ -28,11 +46,16 @@ class parser : impl::base   // DEBT
 {
     Impl impl_;
 
+public:
+    using transport_type = typename Impl::transport_type;
+    using frame_type = typename transport_type::frame;
+    using frame_traits = can::frame_traits<frame_type>;
+
     static constexpr const char* OK = "\r";
     static constexpr const char* ERROR = "\7";
     static constexpr const char* OK_NEW = "z\r";
 
-    const char* transmit(estd::string_view, bool extended, bool rtr) { return ERROR; }
+    using view = estd::string_view;
 
 #if UNIT_TESTING
 public:
@@ -42,13 +65,42 @@ protected:
 
     Impl& impl() { return impl_; }
 
-    template <class Transport>
-    void package(Transport& t)
+    // Turn ASCII representation into native frame
+    void serialize(view in, frame_type* out, bool extended)
     {
+        uint32_t v;
+        unsigned pos = 8;
 
+        estd::from_chars_result r = estd::from_chars(in.begin(), in.begin() + pos, v, 16);
+
+        frame_traits::id(*out, v);
+
+        // FIX: Looks like we have a bug
+        r = estd::from_chars(in.begin() + pos, in.begin() + (++pos), v, 16);
+
+        frame_traits::length(*out, v);
+
+        uint8_t* payload = frame_traits::payload(*out);
+
+        while(v--)
+        {
+            uint8_t v2;
+
+            r = estd::from_chars(in.begin() + pos, in.begin() + (pos += 2), v2, 16);
+
+            *payload++ = v2;
+        }
     }
 
-    const char* bitrate(estd::string_view s)
+    const char* transmit(view v, bool extended, bool rtr)
+    {
+        frame_type frame;
+
+        serialize(v, &frame, extended);
+        return ERROR;
+    }
+
+    const char* bitrate(view s)
     {
         if(s.size() != 1) return ERROR;
 
@@ -75,13 +127,15 @@ public:
                 break;
 
             case 'O':       // open CAN channel
-                break;
+                if(!sz1) return ERROR;
+                return impl().open();
 
             case 'L':       // open CAN channel (listen only)
                 break;
 
             case 'C':       // close CAN channel
-                break;
+                if(!sz1) return ERROR;
+                return impl().close();
 
             case 'r':       // Transmit 11bit frame (RTR)
                 return transmit(param, false, true);

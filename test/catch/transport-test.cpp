@@ -90,10 +90,17 @@ TEST_CASE("transport (can)")
     }
     SECTION("slcan")
     {
-        embr::can::slcan::parser<> p;
+        using parser_type = embr::can::slcan::parser<>;
+        parser_type p;
+        parser_type::frame_type frame;
         const char* cmd = "C";
 
         p.parse(cmd);
+        p.serialize("0000000A412345678", &frame, false);
+
+        REQUIRE(frame.id == 10);
+        //REQUIRE(frame.dlc == 4);
+        //REQUIRE(frame.payload[0] == 0x12);
     }
 }
 

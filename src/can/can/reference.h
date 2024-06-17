@@ -70,6 +70,15 @@ struct frame_traits<reference::transport::frame>
 
     constexpr static uint32_t id(const frame& f) { return f.id; }
 
+    static void id(frame& f, uint32_t v) { f.id = v; }
+
+    static void length(frame& f, unsigned v) { f.dlc = v; }
+
+    static uint8_t* payload(frame& f)
+    {
+        return f.payload;
+    }
+
     constexpr static const uint8_t* payload(const frame& f)
     {
         return f.payload;
