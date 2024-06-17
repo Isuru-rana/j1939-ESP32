@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef ESP_PLATFORM
+#include <esp_log.h>
+#endif
+
 #include "network.h"
 #include "base.hpp"
 
@@ -263,6 +267,10 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
     return false;
 }
 
+// DEBT: Put this into estd itself - and useful because some compilers' __has_cpp_attribute doesn't
+// report this property
+#define FEATURE_ESTD_HAS_FALLTHROUGH    __cplusplus >= 201603L
+
 template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
 bool network<AddressManager, TimePoint>::update_state_after_send_claim(time_point* wake, time_point current)
 {
@@ -270,6 +278,9 @@ bool network<AddressManager, TimePoint>::update_state_after_send_claim(time_poin
     {
         case states::claimed:
             state_ = states::claiming;
+#if FEATURE_ESTD_HAS_FALLTHROUGH
+            [[fallthrough]];
+#endif
 
         case states::claiming:
             /* FIX: Disabled due to ambiguities in [1] 4.4.4.3

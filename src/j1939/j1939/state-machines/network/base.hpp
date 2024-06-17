@@ -53,7 +53,11 @@ void network_base::send_claim(Transport& t, uint8_t sa)
 #if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
     t.one_shot(true);
 #endif
+
+    // DEBT: Clean up and pay more attention to send failures
     bool send_result = traits::send(t, p);
+    (void)send_result;  // Silence unused variable warning
+
 #if FEATURE_EMBR_J1939_AC_COLLISION_MANAGEMENT
     t.one_shot(false);
 #endif

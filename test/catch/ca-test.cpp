@@ -145,13 +145,11 @@ TEST_CASE("Controller Applications")
 
         ca.process_incoming(t, f);
 
-        const frame* f_received = t.receive();
-
-        REQUIRE(f_received != nullptr);
+        REQUIRE(t.receive(&f));
 
         REQUIRE(ca.switch_bank_control_counter == 0);
 
-        REQUIRE(ca.process_incoming(t, *f_received));
+        REQUIRE(ca.process_incoming(t, f));
 
         REQUIRE(ca.switch_bank_control_counter == 1);
     }

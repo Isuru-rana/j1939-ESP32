@@ -4,7 +4,7 @@
 #include "../pgn/enum.h"
 #include "../spn/enum.h"
 
-namespace embr { namespace j1939 { namespace cs { namespace v1 {
+namespace embr { namespace j1939 { namespace cs { inline namespace v1 {
 
 // Adapted from old controller_application_base
 class base
@@ -12,6 +12,9 @@ class base
 protected:
     using pgns = embr::j1939::pgns;
     using spns = embr::j1939::spns;
+
+    template <pgns p>
+    using pdu = embr::j1939::pdu<p>;
 
 public:
     // DEBT: Need a Context variety of this one too

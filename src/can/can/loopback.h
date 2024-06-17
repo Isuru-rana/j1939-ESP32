@@ -10,10 +10,12 @@ namespace embr { namespace can {
 
 namespace impl {
 
-template <size_t N, class TFrame = can::reference::transport::frame>
+template <size_t N, class Frame = can::reference::transport::frame>
 struct loopback_transport
 {
     typedef estd::layer1::vector<uint8_t, 8> message_type;
+
+    using traits = frame_traits<Frame>;
 
     bus_state state_ = bus_state::online;
 
@@ -58,7 +60,7 @@ struct loopback_transport
         }
     };
 #endif
-    using frame = TFrame;
+    using frame = Frame;
 
     estd::detail::function<bool(const frame&)> receive_callback;
 
@@ -66,12 +68,16 @@ struct loopback_transport
     {
         frame frame_;
         void* sender_;
-        int count_;     // number of receivers to distribute to
+        //int count_;     // number of receivers to distribute to
 
         // DEBT: layer1::queue should probably use uninitialized array
         item() = default;
 
-        constexpr item(const frame& f, void* s = nullptr) : frame_{f}, sender_{s} {}
+        constexpr explicit item(frame&& f, void* s = nullptr) :
+            frame_{std::forward<frame>(f)}, sender_{s} {}
+
+        constexpr explicit item(const frame& f, void* s = nullptr) :
+            frame_{f}, sender_{s} {}
     };
 
     // where 'sent' messages go to just be read back by 'receive'
@@ -86,9 +92,13 @@ struct loopback_transport
 
     bool send(const frame& f, void* sender = nullptr)
     {
+        // DEBT: Add a 'full' for circular queues like us
+        //if(queue.size() == queue.max_size()) return false;
+
         const item& emplaced = queue.emplace(f, sender);
         bool dequeue = false;
 
+        // DEBT: Surely there's a better way to notice if this guy should be called?
         if (static_cast<bool>(receive_callback))
             dequeue = receive_callback(emplaced.frame_);
 
@@ -108,26 +118,15 @@ struct loopback_transport
         //queue.emplace(id, data);
         //queue.push(message{id, data});
 
-        const item& emplaced = queue.emplace(frame{id, data}, nullptr);
+        //const item& emplaced = queue.emplace(frame{id, data}, nullptr);
+        const item& emplaced = queue.emplace(traits::create(
+            id, data.data(), data.size_bytes()), nullptr);
         bool dequeue = true;
 
         if (static_cast<bool>(receive_callback))
             dequeue = receive_callback(emplaced.frame_);
 
         if (dequeue) queue.pop();
-    }
-
-    // DEBT: Be very careful with this, message* is valid only for a short time until someone
-    // overwrites that queue slot again.  Will need revision for production use
-    const frame* receive()
-    {
-        if (queue.empty()) return nullptr;
-
-        const frame& front = queue.front().frame_;
-
-        queue.pop();
-
-        return &front;
     }
 
     bool receive(frame* f)
