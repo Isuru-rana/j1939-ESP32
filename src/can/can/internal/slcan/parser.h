@@ -105,7 +105,7 @@ protected:
 
         r = estd::from_chars(current, current + 1, v, 16);
 
-        if(r.ec != 0) return r.ec;
+        if(!(r.ec == 0)) return r.ec;
 
         ++current;
 
@@ -119,7 +119,9 @@ protected:
 
             r = estd::from_chars(current, current + 2, v2, 16);
 
-            if(r.ec != 0) return r.ec;
+            // DEBT: According to https://en.cppreference.com/w/cpp/utility/to_chars
+            // the ideal version of this *might* be r.ec != estd::errc{}
+            if(!(r.ec == 0)) return r.ec;
 
             current += 2;
 
@@ -129,13 +131,32 @@ protected:
         return estd::errc{0};
     }
 
-    void serialize(const frame_type& in, char* out)
+    void serialize(const frame_type& in, char* out, bool extended)
     {
-        // Holding off until https://github.com/malachi-iot/estdlib/issues/42 so that we don't
-        // reinvent formatting/padding code
-        //estd::to_chars_result r = estd::to_chars(out, out + 8, frame_traits::id(in), 16);
+        using num_put = estd::internal::num_put<char, char*>;
+        num_put np; // DEBT: It feels like one of these days he might end up requiring an instance.  Not today though
+        estd::ios_base fmt;
 
-        //r.
+        fmt.setf(estd::ios_base::hex | estd::ios_base::uppercase,
+            estd::ios_base::basefield);
+        fmt.width(extended ? 8 : 4);
+
+        out = np.put(out, fmt, '0', frame_traits::id(in));
+
+        unsigned length = frame_traits::length(in);
+
+        *out++ = '0' + length;
+
+        fmt.width(2);
+
+        const uint8_t* payload = frame_traits::payload(in);
+
+        while(length--)
+        {
+            out = np.put(out, fmt, '0', *payload++);
+        }
+
+        *out = 0;
     }
 
     const char* transmit(view v, bool extended, bool rtr)

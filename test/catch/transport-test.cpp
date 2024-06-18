@@ -95,17 +95,30 @@ TEST_CASE("transport (can)")
         parser_type::frame_type frame;
         const char* cmd = "C";
 
-        p.parse(cmd);
-        estd::errc ec = p.deserialize("0000000A412345678", &frame, true);
+        SECTION("deserialize")
+        {
+            p.parse(cmd);
+            estd::errc ec = p.deserialize("0000000A412345678", &frame, true);
 
-        REQUIRE(ec == 0);
+            REQUIRE(ec == 0);
 
-        REQUIRE(frame.id == 10);
-        REQUIRE(frame.dlc == 4);
-        REQUIRE(frame.payload[0] == 0x12);
-        REQUIRE(frame.payload[3] == 0x78);
-
-
+            REQUIRE(frame.id == 10);
+            REQUIRE(frame.dlc == 4);
+            REQUIRE(frame.payload[0] == 0x12);
+            REQUIRE(frame.payload[3] == 0x78);
+        }
+        SECTION("serialize")
+        {
+            frame.id = 0x12345;
+            frame.dlc = 3;
+            frame.payload[0] = 0x12;
+            frame.payload[1] = 0x34;
+            frame.payload[2] = 0x56;
+            //char s[64];
+            estd::layer1::string<64> s;
+            p.serialize(frame, s.data(), true);
+            REQUIRE(s == "000123453123456");
+        }
     }
 }
 

@@ -74,6 +74,8 @@ struct frame_traits<reference::transport::frame>
 
     static void length(frame& f, unsigned v) { f.dlc = v; }
 
+    constexpr static unsigned length(const frame& f) { return f.dlc; }
+
     static uint8_t* payload(frame& f)
     {
         return f.payload;
