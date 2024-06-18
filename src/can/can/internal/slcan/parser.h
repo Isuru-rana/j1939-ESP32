@@ -47,7 +47,7 @@ struct loopback : base
 
     transport_type& transport() { return transport_; }
 
-    const char* open()
+    const char* open(bool listen_only)
     {
         return "\r";
     }
@@ -75,9 +75,19 @@ public:
     using frame_type = typename transport_type::frame;
     using frame_traits = can::frame_traits<frame_type>;
 
+    enum alerts
+    {
+        ALERT_RX_FIFO_FULL,
+        ALERT_TX_FIFO_FULL,
+        ALERT_BUS_ERROR = 7
+    };
+
     static constexpr const char* OK = "\r";
     static constexpr const char* ERROR = "\7";
     static constexpr const char* OK_NEW = "z\r";
+
+    // Approximately
+    static constexpr const unsigned max_frame_str_size = 30;
 
     using view = estd::string_view;
 
@@ -88,6 +98,10 @@ protected:
 #endif
 
     Impl& impl() { return impl_; }
+
+    // Primarily useful for polled mode, but also if to host USB doesn't keep up for some
+    // reason, can be helpful too
+    estd::layer1::queue<frame_type, 5> frames_to_send;
 
     // Turn ASCII representation into native frame
     estd::errc deserialize(view in, frame_type* out, bool extended)
@@ -131,9 +145,11 @@ protected:
         return estd::errc{0};
     }
 
-    void serialize(const frame_type& in, char* out, bool extended)
+    template <class CharIter>
+    CharIter serialize(const frame_type& in, CharIter out, bool extended)
     {
-        using num_put = estd::internal::num_put<char, char*>;
+        // DEBT: Extract char_type from iter
+        using num_put = estd::internal::num_put<char, CharIter>;
         num_put np; // DEBT: It feels like one of these days he might end up requiring an instance.  Not today though
         estd::ios_base fmt;
 
@@ -156,9 +172,29 @@ protected:
             out = np.put(out, fmt, '0', *payload++);
         }
 
-        *out = 0;
+        return out;
     }
 
+    // for 'parse' to use as its response buffer
+    char to_host_buffer[max_frame_str_size];
+
+    void get_frame_to_send_to_host(char* s)
+    {
+        // DEBT: Ascertain via frame_traits whether this is extended or not
+        s = serialize(frames_to_send.top(), s, true);
+        *s = 0;
+
+        frames_to_send.pop();
+    }
+
+
+    // received from CAN bus
+    void on_receive(const frame_type& frame)
+    {
+        frames_to_send.push(frame);
+    }
+
+    // send out over CAN bus
     const char* transmit(view v, bool extended, bool rtr)
     {
         // Not supported yet
@@ -181,6 +217,38 @@ protected:
         return impl().bitrate(bitrates_[v]);
     }
 
+    bool autopoll_ = false;
+
+    const char* pollmode(view s)
+    {
+        if(s.size() != 1) return ERROR;
+
+        const char c = s[0];
+
+        switch(c)
+        {
+            case '0': autopoll_ = false;
+            case '1': autopoll_ = true;
+            default: return ERROR;
+        }
+
+        return OK;
+    }
+
+    template <class CharIter>
+    CharIter alerts(CharIter out)
+    {
+        *out++ = 'F';
+        return out;
+    }
+
+    const char* alerts()
+    {
+        char* out = alerts(to_host_buffer);
+        *out = 0;
+        return to_host_buffer;
+    }
+
 public:
     const char* parse(estd::string_view s)
     {
@@ -199,14 +267,25 @@ public:
 
             case 'O':       // open CAN channel
                 if(!sz1) return ERROR;
-                return impl().open();
+                return impl().open(false);
 
             case 'L':       // open CAN channel (listen only)
+                if(!sz1) return ERROR;
+                return impl().open(true);
                 break;
 
             case 'C':       // close CAN channel
                 if(!sz1) return ERROR;
                 return impl().close();
+
+            case 'F':       // Read status flags
+                return alerts();
+
+            case 'A':       // Poll all (deprecated)
+                break;
+
+            case 'P':       // Poll single (deprecated)
+                break;
 
             case 'r':       // Transmit 11bit frame (RTR)
                 return transmit(param, false, true);
@@ -224,7 +303,7 @@ public:
                 break;
 
             case 'X':       // Auto Poll/Send ON/OFF
-                break;
+                return pollmode(param);
 
             default: break;
         }

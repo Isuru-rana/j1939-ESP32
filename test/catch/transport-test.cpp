@@ -116,7 +116,8 @@ TEST_CASE("transport (can)")
             frame.payload[2] = 0x56;
             //char s[64];
             estd::layer1::string<64> s;
-            p.serialize(frame, s.data(), true);
+            char* out = p.serialize(frame, s.data(), true);
+            *out = 0;
             REQUIRE(s == "000123453123456");
         }
     }
