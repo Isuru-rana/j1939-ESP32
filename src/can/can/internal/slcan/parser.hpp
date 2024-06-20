@@ -21,15 +21,15 @@ const char* parser<Impl>::parse(estd::string_view s)
             return ERROR;   // Not supported
 
         case 'O':       // open CAN channel
-            if(!sz1) return ERROR;
+            if(!sz1 || impl().opened()) return ERROR;
             return impl().open(false);
 
         case 'L':       // open CAN channel (listen only)
-            if(!sz1) return ERROR;
+            if(!sz1 || impl().opened()) return ERROR;
             return impl().open(true);
 
         case 'C':       // close CAN channel
-            if(!sz1) return ERROR;
+            if(!sz1 || !impl().opened()) return ERROR;
             return impl().close();
 
         case 'F':       // Read status flags

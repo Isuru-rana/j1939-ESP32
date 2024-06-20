@@ -238,7 +238,7 @@ protected:
 
     const char* bitrate(view s)
     {
-        if(s.size() != 1) return ERROR;
+        if(s.size() != 1 || impl().opened() == false) return ERROR;
 
         unsigned v = s[0] - '0';
         if(v > 8) return ERROR;
@@ -288,6 +288,8 @@ protected:
     }
 
 public:
+    const Impl& cimpl() const { return impl_; }
+
     const char* parse(estd::string_view s);
 };
 

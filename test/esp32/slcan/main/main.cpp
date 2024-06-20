@@ -104,6 +104,12 @@ extern "C" void app_main(void)
 
     for(;;)
     {
+        twai_message_t frame;
+
+        // DEBT: Needs cleanup along with delay down below
+        if(parser.cimpl().opened())
+            ESP_ERROR_CHECK(twai_receive(&frame, 0));
+
         if(++counter % 10 == 0)
             ESP_LOGI(TAG, "counter: %u", counter);
 
