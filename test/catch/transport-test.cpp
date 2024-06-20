@@ -2,7 +2,7 @@
 
 #include <can/loopback.h>
 #include <can/aggregated_transport.h>
-#include <can/internal/slcan/parser.h>
+#include <can/internal/slcan/parser.hpp>
 
 #include <j1939/ca.hpp>
 

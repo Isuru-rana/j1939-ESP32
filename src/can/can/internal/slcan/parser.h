@@ -76,11 +76,12 @@ public:
     using frame_type = typename transport_type::frame;
     using frame_traits = can::frame_traits<frame_type>;
 
-    enum alerts
+    enum alerts : uint8_t
     {
         ALERT_RX_FIFO_FULL,
         ALERT_TX_FIFO_FULL,
-        ALERT_BUS_ERROR = 7
+        ALERT_ARBITRATION_LOST = 1 << 6,
+        ALERT_BUS_ERROR = 1 << 7
     };
 
     static constexpr const char* OK = "\r";
@@ -97,6 +98,9 @@ public:
 #else
 protected:
 #endif
+
+    alerts alerts_ {};
+    bool autopoll_ = false;
 
     Impl& impl() { return impl_; }
 
@@ -225,8 +229,6 @@ protected:
         return impl().bitrate(bitrates_[v]);
     }
 
-    bool autopoll_ = false;
-
     const char* pollmode(view s)
     {
         if(s.size() != 1) return ERROR;
@@ -247,7 +249,17 @@ protected:
     CharIter alerts(CharIter out)
     {
         *out++ = 'F';
-        *out++ = '0';
+        // DEBT: Extract char_type from iter
+        using num_put = estd::num_put<char, CharIter>;
+        num_put np; // DEBT: It feels like one of these days he might end up requiring an instance.  Not today though
+        estd::ios_base fmt;
+
+        fmt.setf(estd::ios_base::hex | estd::ios_base::uppercase,
+            estd::ios_base::basefield);
+        fmt.width(2);
+
+        out = np.put(out, fmt, '0', (uint8_t)alerts_);
+
         return out;
     }
 
@@ -259,81 +271,7 @@ protected:
     }
 
 public:
-    const char* parse(estd::string_view s)
-    {
-        char c = s[0];
-        const bool sz1 = s.size() == 1;
-
-        estd::string_view param = s.substr(1);
-
-        switch(c)
-        {
-            case 'S':       // setup bitrate
-                return bitrate(param);
-
-            case 's':       // setup BTR0/BTR1 style
-                return ERROR;   // Not supported
-
-            case 'O':       // open CAN channel
-                if(!sz1) return ERROR;
-                return impl().open(false);
-
-            case 'L':       // open CAN channel (listen only)
-                if(!sz1) return ERROR;
-                return impl().open(true);
-
-            case 'C':       // close CAN channel
-                if(!sz1) return ERROR;
-                return impl().close();
-
-            case 'F':       // Read status flags
-                return alerts();
-
-            case 'A':       // Poll all (deprecated)
-            {
-                if(!sz1) return ERROR;
-
-                char* s2 = get_frame_to_send_to_host(to_host_buffer);
-                *s2 = 0;
-
-                // DEBT: Should return multiples.  Better served by reworking
-                // serialization code to use an ostream/ostreambuf directly
-                return s2;
-            }
-
-            case 'P':       // Poll single (deprecated)
-            {
-                if(!sz1) return ERROR;
-
-                char* s2 = get_frame_to_send_to_host(to_host_buffer);
-                *s2 = 0;
-
-                return s2;
-            }
-
-            case 'r':       // Transmit 11bit frame (RTR)
-                return transmit(param, false, true);
-
-            case 'R':       // Transmit 29bit frame (RTR)
-                return transmit(param, true, true);
-
-            case 't':       // Transmit 11bit frame
-                return transmit(param, false, false);
-
-            case 'T':       // Transmit 29bit frame
-                return transmit(param, true, false);
-
-            case 'V':       // get version number'
-                break;
-
-            case 'X':       // Auto Poll/Send ON/OFF
-                return pollmode(param);
-
-            default: break;
-        }
-
-        return ERROR;
-    }
+    const char* parse(estd::string_view s);
 };
 
 }}}}
