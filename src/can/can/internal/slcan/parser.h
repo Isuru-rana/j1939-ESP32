@@ -21,7 +21,7 @@ concept Impl = requires(T t)
 {
     T::bitrates_;
 
-    t.open();
+    t.open(bool{});
     t.close();
 };
 
@@ -149,7 +149,7 @@ protected:
     CharIter serialize(const frame_type& in, CharIter out, bool extended)
     {
         // DEBT: Extract char_type from iter
-        using num_put = estd::internal::num_put<char, CharIter>;
+        using num_put = estd::num_put<char, CharIter>;
         num_put np; // DEBT: It feels like one of these days he might end up requiring an instance.  Not today though
         estd::ios_base fmt;
 
