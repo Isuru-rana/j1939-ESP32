@@ -36,6 +36,23 @@ namespace impl {
 
 struct base
 {
+    bool opened_ = false;
+
+    bool opened() const { return opened_; }
+
+    enum bitrates_enum
+    {
+        BITRATE_10K,
+        BITRATE_20K,
+        BITRATE_50K,
+        BITRATE_100K,
+        BITRATE_125K,
+        BITRATE_250K,
+        BITRATE_500K,
+        BITRATE_800K,
+        BITRATE_1000K
+    };
+
     static constexpr unsigned bitrates_[] =
         { 10, 20, 50, 100, 125, 250, 500, 800, 1000 };
 };
@@ -58,7 +75,7 @@ struct loopback : base
         return "\r";
     }
 
-    const char*  bitrate(unsigned v)
+    const char* bitrate(unsigned idx, unsigned rate)
     {
         return "\r";
     }
@@ -226,7 +243,7 @@ protected:
         unsigned v = s[0] - '0';
         if(v > 8) return ERROR;
 
-        return impl().bitrate(bitrates_[v]);
+        return impl().bitrate(v, bitrates_[v]);
     }
 
     const char* pollmode(view s)

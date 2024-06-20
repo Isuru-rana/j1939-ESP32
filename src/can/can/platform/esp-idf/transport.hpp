@@ -159,7 +159,12 @@ struct frame_traits<twai_message_t>
         return message.data;
     }
 
-    inline static uint32_t length(const twai_message_t& message)
+    inline static uint8_t* payload(twai_message_t& message)
+    {
+        return message.data;
+    }
+
+    inline static unsigned length(const twai_message_t& message)
     {
         return message.data_length_code;
     }
@@ -167,6 +172,16 @@ struct frame_traits<twai_message_t>
     inline static uint32_t id(const frame& message)
     {
         return message.identifier;
+    }
+
+    static void id(frame& message, uint32_t id)
+    {
+        message.identifier = id;
+    }
+
+    static void length(frame& message, uint8_t v)
+    {
+        message.data_length_code = v;
     }
 };
 
