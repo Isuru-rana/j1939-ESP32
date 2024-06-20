@@ -1,6 +1,7 @@
 #pragma once
 
 #include <estd/charconv.h>
+#include <estd/iterator.h>
 #include <estd/locale.h>
 #include <estd/string_view.h>
 
@@ -178,13 +179,20 @@ protected:
     // for 'parse' to use as its response buffer
     char to_host_buffer[max_frame_str_size];
 
-    void get_frame_to_send_to_host(char* s)
+    template <class CharIt>
+    CharIt get_frame_to_send_to_host(CharIt s)
     {
-        // DEBT: Ascertain via frame_traits whether this is extended or not
-        s = serialize(frames_to_send.top(), s, true);
-        *s = 0;
+        if(!frames_to_send.empty())
+        {
+            // DEBT: Ascertain via frame_traits whether this is extended or not
+            s = serialize(frames_to_send.front(), s, true);
 
-        frames_to_send.pop();
+            frames_to_send.pop();
+        }
+
+        *s++ = '\r';
+
+        return s;
     }
 
 
@@ -227,8 +235,8 @@ protected:
 
         switch(c)
         {
-            case '0': autopoll_ = false;
-            case '1': autopoll_ = true;
+            case '0': autopoll_ = false; break;
+            case '1': autopoll_ = true; break;
             default: return ERROR;
         }
 
@@ -239,6 +247,7 @@ protected:
     CharIter alerts(CharIter out)
     {
         *out++ = 'F';
+        *out++ = '0';
         return out;
     }
 
@@ -263,7 +272,7 @@ public:
                 return bitrate(param);
 
             case 's':       // setup BTR0/BTR1 style
-                break;
+                return ERROR;   // Not supported
 
             case 'O':       // open CAN channel
                 if(!sz1) return ERROR;
@@ -272,7 +281,6 @@ public:
             case 'L':       // open CAN channel (listen only)
                 if(!sz1) return ERROR;
                 return impl().open(true);
-                break;
 
             case 'C':       // close CAN channel
                 if(!sz1) return ERROR;
@@ -282,10 +290,26 @@ public:
                 return alerts();
 
             case 'A':       // Poll all (deprecated)
-                break;
+            {
+                if(!sz1) return ERROR;
+
+                char* s2 = get_frame_to_send_to_host(to_host_buffer);
+                *s2 = 0;
+
+                // DEBT: Should return multiples.  Better served by reworking
+                // serialization code to use an ostream/ostreambuf directly
+                return s2;
+            }
 
             case 'P':       // Poll single (deprecated)
-                break;
+            {
+                if(!sz1) return ERROR;
+
+                char* s2 = get_frame_to_send_to_host(to_host_buffer);
+                *s2 = 0;
+
+                return s2;
+            }
 
             case 'r':       // Transmit 11bit frame (RTR)
                 return transmit(param, false, true);
