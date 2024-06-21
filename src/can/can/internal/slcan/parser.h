@@ -60,6 +60,17 @@ struct base
 
     bool opened() const { return opened_; }
 
+    enum openmodes
+    {
+    };
+
+    enum autostart_modes : uint8_t
+    {
+        AUTOSTART_NONE,
+        AUTOSTART_NORMAL,
+        AUTOSTART_LISTEN
+    };
+
     enum alerts_type : uint8_t
     {
         ALERT_NONE,
@@ -98,6 +109,15 @@ struct base
     constexpr alerts_type alerts() const { return {}; }
 
     static constexpr slcan_policies policy = SLCAN_POLICY_DEFAULT;
+
+    void init() {}
+
+    const char* autostart(autostart_modes)
+    {
+        return ERROR;
+    }
+
+    autostart_modes autostart() const { return AUTOSTART_NONE; }
 };
 
 struct loopback : base
@@ -110,17 +130,17 @@ struct loopback : base
 
     const char* open(bool listen_only)
     {
-        return "\r";
+        return OK;
     }
 
     const char* close()
     {
-        return "\r";
+        return OK;
     }
 
     const char* bitrate(unsigned idx, unsigned rate)
     {
-        return "\r";
+        return OK;
     }
 };
 
@@ -373,6 +393,9 @@ public:
         }
         return out;
     }
+
+    // DEBT: Clumsy, RAII WRU?
+    void init() { impl().init(); }
 };
 
 }}}}

@@ -1,13 +1,13 @@
 #include <driver/twai.h>
 #include <esp_check.h>
 #include <esp_log.h>
-#include <nvs_flash.h>
 
 #include <estd/istream.h>
 #include <estd/ostream.h>
 #include <estd/thread.h>
 
 #include <embr/platform/esp-idf/usb-serial-jtag/streambuf.h>
+#include <embr/platform/esp-idf/nvs.h>
 #include <can/internal/slcan/parser.hpp>
 #include <can/platform/esp-idf/transport.hpp>
 
@@ -24,6 +24,11 @@ struct twai_impl : embr::can::slcan::v0::impl::base
     bitrates_enum bitrate_ { BITRATE_UNSET };
 
     static constexpr const char* TAG = "slcan::twai_impl";
+
+    void init()
+    {
+
+    }
 
     static bool set_bitrate(bitrates_enum v, twai_timing_config_t* config)
     {
@@ -85,6 +90,8 @@ struct twai_impl : embr::can::slcan::v0::impl::base
     {
         esp_err_t ret;
 
+        (void)ret;
+
         ESP_GOTO_ON_ERROR(twai_stop(), err, TAG, "Cannot stop TWAI");
         ESP_GOTO_ON_ERROR(twai_driver_uninstall(), err, TAG, "Cannot uninstall TWAI");
 
@@ -103,9 +110,49 @@ struct twai_impl : embr::can::slcan::v0::impl::base
         return OK;
     }
 
-    const char* autostart(int mode)
+    static constexpr const char* nvs_ns = "slcan::1";
+
+    const char* autostart(autostart_modes mode)
     {
-        return ERROR;
+        embr::esp_idf::nvs::Handle nvh;
+        esp_err_t err;
+
+        err = nvh.open(nvs_ns, NVS_READWRITE);
+
+        if(err != ESP_OK)   return ERROR;
+
+        nvh.set("speed", (uint8_t)bitrate_);
+        nvh.set("autostart", (uint8_t)mode);
+
+        nvh.close();
+
+        return OK;
+    }
+
+    // Returns NONE if NVS errors occur
+    autostart_modes autostart() const
+    {
+        embr::esp_idf::nvs::Handle nvh;
+        esp_err_t err = nvh.open(nvs_ns, NVS_READWRITE);
+
+        uint8_t mode;
+
+        err = nvh.get("autostart", &mode);
+
+        switch(err)
+        {
+            case ESP_OK:
+                break;
+
+            case ESP_ERR_NVS_NOT_FOUND:
+            default:
+                mode = AUTOSTART_NONE;
+                break;
+        }
+
+        nvh.close();
+
+        return autostart_modes(mode);
     }
 };
 
@@ -118,11 +165,18 @@ estd::detail::basic_ostream<embr::esp_idf::usj_streambuf<char> > cout;
 
 static const char* TAG = "slcan::main";
 
+#ifdef CONFIG_ESP_CONSOLE_SECONDARY_NONE
+#define ENABLE_USJ 1
+#endif
+
 extern "C" void app_main(void)
 {
+    // Don't enable usj mode unless secondary console is disabled
+#if ENABLE_USJ
     static auto config = USB_SERIAL_JTAG_DRIVER_CONFIG_DEFAULT();
 
     ESP_ERROR_CHECK(usb_serial_jtag_driver_install(&config));
+#endif
 
     // Guidance from
     // https://github.com/espressif/esp-idf/blob/v5.2.2/examples/storage/nvs_rw_value/main/nvs_value_example_main.c
@@ -138,17 +192,20 @@ extern "C" void app_main(void)
     }
     ESP_ERROR_CHECK(err);
 
-    nvs_handle_t nvh;
+    embr::esp_idf::nvs::Handle nvh;
 
-    err = nvs_open("slcan::v1", NVS_READWRITE, &nvh);
+    //nvs_handle_t nvh;
+
+    //err = nvs_open("slcan::v1", NVS_READWRITE, &nvh);
+    err = nvh.open(twai_impl::nvs_ns, NVS_READWRITE);
 
     // Not ready yet
     if(err == ESP_OK)
     {
         uint8_t v;
 
-        err = nvs_get_u8(nvh, "speed", &v);
-        err = nvs_get_u8(nvh, "autostart", &v);
+        err = nvh.get("speed", &v);
+        err = nvh.get("autostart", &v);
 
         switch(v)
         {
@@ -163,6 +220,8 @@ extern "C" void app_main(void)
 
             default: break;
         }
+
+        nvh.close();
     }
 
     unsigned counter = 0, frame_counter = 0;
@@ -170,6 +229,7 @@ extern "C" void app_main(void)
     int input_pos = 0;
 
     parser.autopoll(true);
+    parser.init();
 
     for(;;)
     {
@@ -191,7 +251,12 @@ extern "C" void app_main(void)
             ESP_LOGI(TAG, "counter: %u frames: %u autopoll: %u",
                 counter, frame_counter, parser.autopoll());
 
+#if ENABLE_USJ
         int c = cin.get();
+#else
+        // DEBT: Non-USJ not yet supported except in pure diagnostic mode (no USB comms at all)
+        int c = -1;
+#endif
 
         if(c != -1)
         {
