@@ -169,9 +169,20 @@ struct frame_traits<twai_message_t>
         return message.data_length_code;
     }
 
-    inline static uint32_t id(const frame& message)
+    constexpr static uint32_t id(const frame& message)
     {
         return message.identifier;
+    }
+
+    constexpr static bool extended(const frame& message)
+    {
+        return message.extd;
+    }
+
+    constexpr static bool rtr(const frame& message)
+    {
+        // TODO
+        return {};
     }
 
     static void id(frame& message, uint32_t id)
@@ -182,6 +193,16 @@ struct frame_traits<twai_message_t>
     static void length(frame& message, uint8_t v)
     {
         message.data_length_code = v;
+    }
+
+    static void extended(frame& message, bool is_extended)
+    {
+        message.extd = is_extended;
+    }
+
+    static void rtr(frame& message, bool is_rtr)
+    {
+        // TODO
     }
 };
 

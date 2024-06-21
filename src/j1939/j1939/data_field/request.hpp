@@ -6,6 +6,13 @@
 // "The CAN frame for this PG shall set the DLC to 3."
 // j1939-21 (2006) Section 5.4.1 Figure 8
 
+// 20JUN24 FIX: RQST has some issues:
+// 1.  It appears ostream treatment isn't picking up bytes correctly.  PGN 0x00EE00 received,
+//     but 0xCA 00 00 is rendered.
+// 2.  Our enum trick of using the 8-bit/ps portion only of addressable PDU/PGN works well, but in
+//     this case translating back from pgn() field  means we'll need to treat it as 18-bit all
+//     the time
+
 namespace embr { namespace j1939 {
 
 namespace spn {

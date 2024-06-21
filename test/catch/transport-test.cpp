@@ -116,7 +116,7 @@ TEST_CASE("transport (can)")
             {
                 p.parse("V", ss);
 
-                REQUIRE(s == "V0001");
+                REQUIRE(s == "V0001\r");
             }
         }
         SECTION("deserialize")
@@ -133,13 +133,14 @@ TEST_CASE("transport (can)")
         SECTION("serialize")
         {
             frame.id = 0x12345;
+            frame.extended = true;
             frame.dlc = 3;
             frame.payload[0] = 0x12;
             frame.payload[1] = 0x34;
             frame.payload[2] = 0x56;
             //char s[64];
-            p.serialize(frame, ss, true);
-            REQUIRE(s == "000123453123456");
+            p.serialize(frame, ss);
+            REQUIRE(s == "T000123453123456\r");
         }
     }
 }

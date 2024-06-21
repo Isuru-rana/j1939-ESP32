@@ -39,9 +39,9 @@ auto parser<Impl>::parse(estd::string_view in, ostream<S, B>& out) -> ostream<S,
 
         case 'A':       // Poll all (deprecated)
         {
-            if(!sz1) return out <<  ERROR;
+            if(!sz1 || autopoll_) return out <<  ERROR;
 
-            return get_frame_to_send_to_host(out);
+            return send_frame_to_host(out);
             //*s2 = 0;
 
             // DEBT: Should return multiples.  Better served by reworking
@@ -54,9 +54,9 @@ auto parser<Impl>::parse(estd::string_view in, ostream<S, B>& out) -> ostream<S,
 
         case 'P':       // Poll single (deprecated)
         {
-            if(!sz1) return out << ERROR;
+            if(!sz1 || autopoll_) return out << ERROR;
 
-            return get_frame_to_send_to_host(out);
+            return send_frame_to_host(out);
         }
 
         case 'r':       // Transmit 11bit frame (RTR)
@@ -83,10 +83,61 @@ auto parser<Impl>::parse(estd::string_view in, ostream<S, B>& out) -> ostream<S,
         case 'W':
             break;
 
+        case 'Z':
+            if(!sz1) return out << ERROR;
+            switch(param[0])
+            {
+                case '0':   timestamps_ = false; return out << OK;
+                case '1':   timestamps_ = true; return out << OK;
+                default: break;
+            }
+            break;
+
         default: break;
     }
 
     return out << ERROR;
 }
+
+
+template <ESTD_CPP_CONCEPT(concepts::Impl) Impl>
+template <class S, class B>
+auto parser<Impl>::serialize(const frame_type& in, ostream<S, B>& out) -> ostream<S, B>&
+{
+    const bool extended = frame_traits::extended(in);
+
+    // DEBT: Minor debt, consider using the nifty 0x20 mask to convert to lower case
+
+    if(frame_traits::rtr(in))
+        out << (extended ? 'R' : 'r');
+    else
+        out << (extended ? 'T' : 't');
+
+    out.setf(estd::ios_base::hex | estd::ios_base::uppercase,
+        estd::ios_base::basefield);
+    out.width(extended ? 8 : 4);
+    out.fill('0');
+
+    out << frame_traits::id(in);
+
+    unsigned length = frame_traits::length(in);
+
+    out.put('0' + length);
+
+    out.width(2);
+
+    const uint8_t* payload = frame_traits::payload(in);
+
+    while(length--) out << *payload++;
+
+    if(timestamps_)
+    {
+        out.width(4);
+        out << impl().timestamp_ms();
+    }
+
+    return out << OK;
+}
+
 
 }}}}

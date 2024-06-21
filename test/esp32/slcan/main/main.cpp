@@ -83,7 +83,7 @@ struct twai_impl : embr::can::slcan::v0::impl::base
     const char* close()
     {
         esp_err_t ret;
-        
+
         ESP_GOTO_ON_ERROR(twai_stop(), err, TAG, "Cannot stop TWAI");
         ESP_GOTO_ON_ERROR(twai_driver_uninstall(), err, TAG, "Cannot uninstall TWAI");
 
@@ -118,7 +118,7 @@ extern "C" void app_main(void)
 
     ESP_ERROR_CHECK(usb_serial_jtag_driver_install(&config));
 
-    unsigned counter = 0;
+    unsigned counter = 0, frame_counter = 0;
     char input[60];
     int input_pos = 0;
 
@@ -133,12 +133,14 @@ extern "C" void app_main(void)
             ret = twai_receive(&frame, 0);
             if(ret == ESP_OK)
             {
-                parser.on_receive(frame);
+                ++frame_counter;
+                parser.on_receive(frame, cout);
             }
         }
 
         if(++counter % 10 == 0)
-            ESP_LOGI(TAG, "counter: %u", counter);
+            ESP_LOGI(TAG, "counter: %u frames: %u autopoll: %u",
+                counter, frame_counter, parser.autopoll());
 
         int c = cin.get();
 

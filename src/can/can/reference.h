@@ -18,7 +18,8 @@ struct transport
 {
     struct frame
     {
-        uint32_t id;
+        uint32_t id : 29;
+        uint32_t extended : 1;
         uint8_t dlc;
         uint8_t payload[8];
 
@@ -84,6 +85,24 @@ struct frame_traits<reference::transport::frame>
     constexpr static const uint8_t* payload(const frame& f)
     {
         return f.payload;
+    }
+
+    static void rtr(frame& message, bool) {}        // TODO
+
+    constexpr static bool extended(const frame& f)
+    {
+        return f.extended;
+    }
+
+    static void extended(frame& f, bool is_extended)
+    {
+        f.extended = is_extended;
+    }
+
+    constexpr static bool rtr(const frame& message)
+    {
+        // TODO
+        return {};
     }
 };
 

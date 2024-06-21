@@ -61,6 +61,9 @@ struct base
 
     static constexpr unsigned bitrates_[] =
         { 10, 20, 50, 100, 125, 250, 500, 800, 1000 };
+
+    // Would get fancy with chrono, but it's not really worth it
+    static constexpr uint16_t timestamp_ms() { return 0xFFFF; }
 };
 
 struct loopback : base
@@ -120,6 +123,7 @@ protected:
 
     alerts alerts_ {};
     bool autopoll_ = false;
+    bool timestamps_ = false;
 
     Impl& impl() { return impl_; }
 
@@ -143,6 +147,7 @@ protected:
 
         r = estd::from_chars(current, current + 1, v, 16);
 
+        // DEBT: See below ec comparison
         if(!(r.ec == 0)) return r.ec;
 
         ++current;
@@ -172,39 +177,19 @@ protected:
     template <class Streambuf, class Base>
     using ostream = estd::detail::basic_ostream<Streambuf, Base>;
 
+    // NOTE: Serialize adds in prefix r/R/t/T
     template <class S, class B>
-    ostream<S, B>& serialize(const frame_type& in, ostream<S, B>& out, bool extended)
-    {
-        out.setf(estd::ios_base::hex | estd::ios_base::uppercase,
-            estd::ios_base::basefield);
-        out.width(extended ? 8 : 4);
-        out.fill('0');
-
-        out << frame_traits::id(in);
-
-        unsigned length = frame_traits::length(in);
-
-        out.put('0' + length);
-
-        out.width(2);
-
-        const uint8_t* payload = frame_traits::payload(in);
-
-        while(length--) out << *payload++;
-
-        return out;
-    }
+    ostream<S, B>& serialize(const frame_type& in, ostream<S, B>& out);
 
     // for 'parse' to use as its response buffer
     //char to_host_buffer[max_frame_str_size];
 
     template <class S, class B>
-    ostream<S, B>& get_frame_to_send_to_host(ostream<S, B>& out)
+    ostream<S, B>& send_frame_to_host(ostream<S, B>& out)
     {
         if(!frames_to_send.empty())
         {
-            // DEBT: Ascertain via frame_traits whether this is extended or not
-            serialize(frames_to_send.front(), out, true);
+            serialize(frames_to_send.front(), out);
 
             frames_to_send.pop();
         }
@@ -218,10 +203,15 @@ protected:
     // send out over CAN bus
     const char* transmit(view v, bool extended, bool rtr)
     {
+        if(!impl().opened())    return ERROR;
+
         // Not supported yet
         if(rtr) return  ERROR;
 
         frame_type frame;
+
+        frame_traits::rtr(frame, rtr);
+        frame_traits::extended(frame, extended);
 
         deserialize(v, &frame, extended);
 
@@ -272,6 +262,7 @@ protected:
 
 public:
     const Impl& cimpl() const { return impl_; }
+    bool autopoll() const { return autopoll_; }
 
     ///
     /// @tparam S
@@ -284,9 +275,21 @@ public:
     ostream<S, B>& parse(estd::string_view in, ostream<S, B>& out);
 
     // received from CAN bus
-    void on_receive(const frame_type& frame)
+    // DEBT: Probably split this out into a kind of 'process_outgoing' statemachine-esque
+    // emptying of frames_to_send during autopoll, so that we don't always pass in out.  Mainly
+    // in service of potential flow control down the line
+    template <class S, class B>
+    auto on_receive(const frame_type& frame, ostream<S, B>& out) -> ostream<S, B>&
     {
-        frames_to_send.push(frame);
+        if(autopoll_)
+        {
+            serialize(frame, out);
+        }
+        else
+        {
+            frames_to_send.push(frame);
+        }
+        return out;
     }
 };
 
