@@ -161,6 +161,8 @@ public:
 protected:
 #endif
 
+    // TODO: Put in autoopen mode as per [2]
+
     uint8_t alerts_ {};
     // Original spec indicates this is false [1] but Linux slcan suite seems to presume true
     bool autopoll_ = false;
@@ -340,6 +342,7 @@ protected:
 public:
     const Impl& cimpl() const { return impl_; }
     bool autopoll() const { return autopoll_; }
+    void autopoll(bool v) { autopoll_ = v; }
 
     ///
     /// @tparam S Streambuf

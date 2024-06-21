@@ -122,6 +122,8 @@ extern "C" void app_main(void)
     char input[60];
     int input_pos = 0;
 
+    parser.autopoll(true);
+
     for(;;)
     {
         twai_message_t frame;
