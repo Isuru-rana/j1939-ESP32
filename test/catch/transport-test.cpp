@@ -98,6 +98,12 @@ TEST_CASE("transport (can)")
         estd::layer1::stringstream<64> ss;
         const auto& s = ss.rdbuf()->str();
 
+        SECTION("status")
+        {
+            p.status(ss);
+
+            REQUIRE(s == "fC---0\r");
+        }
         SECTION("parse")
         {
             SECTION("open")

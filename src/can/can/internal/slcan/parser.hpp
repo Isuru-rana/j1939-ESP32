@@ -34,6 +34,9 @@ auto parser<Impl>::parse(estd::string_view in, ostream<S, B>& out) -> ostream<S,
             if(!sz1 || !impl().opened()) return out << ERROR;
             return out << impl().close();
 
+        case 'f':       // Read extended status flags [2]
+            return status(out);
+
         case 'F':       // Read status flags
             return alerts(out);
 
@@ -142,5 +145,58 @@ auto parser<Impl>::serialize(const frame_type& in, ostream<S, B>& out) -> ostrea
     return out << OK;
 }
 
+// Turn ASCII representation into native frame
+template <ESTD_CPP_CONCEPT(concepts::Impl) Impl>
+template <class CharIt>
+estd::errc parser<Impl>::deserialize(CharIt in, frame_type* out, bool extended)
+{
+    //constexpr auto success = estd::errc{};
+
+    uint32_t v;
+    unsigned bump = extended ? 8 : 4;
+    CharIt current = in;
+    //const char* current = in.begin();
+    //const char* const end = in.end();
+
+    // TODO: Do ALERT_DATA_STREAM on result errors
+
+    estd::from_chars_result r = estd::from_chars(current, current + bump, v, 16);
+
+    // DEBT: See below ec comparison
+    if(!(r.ec == 0)) return r.ec;
+
+    frame_traits::id(*out, v);
+
+    current += bump;
+
+    r = estd::from_chars(current, current + 1, v, 16);
+
+    // DEBT: See below ec comparison
+    if(!(r.ec == 0)) return r.ec;
+
+    ++current;
+
+    frame_traits::length(*out, v);
+
+    uint8_t* payload = frame_traits::payload(*out);
+
+    while(v--)
+    {
+        uint8_t v2;
+
+        r = estd::from_chars(current, current + 2, v2, 16);
+
+        // DEBT: According to https://en.cppreference.com/w/cpp/utility/to_chars
+        // the ideal version of this *might* be r.ec != estd::errc{}
+        // DEBT: Also, our errc needs != operator in general
+        if(!(r.ec == 0)) return r.ec;
+
+        current += 2;
+
+        *payload++ = v2;
+    }
+
+    return estd::errc{};
+}
 
 }}}}

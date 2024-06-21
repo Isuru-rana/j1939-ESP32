@@ -50,25 +50,35 @@ namespace impl {
 // Transport abstraction is very hard.  Do up impl pattern for some auxiliary
 // transport specifics rather than a full on transport abstraction
 
+// CLion is throwing a serious warning fit
+#if __cplusplus >= 201703L
+#define ATTR_NODISCARD      [[nodiscard]]
+#define ATTR_FALLTHROUGH    [[fallthrough]]
+#else
+#define ATTR_NODISCARD
+#define ATTR_FALLTHROUGH
+#endif
+
 struct base
 {
     static constexpr const char* OK = "\r";
     static constexpr const char* ERROR = "\7";
     static constexpr const char* OK_AUTOPOLL = "z\r";
 
-    enum openmodes
+    enum open_modes
     {
         CLOSED,
         OPEN_NORMAL,
-        OPEN_LISTENONLY,
+        OPEN_LISTEN,
+        OPEN_ECHO,      // [2]
     };
 
-    openmodes openmode_ {};
+    open_modes open_mode_ {};
 
-    bool opened() const
+    ATTR_NODISCARD bool opened() const
     {
-        return openmode_ == OPEN_NORMAL ||
-            openmode_ == OPEN_LISTENONLY;
+        return open_mode_ == OPEN_NORMAL ||
+            open_mode_ == OPEN_LISTEN;
     }
 
     enum autostart_modes : uint8_t
@@ -107,24 +117,35 @@ struct base
         BITRATE_UNSET
     };
 
+    bitrates_enum bitrate_ { BITRATE_UNSET };
+
     static constexpr unsigned bitrates_[] =
         { 10, 20, 50, 100, 125, 250, 500, 800, 1000 };
 
     // Would get fancy with chrono, but it's not really worth it
     static constexpr uint16_t timestamp_ms() { return 0xFFFF; }
 
-    constexpr alerts_type alerts() const { return {}; }
+    static constexpr alerts_type alerts() { return {}; }
 
     static constexpr slcan_policies policy = SLCAN_POLICY_DEFAULT;
 
     void init() {}
 
-    const char* autostart(autostart_modes)
+    static const char* autostart(autostart_modes)
     {
         return ERROR;
     }
 
-    autostart_modes autostart() const { return AUTOSTART_NONE; }
+    static autostart_modes autostart() { return AUTOSTART_NONE; }
+
+    const char* bitrate(unsigned idx, unsigned rate)
+    {
+        bitrate_ = bitrates_enum(idx);
+
+        return OK;
+    }
+
+    ATTR_NODISCARD constexpr unsigned bitrate() const { return bitrate_; }
 };
 
 struct loopback : base
@@ -135,17 +156,12 @@ struct loopback : base
 
     transport_type& transport() { return transport_; }
 
-    const char* open(bool listen_only)
+    static const char* open(bool listen_only)
     {
         return OK;
     }
 
-    const char* close()
-    {
-        return OK;
-    }
-
-    const char* bitrate(unsigned idx, unsigned rate)
+    static const char* close()
     {
         return OK;
     }
@@ -198,7 +214,7 @@ protected:
     Impl& impl() { return impl_; }
     const Impl& impl() const { return impl_; }
 
-    uint8_t alerts() const
+    uint8_t alerts() const  // NOLINT
     {
         // TODO: "Bits clear on read" [2]
         return impl().alerts() | alerts_;
@@ -211,56 +227,7 @@ protected:
 
     // Turn ASCII representation into native frame
     template <class CharIt>
-    estd::errc deserialize(CharIt in, frame_type* out, bool extended)
-    {
-        //constexpr auto success = estd::errc{};
-
-        uint32_t v;
-        unsigned bump = extended ? 8 : 4;
-        CharIt current = in;
-        //const char* current = in.begin();
-        //const char* const end = in.end();
-
-        // TODO: Do ALERT_DATA_STREAM on result errors
-
-        estd::from_chars_result r = estd::from_chars(current, current + bump, v, 16);
-
-        // DEBT: See below ec comparison
-        if(!(r.ec == 0)) return r.ec;
-
-        frame_traits::id(*out, v);
-
-        current += bump;
-
-        r = estd::from_chars(current, current + 1, v, 16);
-
-        // DEBT: See below ec comparison
-        if(!(r.ec == 0)) return r.ec;
-
-        ++current;
-
-        frame_traits::length(*out, v);
-
-        uint8_t* payload = frame_traits::payload(*out);
-
-        while(v--)
-        {
-            uint8_t v2;
-
-            r = estd::from_chars(current, current + 2, v2, 16);
-
-            // DEBT: According to https://en.cppreference.com/w/cpp/utility/to_chars
-            // the ideal version of this *might* be r.ec != estd::errc{}
-            // DEBT: Also, our errc needs != operator in general
-            if(!(r.ec == 0)) return r.ec;
-
-            current += 2;
-
-            *payload++ = v2;
-        }
-
-        return estd::errc{};
-    }
+    estd::errc deserialize(CharIt in, frame_type* out, bool extended);
 
     template <class Streambuf, class Base>
     using ostream = estd::detail::basic_ostream<Streambuf, Base>;
@@ -346,21 +313,26 @@ protected:
     ostream<S, B>& status(ostream<S, B>& out)
     {
         out << 'f';
-        switch(openmode_)
+        switch(open_mode_)
         {
-            case OPEN_LISTENONLY:   out << 'L'; break;
+            case OPEN_LISTEN:       out << 'L'; break;
             case OPEN_NORMAL:       out << 'O'; break;
+            case OPEN_ECHO:         out << 'E'; break;  // [2]
             case CLOSED:            out << 'C'; break;
         }
 
         // TODO: Incomplete
 
-        //out.put(impl().bitrate())
-        out << '-'; // regular CAN
-        out << timestamps_ ? 'Z' : '-';
-        out << impl().autostart() == AUTOSTART_NONE ? '0' : '1';
+        if(impl().bitrate() == BITRATE_UNSET)
+            out << '-';     // NOTE: Standard doesn't specify this, but it is implied
+        else
+            out.put(impl().bitrate() + '0');
 
-        return out;
+        out << '-'; // regular CAN
+        out.put(timestamps_ ? 'Z' : '-');
+        out << (impl().autostart() == AUTOSTART_NONE ? '0' : '1');
+
+        return out << OK;
     }
 
     template <class S, class B>

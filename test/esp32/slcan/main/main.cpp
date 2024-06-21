@@ -21,8 +21,6 @@ struct twai_impl : embr::can::slcan::v0::impl::base
     // DEBT: Make this actual instance for TWAI v2 API
     transport_type transport() { return {}; }
 
-    bitrates_enum bitrate_ { BITRATE_UNSET };
-
     static constexpr const char* TAG = "slcan::twai_impl";
 
     alerts_type alerts() const
@@ -34,7 +32,7 @@ struct twai_impl : embr::can::slcan::v0::impl::base
         return {};
     }
 
-    static bool set_bitrate(bitrates_enum v, twai_timing_config_t* config)
+    static bool config_bitrate(bitrates_enum v, twai_timing_config_t* config)
     {
         switch(v)
         {
@@ -75,7 +73,7 @@ struct twai_impl : embr::can::slcan::v0::impl::base
 
         twai_timing_config_t t_config;
 
-        bool r = set_bitrate(bitrate_, &t_config);
+        bool r = config_bitrate(bitrate_, &t_config);
 
         if(r == false) return ERROR;
         
@@ -105,13 +103,6 @@ struct twai_impl : embr::can::slcan::v0::impl::base
     
     err:
         return ERROR;
-    }
-
-    const char* bitrate(unsigned idx, unsigned rate)
-    {
-        bitrate_ = bitrates_enum(idx);
-
-        return OK;
     }
 
     static constexpr const char* nvs_ns = "slcan::v1";
@@ -162,7 +153,6 @@ struct twai_impl : embr::can::slcan::v0::impl::base
         return mode;
     }
 
-    // UNTESTED
     void init()
     {
         embr::esp_idf::nvs::Handle nvh;
@@ -181,7 +171,7 @@ struct twai_impl : embr::can::slcan::v0::impl::base
             case AUTOSTART_NORMAL:
                 if((err = nvh.get("speed", &v)) == ESP_OK)
                 {
-                    bitrate_ = bitrates_enum(v);
+                    bitrate(bitrates_enum(v), 0);
                     open(false);
                 }
                 else
@@ -192,7 +182,7 @@ struct twai_impl : embr::can::slcan::v0::impl::base
             case AUTOSTART_LISTEN:
                 if((err = nvh.get("speed", &v)) == ESP_OK)
                 {
-                    bitrate_ = bitrates_enum(v);
+                    bitrate(bitrates_enum(v), 0);
                     open(true);
                 }
                 else
