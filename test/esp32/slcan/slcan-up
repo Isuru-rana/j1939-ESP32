@@ -1,0 +1,4 @@
+#!/bin/sh
+
+slcand $1 can0
+ip link set can0 up
