@@ -1,5 +1,7 @@
 #include <catch2/catch.hpp>
 
+#include <estd/sstream.h>
+
 #include <can/loopback.h>
 #include <can/aggregated_transport.h>
 #include <can/internal/slcan/parser.hpp>
@@ -93,11 +95,32 @@ TEST_CASE("transport (can)")
         using parser_type = embr::can::slcan::parser<>;
         parser_type p;
         parser_type::frame_type frame;
-        const char* cmd = "C";
+        estd::layer1::stringstream<64> ss;
+        const auto& s = ss.rdbuf()->str();
 
+        SECTION("parse")
+        {
+            SECTION("open")
+            {
+
+            }
+            SECTION("close")
+            {
+                const char* cmd = "C";
+                p.parse(cmd, ss);
+
+                REQUIRE(s[0] == '\7');
+                REQUIRE(s.length() == 1);
+            }
+            SECTION("version")
+            {
+                p.parse("V", ss);
+
+                REQUIRE(s == "V0001");
+            }
+        }
         SECTION("deserialize")
         {
-            p.parse(cmd);
             estd::errc ec = p.deserialize("0000000A412345678", &frame, true);
 
             REQUIRE(ec == 0);
@@ -115,9 +138,7 @@ TEST_CASE("transport (can)")
             frame.payload[1] = 0x34;
             frame.payload[2] = 0x56;
             //char s[64];
-            estd::layer1::string<64> s;
-            char* out = p.serialize(frame, s.data(), true);
-            *out = 0;
+            p.serialize(frame, ss, true);
             REQUIRE(s == "000123453123456");
         }
     }

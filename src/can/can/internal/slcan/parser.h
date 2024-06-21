@@ -4,6 +4,7 @@
 #include <estd/iterator.h>
 #include <estd/locale.h>
 #include <estd/string_view.h>
+#include <estd/iosfwd.h>
 
 #include <can/reference.h>
 #include <can/loopback.h>
@@ -167,32 +168,28 @@ protected:
         return estd::errc{0};
     }
 
-    template <class CharIter>
-    CharIter serialize(const frame_type& in, CharIter out, bool extended)
+    template <class Streambuf, class Base>
+    using ostream = estd::detail::basic_ostream<Streambuf, Base>;
+
+    template <class S, class B>
+    ostream<S, B>& serialize(const frame_type& in, ostream<S, B>& out, bool extended)
     {
-        // DEBT: Extract char_type from iter
-        using num_put = estd::num_put<char, CharIter>;
-        num_put np; // DEBT: It feels like one of these days he might end up requiring an instance.  Not today though
-        estd::ios_base fmt;
-
-        fmt.setf(estd::ios_base::hex | estd::ios_base::uppercase,
+        out.setf(estd::ios_base::hex | estd::ios_base::uppercase,
             estd::ios_base::basefield);
-        fmt.width(extended ? 8 : 4);
+        out.width(extended ? 8 : 4);
+        out.fill('0');
 
-        out = np.put(out, fmt, '0', frame_traits::id(in));
+        out << frame_traits::id(in);
 
         unsigned length = frame_traits::length(in);
 
-        *out++ = '0' + length;
+        out.put('0' + length);
 
-        fmt.width(2);
+        out.width(2);
 
         const uint8_t* payload = frame_traits::payload(in);
 
-        while(length--)
-        {
-            out = np.put(out, fmt, '0', *payload++);
-        }
+        while(length--) out << *payload++;
 
         return out;
     }
@@ -200,20 +197,20 @@ protected:
     // for 'parse' to use as its response buffer
     char to_host_buffer[max_frame_str_size];
 
-    template <class CharIt>
-    CharIt get_frame_to_send_to_host(CharIt s)
+    template <class S, class B>
+    ostream<S, B>& get_frame_to_send_to_host(ostream<S, B>& out)
     {
         if(!frames_to_send.empty())
         {
             // DEBT: Ascertain via frame_traits whether this is extended or not
-            s = serialize(frames_to_send.front(), s, true);
+            serialize(frames_to_send.front(), out, true);
 
             frames_to_send.pop();
         }
 
-        *s++ = '\r';
+        out.put('\r');
 
-        return s;
+        return out;
     }
 
 
@@ -262,35 +259,33 @@ protected:
         return OK;
     }
 
-    template <class CharIter>
-    CharIter alerts(CharIter out)
+    template <class S, class B>
+    ostream<S, B>& alerts(ostream<S, B>& out)
     {
-        *out++ = 'F';
-        // DEBT: Extract char_type from iter
-        using num_put = estd::num_put<char, CharIter>;
-        num_put np; // DEBT: It feels like one of these days he might end up requiring an instance.  Not today though
-        estd::ios_base fmt;
+        out << 'F';
 
-        fmt.setf(estd::ios_base::hex | estd::ios_base::uppercase,
+        out.setf(estd::ios_base::hex | estd::ios_base::uppercase,
             estd::ios_base::basefield);
-        fmt.width(2);
+        out.width(2);
+        out.fill('0');
 
-        out = np.put(out, fmt, '0', (uint8_t)alerts_);
+        out << (uint8_t)alerts_;
 
         return out;
-    }
-
-    const char* alerts()
-    {
-        char* out = alerts(to_host_buffer);
-        *out = 0;
-        return to_host_buffer;
     }
 
 public:
     const Impl& cimpl() const { return impl_; }
 
-    const char* parse(estd::string_view s);
+    ///
+    /// @tparam S
+    /// @tparam B
+    /// @param in
+    /// @param out
+    /// @return
+    /// @remark char 13 (CR) MUST NOT be present for 'in'
+    template <class S, class B>
+    ostream<S, B>& parse(estd::string_view in, ostream<S, B>& out);
 };
 
 }}}}

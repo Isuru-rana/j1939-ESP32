@@ -5,81 +5,80 @@
 namespace embr { namespace can { namespace slcan { inline namespace v0 {
 
 template <ESTD_CPP_CONCEPT(concepts::Impl) Impl>
-const char* parser<Impl>::parse(estd::string_view s)
+template <class S, class B>
+auto parser<Impl>::parse(estd::string_view in, ostream<S, B>& out) -> ostream<S, B>&
 {
-    char c = s[0];
-    const bool sz1 = s.size() == 1;
+    char c = in[0];
+    const bool sz1 = in.size() == 1;
 
-    estd::string_view param = s.substr(1);
+    estd::string_view param = in.substr(1);
+    //const char* ret;
 
     switch(c)
     {
         case 'S':       // setup bitrate
-            return bitrate(param);
+            return out << bitrate(param);
 
         case 's':       // setup BTR0/BTR1 style
-            return ERROR;   // Not supported
+            break;   // Not supported
 
         case 'O':       // open CAN channel
-            if(!sz1 || impl().opened()) return ERROR;
-            return impl().open(false);
+            if(!sz1 || impl().opened()) return out << ERROR;
+            return out << impl().open(false);
 
         case 'L':       // open CAN channel (listen only)
-            if(!sz1 || impl().opened()) return ERROR;
-            return impl().open(true);
+            if(!sz1 || impl().opened()) return out << ERROR;
+            return out << impl().open(true);
 
         case 'C':       // close CAN channel
-            if(!sz1 || !impl().opened()) return ERROR;
-            return impl().close();
+            if(!sz1 || !impl().opened()) return out << ERROR;
+            return out << impl().close();
 
         case 'F':       // Read status flags
-            return alerts();
+            return alerts(out);
 
         case 'A':       // Poll all (deprecated)
         {
-            if(!sz1) return ERROR;
+            if(!sz1) return out <<  ERROR;
 
-            char* s2 = get_frame_to_send_to_host(to_host_buffer);
-            *s2 = 0;
+            return get_frame_to_send_to_host(out);
+            //*s2 = 0;
 
             // DEBT: Should return multiples.  Better served by reworking
             // serialization code to use an ostream/ostreambuf directly
-            return s2;
+            //return s2;
         }
 
         case 'N':
-            return "NE000\r";
+            return out << "NE000\r";
 
         case 'P':       // Poll single (deprecated)
         {
-            if(!sz1) return ERROR;
+            if(!sz1) return out << ERROR;
 
-            char* s2 = get_frame_to_send_to_host(to_host_buffer);
-            *s2 = 0;
-
-            return s2;
+            return get_frame_to_send_to_host(out);
         }
 
         case 'r':       // Transmit 11bit frame (RTR)
-            return transmit(param, false, true);
+            return out << transmit(param, false, true);
 
         case 'R':       // Transmit 29bit frame (RTR)
-            return transmit(param, true, true);
+            return out << transmit(param, true, true);
 
         case 't':       // Transmit 11bit frame
-            return transmit(param, false, false);
+            return out << transmit(param, false, false);
 
         case 'T':       // Transmit 29bit frame
-            return transmit(param, true, false);
+            return out << transmit(param, true, false);
 
         case 'U':       // USB UART supports any baudrate
-            return OK;
+            return out << OK;
 
-        case 'V':       // get version number'
-            return "V0001\r";
+        case 'V':       // get version number
+            return out << "V0001\r";
 
         case 'X':       // Auto Poll/Send ON/OFF
-            return pollmode(param);
+            return out << pollmode(param);
 
         case 'W':
             break;
@@ -87,7 +86,7 @@ const char* parser<Impl>::parse(estd::string_view s)
         default: break;
     }
 
-    return ERROR;
+    return out << ERROR;
 }
 
 }}}}

@@ -128,11 +128,11 @@ extern "C" void app_main(void)
                 
                 ESP_LOGI(TAG, "Got command: %s", input);
 
-                const char* out = parser.parse(input);
+                parser.parse(input, cout);
 
-                ESP_LOGI(TAG, "Got result: %s", out);
+                //ESP_LOGI(TAG, "Got result: %s", out);
 
-                cout << out << estd::endl;
+                //cout << out << estd::endl;
             }
             else
                 input[input_pos++] = c;
