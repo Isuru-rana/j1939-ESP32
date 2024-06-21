@@ -1,7 +1,7 @@
 /**
  * References:
  *
- * 1. RESERVED
+ * 1. CAN232_VER3_Manual
  * 2. https://accesio.com/MANUALS/CAN232FD_Reference.html
  */
 #pragma once
@@ -13,6 +13,7 @@
 #include <estd/iosfwd.h>
 
 #include <can/reference.h>
+// DEBT: Move this loopback stuff elsewhere
 #include <can/loopback.h>
 
 #if __cpp_lib_concepts
@@ -36,6 +37,14 @@ concept Impl = requires(T t)
 }
 #endif
 
+enum slcan_policies
+{
+    SLCAN_AUTOPOLL_DYNAMIC,         // On or off (See X0 and X1)
+    SLCAN_AUTOPOLL_ON,              // On always (See X1)
+
+    SLCAN_POLICY_DEFAULT = SLCAN_AUTOPOLL_DYNAMIC
+};
+
 namespace impl {
 
 // Transport abstraction is very hard.  Do up impl pattern for some auxiliary
@@ -54,9 +63,9 @@ struct base
     enum alerts_type : uint8_t
     {
         ALERT_NONE,
-        // Data overrun in CAN receive to host transfer.
+        // Data overrun in CAN receive to host transfer. [2]
         ALERT_RX_FIFO_FULL      = 0x01,
-        // Data overrun in receive by host send to CAN transfer.
+        // Data overrun in receive by host send to CAN transfer. [2]
         ALERT_TX_FIFO_FULL      = 0x02,
         // (Extended) Unexpected characters between us and host [2]
         ALERT_DATA_STREAM       = 0x10,
@@ -87,6 +96,8 @@ struct base
     static constexpr uint16_t timestamp_ms() { return 0xFFFF; }
 
     constexpr alerts_type alerts() const { return {}; }
+
+    static constexpr slcan_policies policy = SLCAN_POLICY_DEFAULT;
 };
 
 struct loopback : base
@@ -113,10 +124,24 @@ struct loopback : base
     }
 };
 
+
+// DEBT: Really this is a base helper, perhaps 'impl' namespace is incorrect
+template <class Impl, class Enabled = void>
+class parser {};
+
+// DEBT: Optimize ->host frame queue to be here
+template <class Impl>
+class parser<Impl, estd::enable_if_t<Impl::policy & SLCAN_AUTOPOLL_DYNAMIC> >
+{
+
+};
+
 }
 
 template <ESTD_CPP_CONCEPT(concepts::Impl) Impl = impl::loopback>
-class parser : impl::base   // DEBT
+class parser :
+    impl::parser<Impl>,
+    impl::base   // DEBT
 {
     Impl impl_;
 
@@ -137,6 +162,7 @@ protected:
 #endif
 
     uint8_t alerts_ {};
+    // Original spec indicates this is false [1] but Linux slcan suite seems to presume true
     bool autopoll_ = false;
     bool timestamps_ = false;
 
@@ -148,8 +174,9 @@ protected:
         return impl().alerts() | alerts_;
     }
 
+    // Frames to send to host
     // Primarily useful for polled mode, but also if to host USB doesn't keep up for some
-    // reason, can be helpful too
+    // reason, can be helpful too.
     estd::layer1::queue<frame_type, 5> frames_to_send;
 
     // Turn ASCII representation into native frame
@@ -334,6 +361,8 @@ public:
         if(autopoll_)
         {
             serialize(frame, out);
+            if(out.bad())
+                alerts_ |= ALERT_RX_FIFO_FULL;
         }
         else
         {

@@ -83,6 +83,12 @@ struct loopback_transport
     // where 'sent' messages go to just be read back by 'receive'
     estd::layer1::queue<item, N> queue;
 
+    // DEBT: Placeholder instead of queue itself revealing this
+    constexpr bool full() const
+    {
+        return queue.size() == N;
+    }
+
     item* peek()
     {
         if(queue.empty()) return nullptr;
@@ -92,6 +98,7 @@ struct loopback_transport
 
     bool send(const frame& f, void* sender = nullptr)
     {
+        if(full()) return false;
         // DEBT: Add a 'full' for circular queues like us
         //if(queue.size() == queue.max_size()) return false;
 
@@ -112,6 +119,8 @@ struct loopback_transport
         send(id, estd::span<uint8_t>(data.data(), data.size()));
     }
 
+    // DEBT: Return a true/false based on whether queue filled up.  To know that,
+    // circular queue needs the 'full' helper
     void send(uint32_t id, estd::span<uint8_t> data)
     {
         // DEBT: Doesn't work because vector won't take span as an initializer
