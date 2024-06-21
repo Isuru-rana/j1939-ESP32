@@ -59,6 +59,9 @@ auto parser<Impl>::parse(estd::string_view in, ostream<S, B>& out) -> ostream<S,
             return send_frame_to_host(out);
         }
 
+        case 'Q':       // Auto-start
+            break;
+
         case 'r':       // Transmit 11bit frame (RTR)
             return out << transmit(param, false, true);
 

@@ -1,3 +1,9 @@
+/**
+ * References:
+ *
+ * 1. RESERVED
+ * 2. https://accesio.com/MANUALS/CAN232FD_Reference.html
+ */
 #pragma once
 
 #include <estd/charconv.h>
@@ -39,11 +45,26 @@ struct base
 {
     static constexpr const char* OK = "\r";
     static constexpr const char* ERROR = "\7";
-    static constexpr const char* OK_NEW = "z\r";
+    static constexpr const char* OK_AUTOPOLL = "z\r";
 
     bool opened_ = false;
 
     bool opened() const { return opened_; }
+
+    enum alerts_type : uint8_t
+    {
+        ALERT_NONE,
+        // Data overrun in CAN receive to host transfer.
+        ALERT_RX_FIFO_FULL      = 0x01,
+        // Data overrun in receive by host send to CAN transfer.
+        ALERT_TX_FIFO_FULL      = 0x02,
+        // (Extended) Unexpected characters between us and host [2]
+        ALERT_DATA_STREAM       = 0x10,
+        ALERT_BUS_PASSIVE       = 0x20,
+        ALERT_ARBITRATION_LOST  = 0x40,
+        ALERT_BUS_ERROR         = 0x80
+    };
+
 
     enum bitrates_enum
     {
@@ -64,6 +85,8 @@ struct base
 
     // Would get fancy with chrono, but it's not really worth it
     static constexpr uint16_t timestamp_ms() { return 0xFFFF; }
+
+    constexpr alerts_type alerts() const { return {}; }
 };
 
 struct loopback : base
@@ -102,14 +125,6 @@ public:
     using frame_type = typename transport_type::frame;
     using frame_traits = can::frame_traits<frame_type>;
 
-    enum alerts : uint8_t
-    {
-        ALERT_RX_FIFO_FULL,
-        ALERT_TX_FIFO_FULL,
-        ALERT_ARBITRATION_LOST = 1 << 6,
-        ALERT_BUS_ERROR = 1 << 7
-    };
-
     // Approximately
     static constexpr const unsigned max_frame_str_size = 30;
 
@@ -121,25 +136,40 @@ public:
 protected:
 #endif
 
-    alerts alerts_ {};
+    uint8_t alerts_ {};
     bool autopoll_ = false;
     bool timestamps_ = false;
 
     Impl& impl() { return impl_; }
+    const Impl& impl() const { return impl_; }
+
+    uint8_t alerts() const
+    {
+        return impl().alerts() | alerts_;
+    }
 
     // Primarily useful for polled mode, but also if to host USB doesn't keep up for some
     // reason, can be helpful too
     estd::layer1::queue<frame_type, 5> frames_to_send;
 
     // Turn ASCII representation into native frame
-    estd::errc deserialize(view in, frame_type* out, bool extended)
+    template <class CharIt>
+    estd::errc deserialize(CharIt in, frame_type* out, bool extended)
     {
+        //constexpr auto success = estd::errc{};
+
         uint32_t v;
         unsigned bump = extended ? 8 : 4;
-        const char* current = in.begin();
+        CharIt current = in;
+        //const char* current = in.begin();
         //const char* const end = in.end();
 
+        // TODO: Do ALERT_DATA_STREAM on result errors
+
         estd::from_chars_result r = estd::from_chars(current, current + bump, v, 16);
+
+        // DEBT: See below ec comparison
+        if(!(r.ec == 0)) return r.ec;
 
         frame_traits::id(*out, v);
 
@@ -164,6 +194,7 @@ protected:
 
             // DEBT: According to https://en.cppreference.com/w/cpp/utility/to_chars
             // the ideal version of this *might* be r.ec != estd::errc{}
+            // DEBT: Also, our errc needs != operator in general
             if(!(r.ec == 0)) return r.ec;
 
             current += 2;
@@ -171,7 +202,7 @@ protected:
             *payload++ = v2;
         }
 
-        return estd::errc{0};
+        return estd::errc{};
     }
 
     template <class Streambuf, class Base>
@@ -205,7 +236,7 @@ protected:
     {
         if(!impl().opened())    return ERROR;
 
-        // Not supported yet
+        // Not supported yet, but almost
         if(rtr) return  ERROR;
 
         frame_type frame;
@@ -213,9 +244,16 @@ protected:
         frame_traits::rtr(frame, rtr);
         frame_traits::extended(frame, extended);
 
-        deserialize(v, &frame, extended);
+        estd::errc r = deserialize(v.begin(), &frame, extended);
 
-        return impl().transport().send(frame) ? OK : ERROR;
+        if(r == 0)
+            return impl().transport().send(frame) ?
+                (autopoll() ? OK_AUTOPOLL : OK) : ERROR;
+        else
+        {
+            alerts_ |= ALERT_DATA_STREAM;
+            return ERROR;
+        }
     }
 
     const char* bitrate(view s)
@@ -245,6 +283,18 @@ protected:
         return OK;
     }
 
+    // (Extended) status [2]
+    template <class S, class B>
+    ostream<S, B>& status(ostream<S, B>& out)
+    {
+        out << 'f';
+        out.put(impl().opened() ? 'O' : 'C');
+
+        // TODO: Incomplete
+
+        return out;
+    }
+
     template <class S, class B>
     ostream<S, B>& alerts(ostream<S, B>& out)
     {
@@ -255,7 +305,7 @@ protected:
         out.width(2);
         out.fill('0');
 
-        out << (uint8_t)alerts_;
+        out << alerts();
 
         return out << OK;
     }
@@ -265,8 +315,8 @@ public:
     bool autopoll() const { return autopoll_; }
 
     ///
-    /// @tparam S
-    /// @tparam B
+    /// @tparam S Streambuf
+    /// @tparam B ios base
     /// @param in
     /// @param out
     /// @return
