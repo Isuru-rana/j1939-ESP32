@@ -11,8 +11,8 @@
 #include <can/internal/slcan/parser.hpp>
 #include <can/platform/esp-idf/transport.hpp>
 
+#include "twai_slcan.h"
 
-#include <stdio.h>
 
 struct twai_impl : embr::can::slcan::v0::impl::base
 {
@@ -25,9 +25,13 @@ struct twai_impl : embr::can::slcan::v0::impl::base
 
     static constexpr const char* TAG = "slcan::twai_impl";
 
-    void init()
+    alerts_type alerts() const
     {
+        uint32_t v;
+        
+        twai_read_alerts(&v, 0);
 
+        return {};
     }
 
     static bool set_bitrate(bitrates_enum v, twai_timing_config_t* config)
@@ -65,7 +69,7 @@ struct twai_impl : embr::can::slcan::v0::impl::base
         twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
             (gpio_num_t)CONFIG_GPIO_TWAI_TX,
             (gpio_num_t)CONFIG_GPIO_TWAI_RX,
-            TWAI_MODE_NORMAL);
+            listen_only ? TWAI_MODE_LISTEN_ONLY : TWAI_MODE_NORMAL);
 
         static const twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
@@ -81,7 +85,7 @@ struct twai_impl : embr::can::slcan::v0::impl::base
 
         if(twai_start() != ESP_OK)   return ERROR;
 
-        opened_ = true;
+        openmode_ = listen_only ? OPEN_LISTENONLY : OPEN_NORMAL;
 
         return OK;
     }
@@ -95,7 +99,7 @@ struct twai_impl : embr::can::slcan::v0::impl::base
         ESP_GOTO_ON_ERROR(twai_stop(), err, TAG, "Cannot stop TWAI");
         ESP_GOTO_ON_ERROR(twai_driver_uninstall(), err, TAG, "Cannot uninstall TWAI");
 
-        opened_ = false;
+        openmode_ = CLOSED;
 
         return OK;
     
@@ -110,7 +114,7 @@ struct twai_impl : embr::can::slcan::v0::impl::base
         return OK;
     }
 
-    static constexpr const char* nvs_ns = "slcan::1";
+    static constexpr const char* nvs_ns = "slcan::v1";
 
     const char* autostart(autostart_modes mode)
     {
@@ -121,8 +125,8 @@ struct twai_impl : embr::can::slcan::v0::impl::base
 
         if(err != ESP_OK)   return ERROR;
 
-        nvh.set("speed", (uint8_t)bitrate_);
-        nvh.set("autostart", (uint8_t)mode);
+        nvh.set("speed", uint8_t(bitrate_));
+        nvh.set("autostart", uint8_t(mode));
 
         nvh.close();
 
@@ -130,29 +134,78 @@ struct twai_impl : embr::can::slcan::v0::impl::base
     }
 
     // Returns NONE if NVS errors occur
-    autostart_modes autostart() const
+    autostart_modes autostart(embr::esp_idf::nvs::Handle nvh) const
     {
-        embr::esp_idf::nvs::Handle nvh;
-        esp_err_t err = nvh.open(nvs_ns, NVS_READWRITE);
-
         uint8_t mode;
-
-        err = nvh.get("autostart", &mode);
-
-        switch(err)
+        
+        switch(nvh.get("autostart", &mode))
         {
             case ESP_OK:
-                break;
+                return autostart_modes(mode);
 
             case ESP_ERR_NVS_NOT_FOUND:
             default:
-                mode = AUTOSTART_NONE;
+                return AUTOSTART_NONE;
+        }
+    }
+
+    autostart_modes autostart() const
+    {
+        embr::esp_idf::nvs::Handle nvh;
+
+        esp_err_t err = nvh.open(nvs_ns, NVS_READONLY);
+
+        autostart_modes mode = autostart(nvh);
+
+        nvh.close();
+
+        return mode;
+    }
+
+    // UNTESTED
+    void init()
+    {
+        embr::esp_idf::nvs::Handle nvh;
+
+        esp_err_t err = nvh.open(nvs_ns, NVS_READONLY);
+
+        autostart_modes mode = autostart(nvh);
+        uint8_t v;
+
+        ESP_LOGD(TAG, "init: autostart mode=%u", mode);
+
+        // DEBT: Technically autostart seems to require disallowing of poll mode (demands autopoll/auto send)
+        // but it seems also that linux slcand tools presume autopoll/autosend is always on anyway
+        switch(mode)
+        {
+            case AUTOSTART_NORMAL:
+                if((err = nvh.get("speed", &v)) == ESP_OK)
+                {
+                    bitrate_ = bitrates_enum(v);
+                    open(false);
+                }
+                else
+                    ESP_LOGW(TAG, "init: unable to autostart");
+
+                break;
+
+            case AUTOSTART_LISTEN:
+                if((err = nvh.get("speed", &v)) == ESP_OK)
+                {
+                    bitrate_ = bitrates_enum(v);
+                    open(true);
+                }
+                else
+                    ESP_LOGW(TAG, "init: unable to autostart");
+
+                break;
+
+            case AUTOSTART_NONE:
+            default:
                 break;
         }
 
         nvh.close();
-
-        return autostart_modes(mode);
     }
 };
 
@@ -191,38 +244,6 @@ extern "C" void app_main(void)
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err);
-
-    embr::esp_idf::nvs::Handle nvh;
-
-    //nvs_handle_t nvh;
-
-    //err = nvs_open("slcan::v1", NVS_READWRITE, &nvh);
-    err = nvh.open(twai_impl::nvs_ns, NVS_READWRITE);
-
-    // Not ready yet
-    if(err == ESP_OK)
-    {
-        uint8_t v;
-
-        err = nvh.get("speed", &v);
-        err = nvh.get("autostart", &v);
-
-        switch(v)
-        {
-            case 0:         // default, waits for host
-                break;
-
-            case 1:         // auto opens in normal mode
-                break;
-
-            case 2:         // auto opens in listen mode
-                break;
-
-            default: break;
-        }
-
-        nvh.close();
-    }
 
     unsigned counter = 0, frame_counter = 0;
     char input[60];

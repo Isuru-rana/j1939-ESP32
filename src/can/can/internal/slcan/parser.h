@@ -56,13 +56,20 @@ struct base
     static constexpr const char* ERROR = "\7";
     static constexpr const char* OK_AUTOPOLL = "z\r";
 
-    bool opened_ = false;
-
-    bool opened() const { return opened_; }
-
     enum openmodes
     {
+        CLOSED,
+        OPEN_NORMAL,
+        OPEN_LISTENONLY,
     };
+
+    openmodes openmode_ {};
+
+    bool opened() const
+    {
+        return openmode_ == OPEN_NORMAL ||
+            openmode_ == OPEN_LISTENONLY;
+    }
 
     enum autostart_modes : uint8_t
     {
@@ -193,6 +200,7 @@ protected:
 
     uint8_t alerts() const
     {
+        // TODO: "Bits clear on read" [2]
         return impl().alerts() | alerts_;
     }
 
@@ -333,13 +341,24 @@ protected:
     }
 
     // (Extended) status [2]
+    // NOTE: Unclear what is meant by "8-bit", maybe character width?
     template <class S, class B>
     ostream<S, B>& status(ostream<S, B>& out)
     {
         out << 'f';
-        out.put(impl().opened() ? 'O' : 'C');
+        switch(openmode_)
+        {
+            case OPEN_LISTENONLY:   out << 'L'; break;
+            case OPEN_NORMAL:       out << 'O'; break;
+            case CLOSED:            out << 'C'; break;
+        }
 
         // TODO: Incomplete
+
+        //out.put(impl().bitrate())
+        out << '-'; // regular CAN
+        out << timestamps_ ? 'Z' : '-';
+        out << impl().autostart() == AUTOSTART_NONE ? '0' : '1';
 
         return out;
     }
