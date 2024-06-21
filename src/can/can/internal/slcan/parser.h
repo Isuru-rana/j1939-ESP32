@@ -37,6 +37,10 @@ namespace impl {
 
 struct base
 {
+    static constexpr const char* OK = "\r";
+    static constexpr const char* ERROR = "\7";
+    static constexpr const char* OK_NEW = "z\r";
+
     bool opened_ = false;
 
     bool opened() const { return opened_; }
@@ -51,7 +55,8 @@ struct base
         BITRATE_250K,
         BITRATE_500K,
         BITRATE_800K,
-        BITRATE_1000K
+        BITRATE_1000K,
+        BITRATE_UNSET
     };
 
     static constexpr unsigned bitrates_[] =
@@ -101,10 +106,6 @@ public:
         ALERT_ARBITRATION_LOST = 1 << 6,
         ALERT_BUS_ERROR = 1 << 7
     };
-
-    static constexpr const char* OK = "\r";
-    static constexpr const char* ERROR = "\7";
-    static constexpr const char* OK_NEW = "z\r";
 
     // Approximately
     static constexpr const unsigned max_frame_str_size = 30;
@@ -195,7 +196,7 @@ protected:
     }
 
     // for 'parse' to use as its response buffer
-    char to_host_buffer[max_frame_str_size];
+    //char to_host_buffer[max_frame_str_size];
 
     template <class S, class B>
     ostream<S, B>& get_frame_to_send_to_host(ostream<S, B>& out)
@@ -208,17 +209,11 @@ protected:
             frames_to_send.pop();
         }
 
-        out.put('\r');
+        out << OK;
 
         return out;
     }
 
-
-    // received from CAN bus
-    void on_receive(const frame_type& frame)
-    {
-        frames_to_send.push(frame);
-    }
 
     // send out over CAN bus
     const char* transmit(view v, bool extended, bool rtr)
@@ -235,7 +230,8 @@ protected:
 
     const char* bitrate(view s)
     {
-        if(s.size() != 1 || impl().opened() == false) return ERROR;
+        // "This command is only active if the CAN channel is closed."
+        if(s.size() != 1 || impl().opened()) return ERROR;
 
         unsigned v = s[0] - '0';
         if(v > 8) return ERROR;
@@ -271,7 +267,7 @@ protected:
 
         out << (uint8_t)alerts_;
 
-        return out;
+        return out << OK;
     }
 
 public:
@@ -286,6 +282,12 @@ public:
     /// @remark char 13 (CR) MUST NOT be present for 'in'
     template <class S, class B>
     ostream<S, B>& parse(estd::string_view in, ostream<S, B>& out);
+
+    // received from CAN bus
+    void on_receive(const frame_type& frame)
+    {
+        frames_to_send.push(frame);
+    }
 };
 
 }}}}

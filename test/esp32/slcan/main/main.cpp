@@ -1,4 +1,5 @@
 #include <driver/twai.h>
+#include <esp_check.h>
 #include <esp_log.h>
 
 #include <estd/istream.h>
@@ -19,12 +20,18 @@ struct twai_impl : embr::can::slcan::v0::impl::base
     // DEBT: Make this actual instance for TWAI v2 API
     transport_type transport() { return {}; }
 
-    bitrates_enum bitrate_;
+    bitrates_enum bitrate_ { BITRATE_UNSET };
 
-    bool set_bitrate(bitrates_enum v, twai_timing_config_t* config)
+    static constexpr const char* TAG = "slcan::twai_impl";
+
+    static bool set_bitrate(bitrates_enum v, twai_timing_config_t* config)
     {
         switch(v)
         {
+            case BITRATE_125K:
+                *config = TWAI_TIMING_CONFIG_125KBITS();
+                return true;
+
             case BITRATE_250K:
                 *config = TWAI_TIMING_CONFIG_250KBITS();
                 return true;
@@ -33,11 +40,17 @@ struct twai_impl : embr::can::slcan::v0::impl::base
                 *config = TWAI_TIMING_CONFIG_500KBITS();
                 return true;
 
+            case BITRATE_800K:
+                *config = TWAI_TIMING_CONFIG_800KBITS();
+                return true;
+
             case BITRATE_1000K:
                 *config = TWAI_TIMING_CONFIG_1MBITS();
                 return true;
 
-            default: return false;
+            default:
+                ESP_LOGW(TAG, "Unrecognized bitrate: #%d", v);
+                return false;
         }
     }
 
@@ -53,33 +66,40 @@ struct twai_impl : embr::can::slcan::v0::impl::base
         twai_timing_config_t t_config;
 
         bool r = set_bitrate(bitrate_, &t_config);
+
+        if(r == false) return ERROR;
         
         // DEBT: Do validation style soft error checking
-        ESP_ERROR_CHECK(twai_driver_install(&g_config, &t_config, &f_config));
-        ESP_ERROR_CHECK(twai_start());
+        ESP_ERROR_CHECK_WITHOUT_ABORT(
+            twai_driver_install(&g_config, &t_config, &f_config));
+
+        if(twai_start() != ESP_OK)   return ERROR;
 
         opened_ = true;
 
-        return "\r";
+        return OK;
     }
 
     const char* close()
     {
-        ESP_ERROR_CHECK(twai_stop());
-        ESP_ERROR_CHECK(twai_driver_uninstall());
+        esp_err_t ret;
+        
+        ESP_GOTO_ON_ERROR(twai_stop(), err, TAG, "Cannot stop TWAI");
+        ESP_GOTO_ON_ERROR(twai_driver_uninstall(), err, TAG, "Cannot uninstall TWAI");
 
-        return "\r";
+        opened_ = false;
+
+        return OK;
+    
+    err:
+        return ERROR;
     }
 
     const char* bitrate(unsigned idx, unsigned rate)
     {
-        // "This command is only active if the CAN channel is closed."
-        if(opened_)    return "\7";
-
         bitrate_ = bitrates_enum(idx);
 
-        //return r ? "\r" : "\7";
-        return "\r";
+        return OK;
     }
 };
 
@@ -105,10 +125,17 @@ extern "C" void app_main(void)
     for(;;)
     {
         twai_message_t frame;
+        esp_err_t ret;
 
         // DEBT: Needs cleanup along with delay down below
         if(parser.cimpl().opened())
-            ESP_ERROR_CHECK(twai_receive(&frame, 0));
+        {
+            ret = twai_receive(&frame, 0);
+            if(ret == ESP_OK)
+            {
+                parser.on_receive(frame);
+            }
+        }
 
         if(++counter % 10 == 0)
             ESP_LOGI(TAG, "counter: %u", counter);
