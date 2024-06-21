@@ -16,6 +16,11 @@ Seeing a ^G appear during slcan_attach, so far don't have a clue what that is.
 
 Linux SLCAN and friends are really quite extensive, including a bunch of J1939 test tools [2]
 
+# Results
+
+* 20JUN24 - ESP32C6 DevKit - PASS
+* 21JUN24 - ESP32S3 LilyGo QT - PASS
+
 # References
 
 1. https://accesio.com/MANUALS/CAN232FD_Reference.html
