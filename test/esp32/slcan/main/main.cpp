@@ -1,6 +1,7 @@
 #include <driver/twai.h>
 #include <esp_check.h>
 #include <esp_log.h>
+#include <nvs_flash.h>
 
 #include <estd/istream.h>
 #include <estd/ostream.h>
@@ -101,6 +102,11 @@ struct twai_impl : embr::can::slcan::v0::impl::base
 
         return OK;
     }
+
+    const char* autostart(int mode)
+    {
+        return ERROR;
+    }
 };
 
 static embr::can::slcan::v0::parser<twai_impl> parser;
@@ -117,6 +123,47 @@ extern "C" void app_main(void)
     static auto config = USB_SERIAL_JTAG_DRIVER_CONFIG_DEFAULT();
 
     ESP_ERROR_CHECK(usb_serial_jtag_driver_install(&config));
+
+    // Guidance from
+    // https://github.com/espressif/esp-idf/blob/v5.2.2/examples/storage/nvs_rw_value/main/nvs_value_example_main.c
+
+    esp_err_t err = nvs_flash_init();
+
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        // NVS partition was truncated and needs to be erased
+        // Retry nvs_flash_init
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(err);
+
+    nvs_handle_t nvh;
+
+    err = nvs_open("slcan::v1", NVS_READWRITE, &nvh);
+
+    // Not ready yet
+    if(err == ESP_OK)
+    {
+        uint8_t v;
+
+        err = nvs_get_u8(nvh, "speed", &v);
+        err = nvs_get_u8(nvh, "autostart", &v);
+
+        switch(v)
+        {
+            case 0:         // default, waits for host
+                break;
+
+            case 1:         // auto opens in normal mode
+                break;
+
+            case 2:         // auto opens in listen mode
+                break;
+
+            default: break;
+        }
+    }
 
     unsigned counter = 0, frame_counter = 0;
     char input[60];
