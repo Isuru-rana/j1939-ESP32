@@ -1,3 +1,5 @@
+#include <j1939/data_field/ccvs.hpp>
+
 #include "j1939/qt/ca/ccvs.h"
 
 namespace embr::j1939::qt::ca { inline namespace v1 {
@@ -18,13 +20,21 @@ void CCVS::frameReceived(QCanBusDevice*, const QCanBusFrame&)
 
 void CCVS::brakeSwitchPressed()
 {
+    pdu<pgns::ccvs> p(network_.address());
 
+    p.brake_switch(spn::measured::on);
+
+    send(p);
 }
 
 
 void CCVS::brakeSwitchReleased()
 {
+    pdu<pgns::ccvs> p(network_.address());
 
+    p.brake_switch(spn::measured::off);
+
+    send(p);
 }
 
 void CCVS::start(QCanBusDevice* device)
