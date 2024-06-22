@@ -59,7 +59,7 @@ namespace impl {
 #define ATTR_FALLTHROUGH
 #endif
 
-struct base
+struct shared
 {
     static constexpr const char* OK = "\r";
     static constexpr const char* ERROR = "\7";
@@ -72,14 +72,6 @@ struct base
         OPEN_LISTEN,
         OPEN_ECHO,      // [2]
     };
-
-    open_modes open_mode_ {};
-
-    ATTR_NODISCARD bool opened() const
-    {
-        return open_mode_ == OPEN_NORMAL ||
-            open_mode_ == OPEN_LISTEN;
-    }
 
     enum autostart_modes : uint8_t
     {
@@ -117,10 +109,14 @@ struct base
         BITRATE_UNSET
     };
 
-    bitrates_enum bitrate_ { BITRATE_UNSET };
-
     static constexpr unsigned bitrates_[] =
         { 10, 20, 50, 100, 125, 250, 500, 800, 1000 };
+};
+
+class base : public shared
+{
+public:
+
 
     // Would get fancy with chrono, but it's not really worth it
     static constexpr uint16_t timestamp_ms() { return 0xFFFF; }
@@ -138,6 +134,13 @@ struct base
 
     static autostart_modes autostart() { return AUTOSTART_NONE; }
 
+protected:
+    open_modes open_mode_ {};
+
+    bitrates_enum bitrate_ { BITRATE_UNSET };
+
+public:
+
     const char* bitrate(unsigned idx, unsigned rate)
     {
         bitrate_ = bitrates_enum(idx);
@@ -146,6 +149,17 @@ struct base
     }
 
     ATTR_NODISCARD constexpr unsigned bitrate() const { return bitrate_; }
+
+    ATTR_NODISCARD bool opened() const
+    {
+        return open_mode_ == OPEN_NORMAL ||
+            open_mode_ == OPEN_LISTEN;
+    }
+
+    ATTR_NODISCARD constexpr open_modes open_mode() const
+    {
+        return open_mode_;
+    }
 };
 
 struct loopback : base
@@ -184,7 +198,7 @@ class parser<Impl, estd::enable_if_t<Impl::policy & SLCAN_AUTOPOLL_DYNAMIC> >
 template <ESTD_CPP_CONCEPT(concepts::Impl) Impl = impl::loopback>
 class parser :
     impl::parser<Impl>,
-    impl::base   // DEBT
+    impl::shared
 {
     Impl impl_;
 
@@ -313,7 +327,7 @@ protected:
     ostream<S, B>& status(ostream<S, B>& out)
     {
         out << 'f';
-        switch(open_mode_)
+        switch(impl().open_mode())
         {
             case OPEN_LISTEN:       out << 'L'; break;
             case OPEN_NORMAL:       out << 'O'; break;
