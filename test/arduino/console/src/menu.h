@@ -15,6 +15,8 @@
 
 #include <estd/expected.h>
 
+#include "ostream.h"
+
 // TODO: Once featureset/API signature settles a bit, move to embr
 
 namespace menu {
@@ -82,7 +84,7 @@ public:
 class Action
 {
 protected:
-    typedef estd::arduino_ostream ostream;
+    typedef our_arduino_ostream ostream;
 
 public:
     // Shows menu item entry/description for action
@@ -130,7 +132,7 @@ public:
 class Menu
 {
 public:
-    typedef estd::arduino_ostream ostream;
+    using ostream = our_arduino_ostream;
     using errc = estd::errc;
 
 #ifdef __AVR__

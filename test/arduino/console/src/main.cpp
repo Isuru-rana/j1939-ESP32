@@ -37,7 +37,7 @@ using namespace estd::chrono_literals;
 using namespace embr::j1939;
 using namespace embr::units::literals;
 
-arduino_ostream cout(Serial);
+our_arduino_ostream cout(Serial);
 arduino_istream cin(Serial);
 
 #ifdef AUTOWP_LIB
@@ -69,7 +69,7 @@ constexpr embr::word<3> ecu_instance(2);
 #define FEATURE_AGGREGATED_CA 0
 
 scheduler_type scheduler;
-using dca_type = diagnostic_ca<transport, arduino_ostream>;
+using dca_type = diagnostic_ca<transport, our_arduino_ostream>;
 
 using proto_name = embr::j1939::layer0::NAME<true,
     industry_groups::process_control,
@@ -173,8 +173,8 @@ public:
 template <pgns>
 struct CanPGNActionImpl
 {
-    template <class TStreambuf>
-    static void action(detail::basic_ostream<TStreambuf>&) {}
+    template <class Streambuf, class Base>
+    static void action(detail::basic_ostream<Streambuf, Base>&) {}
 
     template <class TPdu>
     static void prep(TPdu&) {}
@@ -187,8 +187,8 @@ struct CanPGNActionImpl
 template <>
 struct CanPGNActionImpl<pgns::request>
 {
-    template <class TStreambuf>
-    void action(detail::basic_ostream<TStreambuf>&) {}
+    template <class Streambuf, class Base>
+    void action(detail::basic_ostream<Streambuf, Base>&) {}
 
     void prep(pdu<pgns::request>& p)
     {
@@ -206,8 +206,8 @@ struct CanPGNActionImpl<pgns::cab_message1>
 
     CanPGNActionImpl() : c(0) {}
 
-    template <class TStreambuf>
-    void action(detail::basic_ostream<TStreambuf>& out)
+    template <class Streambuf, class Base>
+    void action(detail::basic_ostream<Streambuf, Base>& out)
     {
         c += celcius(0.10);
 
@@ -226,7 +226,7 @@ struct CanPGNActionImpl<pgns::cab_message1>
 
 
 template <pgns pgn>
-void send(pdu<pgn>& p, arduino_ostream* out = nullptr)
+void send(pdu<pgn>& p, our_arduino_ostream* out = nullptr)
 {
     p.source_address(source_address());
 
@@ -310,8 +310,8 @@ struct CanPGNActionImpl<pgns::time_date>
 
     typename function_type::template model<wake_functor> wake_model{wake_functor{*this}};
 
-    template <class TStreambuf>
-    void action(detail::basic_ostream<TStreambuf>& out)
+    template <class Streambuf, class Base>
+    void action(detail::basic_ostream<Streambuf, Base>& out)
     {
         if(is_scheduled)
         {
@@ -399,7 +399,7 @@ class InitiateNetworkCAAction : public menu::Action
 struct ios
 {
     arduino_istream& in;
-    arduino_ostream& out;
+    our_arduino_ostream& out;
 
     using int_type = arduino_istream::int_type;
 };
@@ -492,7 +492,7 @@ namespace layer1 {
 
 struct exp_action1
 {
-    void render(arduino_ostream& out)
+    void render(our_arduino_ostream& out)
     {
         out << F("action1");
     }
@@ -500,7 +500,7 @@ struct exp_action1
 
 struct exp_action2
 {
-    void render(arduino_ostream& out)
+    void render(our_arduino_ostream& out)
     {
         out << F("action2");
     }
