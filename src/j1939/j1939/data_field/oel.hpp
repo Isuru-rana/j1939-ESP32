@@ -14,6 +14,17 @@
 #include "../spn/fwd.h"
 #include "../spn/traits.h"
 
+
+// Of our own making, Qt is pretty unhappy if we make F() macro
+#if __AVR__
+#define PROGMEM_PSTR    const __FlashStringHelper*
+#define PROGMEM_STR(s)  F(s)
+#else
+#define PROGMEM_PSTR    const char*
+#define PROGMEM_STR(s)  s
+#endif
+
+
 namespace embr { namespace j1939 {
 
 namespace spn {
@@ -93,6 +104,21 @@ inline const char* to_string(type_traits<spns::high_low_beam_switch>::enum_type 
         case enum_type::error:              return "error";
         case enum_type::no_change:          return "no change";
         default:                            return "undefined";
+    }
+}
+
+
+inline PROGMEM_PSTR to_string(type_traits<spns::turn_signal_switch>::enum_type v)
+{
+    using enum_type = type_traits<spns::turn_signal_switch>::enum_type;
+
+    switch(v)
+    {
+        case enum_type::no_turn_being_signaled:     return PROGMEM_STR("off");
+        case enum_type::left_turn_to_be_flashing:   return PROGMEM_STR("left");
+        case enum_type::right_turn_to_be_flashing:  return PROGMEM_STR("right");
+        case enum_type::no_change:                  return PROGMEM_STR("noop");
+        default:                                    return PROGMEM_STR("undefined");
     }
 }
 
@@ -321,7 +347,8 @@ struct payload_put<pgns::oel, C> : estd::internal::ostream_functor_tag
     template <class Streambuf, class Base>
     void operator()(estd::detail::basic_ostream<Streambuf, Base>& out) const
     {
-        out << "high beam=" << payload.high_low_beam_switch();
+        out << PROGMEM_STR("high beam=") << payload.high_low_beam_switch() << ", ";
+        out << PROGMEM_STR("turn signal=") << spn::to_string(payload.turn_signal_switch());
     }
 };
 

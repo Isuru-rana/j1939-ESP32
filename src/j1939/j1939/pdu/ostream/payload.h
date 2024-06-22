@@ -18,6 +18,9 @@ struct payload_put_base : estd::internal::ostream_functor_tag
     template <class Streambuf, class Base>
     void operator()(estd::detail::basic_ostream<Streambuf, Base>& out) const
     {
+        out.fill('0');
+        out.width(2);
+
         for(unsigned v : payload) out << v << ' ';
     }
 };

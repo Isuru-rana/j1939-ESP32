@@ -11,6 +11,8 @@
 
 using namespace embr;
 
+#define SOCKETCAN_ENABLED 1
+
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
@@ -40,13 +42,20 @@ int main(int argc, char *argv[])
 
     engine.loadFromModule("oel", "Main");
 
+#if SOCKETCAN_ENABLED
+    if (QCanBus::instance()->plugins().contains(QStringLiteral("socketcan")))
+    {
+        QCanBusDevice *device = QCanBus::instance()->createDevice(
+            QStringLiteral("socketcan"), QStringLiteral("can0"));
+#else
     if (QCanBus::instance()->plugins().contains(QStringLiteral("virtualcan")))
     {
         QCanBusDevice *device = QCanBus::instance()->createDevice(
             QStringLiteral("virtualcan"), QStringLiteral("can0"));
+#endif
 
         // Just for the time being.  Looks like this is for OTHERS connected to can0... ?
-        device->setConfigurationParameter(QCanBusDevice::LoopbackKey, true);
+        //device->setConfigurationParameter(QCanBusDevice::LoopbackKey, true);
         device->setConfigurationParameter(QCanBusDevice::ReceiveOwnKey, true);
 
         session->setDevice(device);

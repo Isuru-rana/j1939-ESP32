@@ -62,15 +62,19 @@ extern "C" void app_main(void)
         // DEBT: Needs cleanup along with delay down below
         if(parser.cimpl().opened())
         {
-            ret = twai_receive(&frame, 0);
-            if(ret == ESP_OK)
+            do
             {
-                ++frame_counter;
-                parser.on_receive(frame, cout);
-            }
+                ret = twai_receive(&frame, 0);
+                if(ret == ESP_OK)
+                {
+                    ++frame_counter;
+                    parser.on_receive(frame, cout);
+                }
+
+            }   while(ret == ESP_OK);
         }
 
-        if(++counter % 10 == 0)
+        if(++counter % 20 == 0)
             ESP_LOGI(TAG, "counter: %u frames: %u autopoll: %u",
                 counter, frame_counter, parser.autopoll());
 
@@ -103,7 +107,7 @@ extern "C" void app_main(void)
             else
                 input[input_pos++] = c;
         }
-
-        estd::this_thread::sleep_for(100ms);
+        else
+            estd::this_thread::sleep_for(50ms);
     }
 }
