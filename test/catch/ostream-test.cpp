@@ -133,12 +133,9 @@ TEST_CASE("ostream")
             p.left_turn_signal(spn::status::disable);
             p.right_turn_signal(spn::status::disable);
 
-            out.width(2);
-            out.fill(0);
-
             out << p;
 
-            REQUIRE(out_s == "LCMD SA:0 ff ff ff ff ff ff ff ff ");
+            REQUIRE(out_s == "LCMD SA:0 ff 0f ff ff ff ff ff ff ");
         }
     }
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/iomanip.h>
+
 #include "../../data_field/fwd.h"
 #include "fwd.h"
 
@@ -19,9 +21,8 @@ struct payload_put_base : estd::internal::ostream_functor_tag
     void operator()(estd::detail::basic_ostream<Streambuf, Base>& out) const
     {
         out.fill('0');
-        out.width(2);
 
-        for(unsigned v : payload) out << v << ' ';
+        for(unsigned v : payload) out << estd::setw(2) << v << ' ';
     }
 };
 
