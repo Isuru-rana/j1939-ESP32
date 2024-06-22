@@ -4,11 +4,11 @@
 
 namespace embr { namespace j1939 {
 
-template<class TContainer>
-struct data_field<pgns::cab_message_3, TContainer> :
-    internal::data_field_base<TContainer>
+template<class Container>
+struct data_field<pgns::cab_message_3, Container> :
+    internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
     data_field() = default;
 
@@ -20,6 +20,9 @@ namespace pgn {
 template <>
 struct traits<pgns::cab_message_3> : internal::traits_base
 {
+    // DEBT: Dummy value for qt::DataField to be happy
+    using spns = internal::spns_list<>;
+
     static constexpr const char* name()
     {
         return "Cab Message 3";

@@ -9,6 +9,9 @@ import j1939 1.0 as Lib
 RowLayout {
     property Lib.Pdu pdu
     property variant columnWidths
+    property variant spns: pdu.payload.keys()
+
+    //onSpnsChanged: console.log("spns:", spns)
 
     Label {
         text: pdu.priority
@@ -27,8 +30,25 @@ RowLayout {
     }
 
     ListView {
-        model: pdu.payload.keys()
+        model: spns
+        Layout.minimumWidth: 200
+        Layout.minimumHeight: 50
 
+        orientation: ListView.Horizontal
+
+        /*
+        delegate: Rectangle {
+            //border.color: "red"
+            //border.width: 2
+            //Layout.minimumWidth: 50
+            width: 100
+
+            Label {
+                anchors.fill: parent
+                text: modelData
+                horizontalAlignment: Label.Left
+            }
+        }   */
         delegate: Label {
             text: modelData
         }

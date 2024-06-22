@@ -24,8 +24,7 @@ void CCVS::brakeSwitchPressed()
 
     p.brake_switch(spn::measured::on);
 
-    qDebug() << "CCVS: send on" <<
-        send(p);
+    send(p);
 }
 
 
@@ -35,8 +34,7 @@ void CCVS::brakeSwitchReleased()
 
     p.brake_switch(spn::measured::off);
 
-    qDebug() << "CCVS: send off" <<
-        send(p);
+    send(p);
 }
 
 void CCVS::start(QCanBusDevice* device)

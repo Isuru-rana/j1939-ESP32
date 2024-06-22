@@ -1,5 +1,7 @@
 #include "j1939/qt/cs/generic.h"
 
+//#include <j1939/data_field/all.hpp>   // DEBT: Want to do this, missing a bunch of spn::traits<>::name() fields though
+#include <j1939/data_field/ccvs.hpp>
 //#include <j1939/data_field/cm1.hpp>
 #include <j1939/data_field/oel.hpp>
 #include <j1939/data_field/lighting_command.hpp>
@@ -16,7 +18,18 @@ void Generic::frameReceived(QCanBusDevice*, const QCanBusFrame& frame)
 {
     embr::can::qt_transport t;
 
-    j1939::process_incoming(*this, t, frame);
+    bool processed = j1939::process_incoming(*this, t, frame);
+    if(!processed)
+    {
+        // unrecognized PGN
+        j1939::can_id can_id(frame.frameId());
+
+        auto p = new Pdu(can_id, this);
+
+        // TODO: At the moment, datafield has no provision for unspecialized behavior
+
+        emit pduReceived(p);
+    }
 }
 
 

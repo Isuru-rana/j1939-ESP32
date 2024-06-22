@@ -67,6 +67,26 @@ struct data_field<pgns::ccvs, Container> :
     EMBR_J1939_PROPERTY(wheel_based_vehicle_speed)
 };
 
+namespace pgn {
+
+template <>
+struct traits<pgns::ccvs> : internal::traits_base
+{
+    using spns = internal::spns_list<
+        s::brake_switch,
+        s::parking_brake_switch,
+        s::wheel_based_vehicle_speed>;
+
+    static constexpr const char* name()
+    {
+        return "Cruise Control/Vehicle Speed";
+    }
+
+    static constexpr const char* abbrev() { return "CCVS"; }
+};
+
+}
+
 }}
 
 #include "../slots/macro/pop.h"

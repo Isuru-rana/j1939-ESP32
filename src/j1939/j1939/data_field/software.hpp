@@ -35,6 +35,10 @@ namespace pgn {
 template <>
 struct traits<pgns::software_identification> : internal::traits_base
 {
+    // DEBT: Dummy value for qt::DataField to be happy
+    using spns = internal::spns_list<>;
+
+
     static constexpr const char* name()
     {
         return "Software Identification";

@@ -12,11 +12,23 @@ namespace spn {
 
 template <>
 struct type_traits<spns::illumination_brightness_percent> :
-    internal::slot_type_traits<slots::SAEpc03> {};
+    internal::slot_type_traits<slots::SAEpc03>
+{
+    static constexpr const char* name()
+    {
+        return "illumination_brightness";
+    }
+};
 
 template <>
 struct type_traits<spns::switch_backlight_brightness_percent> :
-    internal::slot_type_traits<slots::SAEpc03> {};
+    internal::slot_type_traits<slots::SAEpc03>
+{
+    static constexpr const char* name()
+    {
+        return "switch_backlight_brightness";
+    }
+};
 
 
 template<>

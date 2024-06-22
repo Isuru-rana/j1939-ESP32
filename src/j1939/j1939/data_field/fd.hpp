@@ -79,6 +79,10 @@ namespace pgn {
 template <>
 struct traits<pgns::fan_drive_1> : internal::traits_base
 {
+    // DEBT: Dummy value for qt::DataField to be happy
+    using spns = internal::spns_list<>;
+
+
     static constexpr const char* name()
     {
         return "Fan Drive 1";

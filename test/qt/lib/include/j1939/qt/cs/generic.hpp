@@ -8,6 +8,9 @@
 
 namespace embr::j1939::qt::cs { inline namespace v1 {
 
+// DEBT: This probably can be moved to .cpp file since the only consumer of it lives there
+// DEBT: Emit messages even if they aren't specialized.  Wait for final throws of NO_TRAITS_WRAPPER
+// to settle down (it's nearly there)
 template <pgns pgn>
 bool Generic::process_incoming(can::qt_transport&, const pdu<pgn>& p)
 {

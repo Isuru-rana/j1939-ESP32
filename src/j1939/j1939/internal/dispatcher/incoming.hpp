@@ -58,6 +58,9 @@ bool process_incoming(internal::app_state<Transport, Impl, Context> state, const
         case pgns::cab_message_3:
             return state.template invoker<pgns::cab_message_3>(id, payload);
 
+        case pgns::ccvs:
+            return state.template invoker<pgns::ccvs>(id, payload);
+
         case pgns::commanded_address:
             return state.template invoker<pgns::commanded_address>(id, payload);
 
