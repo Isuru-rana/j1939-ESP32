@@ -28,6 +28,7 @@ set(INCLUDES
     pdu.h
     plugin.h
     session.h
+    transport.h
 )
 
 list(TRANSFORM INCLUDES PREPEND  include/j1939/qt/)

@@ -38,8 +38,10 @@ struct frame_traits<QCanBusFrame>
     }
 };
 
+namespace qt { inline namespace v1 {
 
-struct qt_transport
+
+struct Transport
 {
     using frame = QCanBusFrame;
 
@@ -50,5 +52,9 @@ struct qt_transport
         return device_->writeFrame(f);
     }
 };
+
+}}
+
+using qt_transport = qt::v1::Transport;
 
 }

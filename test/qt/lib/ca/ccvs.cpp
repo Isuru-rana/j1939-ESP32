@@ -14,7 +14,7 @@ CCVS::CCVS(QObject* parent) :
 
 void CCVS::frameReceived(QCanBusDevice*, const QCanBusFrame&)
 {
-
+    // Probably do this only in QML
 }
 
 
@@ -24,7 +24,8 @@ void CCVS::brakeSwitchPressed()
 
     p.brake_switch(spn::measured::on);
 
-    send(p);
+    qDebug() << "CCVS: send on" <<
+        send(p);
 }
 
 
@@ -34,7 +35,8 @@ void CCVS::brakeSwitchReleased()
 
     p.brake_switch(spn::measured::off);
 
-    send(p);
+    qDebug() << "CCVS: send off" <<
+        send(p);
 }
 
 void CCVS::start(QCanBusDevice* device)
