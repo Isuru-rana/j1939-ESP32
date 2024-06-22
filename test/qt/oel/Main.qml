@@ -42,5 +42,9 @@ Window {
             Layout.fillWidth: true
 
         }
+
+        PDUList {
+            generic: Session.generic
+        }
     }
 }

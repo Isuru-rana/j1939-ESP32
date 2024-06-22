@@ -24,6 +24,7 @@ qt_add_qml_module(${TARGET_NAME}
         Dash.qml
         Debug1.qml
         Main.qml
+        PDUList.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
