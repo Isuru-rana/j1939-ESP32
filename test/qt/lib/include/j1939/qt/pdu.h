@@ -115,6 +115,11 @@ public:
         return h.destination_address();
     }
 
+    Q_INVOKABLE QString short_name(QString spn_name)
+    {
+        return data_field_.short_name(spn_name);
+    }
+
     // DEBT: Needed from Generic::process_incoming for populate.  Confusing and probably
     // we can rework the populate into the constructor
     DataField& data_field() { return data_field_; }

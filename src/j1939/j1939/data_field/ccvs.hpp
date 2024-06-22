@@ -32,6 +32,7 @@ struct type_traits<spns::wheel_based_vehicle_speed> :
     internal::slot_type_traits<slots::SAEvl02>
 {
     static constexpr const char* name() { return "wheel_based_vehicle_speed"; }
+    static constexpr const char* short_name() { return "wspeed"; }
 };
 
 template<>

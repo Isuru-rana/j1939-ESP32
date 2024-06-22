@@ -61,6 +61,7 @@ struct type_traits<spns::turn_signal_switch>
     // EXPERIMENTAL
     static constexpr const char* name() { return "turn_signal_switch"; }
     static constexpr const char* description() { return nullptr; }
+    static constexpr const char* short_name() { return "tsignal"; }
 };
 
 
@@ -90,6 +91,7 @@ struct type_traits<spns::high_low_beam_switch>
     // EXPERIMENTAL
     static constexpr const char* name() { return "high_low_beam_switch"; }
     static constexpr const char* description() { return nullptr; }
+    static constexpr const char* short_name() { return "hbeam"; }
 };
 
 
@@ -163,6 +165,7 @@ struct type_traits<spns::work_light_switch>
     // EXPERIMENTAL
     static constexpr const char* name() { return "work_light_switch"; }
     static constexpr const char* description() { return nullptr; }
+    static constexpr const char* short_name() { return "wklight"; }
 };
 
 

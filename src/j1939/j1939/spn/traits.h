@@ -113,9 +113,17 @@ struct type_traits_base
     typedef Int int_type;
     typedef int_type value_type;
 
-    // EXPERIMENTAL, name of spn
+    // EXPERIMENTAL, name of spn - can deviate slightly as long as it is uniquely
+    // identifiable within context of associated pdu/pgn
     static constexpr const char* name() { return nullptr; }
     static constexpr const char* description() { return nullptr; }
+
+    // Very short version of name for impacted UI use.  Rules:
+    // 1. SHOULD be under 8 characters
+    // 2. MUST NOT be same as name() in:
+    //    a. PGN-adjacent spns (prefer leave as nullptr if needed)
+    //    b. Current spn
+    static constexpr const char* short_name() { return nullptr; }
 
     // EXPERIMENTAL -
     // true here so that specializers can easily derive from this

@@ -18,6 +18,7 @@ struct type_traits<spns::left_stop_lights_cmd> : internal::status_type_traits
 {
     // EXPERIMENTAL
     static constexpr const char* name() { return "left_stop_lights"; }
+    static constexpr const char* short_name() { return "lstop"; }
 };
 
 template <>
@@ -25,6 +26,7 @@ struct type_traits<spns::right_stop_lights_cmd> : internal::status_type_traits
 {
     // EXPERIMENTAL
     static constexpr const char* name() { return "right_stop_lights"; }
+    static constexpr const char* short_name() { return "rstop"; }
 };
 
 template <>
@@ -32,6 +34,7 @@ struct type_traits<spns::center_stop_lights_cmd> : internal::status_type_traits
 {
     // EXPERIMENTAL
     static constexpr const char* name() { return "center_stop_lights"; }
+    static constexpr const char* short_name() { return "cstop"; }
 };
 
 template <>
@@ -39,6 +42,7 @@ struct type_traits<spns::left_turn_signal_lights_cmd> : internal::status_type_tr
 {
     // EXPERIMENTAL
     static constexpr const char* name() { return "left_turn_signal"; }
+    static constexpr const char* short_name() { return "lturn"; }
 };
 
 template <>
@@ -46,6 +50,7 @@ struct type_traits<spns::right_turn_signal_lights_cmd> : internal::status_type_t
 {
     // EXPERIMENTAL
     static constexpr const char* name() { return "right_turn_signal"; }
+    static constexpr const char* short_name() { return "rturn"; }
 };
 
 template <>
@@ -53,6 +58,7 @@ struct type_traits<spns::low_beam_headlight_cmd> : internal::status_type_traits
 {
     // EXPERIMENTAL
     static constexpr const char* name() { return "low_beam_headlight"; }
+    static constexpr const char* short_name() { return "lbeam"; }
 };
 
 template <>
@@ -60,6 +66,7 @@ struct type_traits<spns::high_beam_headlight_cmd> : internal::status_type_traits
 {
     // EXPERIMENTAL
     static constexpr const char* name() { return "high_beam_headlight"; }
+    static constexpr const char* short_name() { return "hbeam"; }
 };
 
 template <>

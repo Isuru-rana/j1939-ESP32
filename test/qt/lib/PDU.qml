@@ -31,10 +31,11 @@ RowLayout {
 
     ListView {
         model: spns
-        Layout.minimumWidth: 200
+        Layout.minimumWidth: 400
         Layout.minimumHeight: 50
 
         orientation: ListView.Horizontal
+        spacing: 4
 
         /*
         delegate: Rectangle {
@@ -49,8 +50,19 @@ RowLayout {
                 horizontalAlignment: Label.Left
             }
         }   */
-        delegate: Label {
-            text: modelData
+        delegate: ColumnLayout {
+
+            property string spnName: modelData
+
+            Label {
+                Layout.fillWidth: true
+                text: pdu.short_name(spnName)
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: pdu.payload[modelData]
+            }
         }
     }
 }

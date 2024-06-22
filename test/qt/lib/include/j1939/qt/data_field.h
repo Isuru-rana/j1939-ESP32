@@ -18,6 +18,20 @@ namespace embr::j1939::qt { inline namespace v0 {
 class DataField : public QObject
 {
     QQmlPropertyMap map_;
+    QQmlPropertyMap name_to_short_name_;
+
+    // DEBT: Use c++20 concept for 'traits'
+    template <class traits, typename T>
+    void set(const T& v)
+    {
+        // DEBT: In the end we don't want a scenario where name is null at all here
+        if constexpr(traits::name() != nullptr)
+            map_[traits::name()] = v;
+
+        name_to_short_name_[traits::name()] = traits::short_name() == nullptr ?
+            traits::name() :
+            traits::short_name();
+    }
 
     Q_OBJECT
 
@@ -51,6 +65,11 @@ public:
 
     QQmlPropertyMap* map() { return &map_; }
 
+    QString short_name(const QString& s) const
+    {
+        return name_to_short_name_[s].toString();
+    }
+
     template <class Rep, class Period, class Tag, class F, spns spn>
     void operator()(j1939::spn::traits<spn>, const unit<Rep, Period, Tag, F>& value)
     {
@@ -62,7 +81,7 @@ public:
         // DEBT: Whole thing was set up to use setProperty, but QML can't see it.
         // a little clunky now since we're doing both and I just tossed map in there
         setProperty(traits::name(), v);
-        map_[traits::name()] = v;
+        set<traits>(v);
     }
 
     template <class T, spns spn>
@@ -74,7 +93,7 @@ public:
         QVariant v(v2);
 
         setProperty(traits::name(), v);
-        map_[traits::name()] = v;
+        set<traits>(v);
     }
 
     template <pgns pgn, class Container>
