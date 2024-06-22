@@ -65,6 +65,7 @@ class Pdu : public QObject
     Q_OBJECT
 
     Q_PROPERTY(pgns pgn READ pgn CONSTANT)
+    Q_PROPERTY(uint8_t priority READ priority CONSTANT)
     Q_PROPERTY(uint8_t source_address READ source_address CONSTANT)
     Q_PROPERTY(uint8_t destination_address READ destination_address CONSTANT)
     Q_PROPERTY(QQmlPropertyMap* payload READ payload CONSTANT)
@@ -91,6 +92,13 @@ public:
 
             return (pgns)h.range();
         }
+    }
+
+    uint8_t priority() const
+    {
+        // DEBT: Is there value in disallowing implicit conversion?  If so, document it here +
+        // on accessor
+        return can_id_.priority().value();
     }
 
     uint8_t source_address() const

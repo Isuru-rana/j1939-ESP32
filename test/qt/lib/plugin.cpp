@@ -1,5 +1,8 @@
 #include <QtQml>
 
+// Specifically we include this so that to_string has as much available to it as possible
+#include <j1939/data_field/all.hpp>
+
 #include "j1939/qt/plugin.h"
 
 #include <j1939/qt/cs/generic.h>
@@ -11,7 +14,9 @@
 #include <j1939/qt/ca/oel.h>
 #include <j1939/qt/ca/lighting_command.h>
 
-namespace embr::j1939::qt {
+#include "j1939/qt/pdu.h"
+
+namespace embr::j1939::qt { inline namespace v1 {
 
 void Plugin::init()
 {
@@ -25,4 +30,9 @@ void Plugin::init()
     qmlRegisterType<embr::j1939::qt::ca::v1::CCVS>("j1939.ca", 1, 0, "CCVS");
 }
 
+QString API::to_string(pgns p)
+{
+    return j1939::to_string(p);
 }
+
+}}

@@ -1,6 +1,7 @@
 #include <QCanBus>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 
 #include <j1939/qt/plugin.h>
 
@@ -11,7 +12,7 @@
 
 using namespace embr;
 
-#define SOCKETCAN_ENABLED 1
+#define SOCKETCAN_ENABLED 0
 
 int main(int argc, char *argv[])
 {
@@ -39,6 +40,8 @@ int main(int argc, char *argv[])
     session->clients().push_back(ccvs);
 
     qmlRegisterSingletonInstance("j1939", 1, 0, "Session", session);
+
+    engine.rootContext()->setContextObject(new embr::j1939::qt::v1::API(&app));
 
     engine.loadFromModule("oel", "Main");
 

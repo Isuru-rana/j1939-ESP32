@@ -23,6 +23,7 @@ set(INCLUDES
     cs/network.h
     cs/tp.h
     data_field.h
+    fwd.h
     NAME.h
     pdu.h
     plugin.h
@@ -40,6 +41,7 @@ qt_add_qml_module(${PROJECT_NAME}
     QML_FILES
         CAContainer.qml
         J1939LibControls.qml
+        PDU.qml
     SOURCES
         ${INCLUDES}
         ca/ccvs.cpp
