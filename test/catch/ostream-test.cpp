@@ -17,6 +17,7 @@
 #include <j1939/units/ostream.h>
 #include <j1939/pdu.h>
 #include <j1939/data_field/cm1.hpp>
+#include <j1939/data_field/lighting_command.hpp>
 
 #include <catch2/catch.hpp>
 #endif
@@ -124,6 +125,20 @@ TEST_CASE("ostream")
             out << p;
 
             REQUIRE(out_s == "220 SA:0 DA:0 ff ff ff ff ff ff ff ff ");
+        }
+        SECTION("somewhat unspecialized (LCMD)")
+        {
+            pdu<pgns::lighting_command> p{null_t{}};
+
+            p.left_turn_signal(spn::status::disable);
+            p.right_turn_signal(spn::status::disable);
+
+            out.width(2);
+            out.fill(0);
+
+            out << p;
+
+            REQUIRE(out_s == "LCMD SA:0 ff ff ff ff ff ff ff ff ");
         }
     }
 }

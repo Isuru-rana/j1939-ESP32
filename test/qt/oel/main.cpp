@@ -52,10 +52,12 @@ int main(int argc, char *argv[])
     {
         QCanBusDevice *device = QCanBus::instance()->createDevice(
             QStringLiteral("virtualcan"), QStringLiteral("can0"));
+
+        // Just for the time being.  Looks like this is for OTHERS connected to can0... ?
+        device->setConfigurationParameter(QCanBusDevice::LoopbackKey, true);
 #endif
 
         // Just for the time being.  Looks like this is for OTHERS connected to can0... ?
-        //device->setConfigurationParameter(QCanBusDevice::LoopbackKey, true);
         device->setConfigurationParameter(QCanBusDevice::ReceiveOwnKey, true);
 
         session->setDevice(device);

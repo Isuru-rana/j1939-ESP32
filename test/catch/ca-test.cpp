@@ -200,7 +200,7 @@ TEST_CASE("Controller Applications")
         process_incoming(dca, t, f);
 
         //REQUIRE(out_s == "OEL SA:0 ff ff ff ff ff ff ff ff \n");
-        REQUIRE(out_s == "OEL SA:0 high beam=no change\n");
+        REQUIRE(out_s == "OEL SA:0 high beam=no change, turn signal=noop\n");
     }
     SECTION("aggregated")
     {
