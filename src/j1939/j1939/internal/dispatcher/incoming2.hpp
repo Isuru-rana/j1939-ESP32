@@ -16,15 +16,16 @@ class process_incoming_functor
     using frame = typename Transport::frame;
 public:
     template <pgns pgn, class Impl>
-    void operator()(j1939::internal::in_place_pgn<pgn>, Impl&, Transport&& t, const frame& f) const
+    void operator()(j1939::internal::in_place_pgn<pgn>, Impl&, Transport& t, const frame& f) const
     {
+        /*
         using traits = can::frame_traits<frame>;
         using pdu_type = pdu<pgn>;
 
         // DEBT: Ensure payload size is correct
         pdu_type p(
-            traits::id(f),
-            traits::payload());
+            traits::id(f)),
+            traits::payload()); */
     }
 
     void operator()(pgns) { }
@@ -32,7 +33,7 @@ public:
 
 template <class Transport, class Impl, class ...Args>
 bool process_incoming(Impl& impl,
-    Transport&& transport,
+    Transport& transport,
     const typename estd::remove_cvref_t<Transport>::frame& f,
     Args&&...args)
 {
@@ -44,7 +45,7 @@ bool process_incoming(Impl& impl,
     can_id id(traits::id(f));
     dispatch(process_incoming_functor<transport_type>{}, id,
         impl,
-        std::forward<Transport>(transport),
+        transport,
         f,
         std::forward<Args>(args)...);
     return {};
