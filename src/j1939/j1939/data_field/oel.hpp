@@ -198,17 +198,17 @@ struct type_traits<spns::main_light_switch> : internal::type_traits_base<uint8_t
 
     typedef enum_type value_type;
 
-    // EXPERIMENTAL
     static constexpr const char* name() { return "main_light_switch"; }
     static constexpr const char* description() { return nullptr; }
+    static constexpr const char* short_name() { return "main"; }
 };
 
 template <>
 struct type_traits<spns::hazard_light_switch> : internal::measured_type_traits
 {
-    // EXPERIMENTAL
     static constexpr const char* name() { return "hazard_light_switch"; }
     static constexpr const char* description() { return nullptr; }
+    static constexpr const char* short_name() { return "hazards"; }
 };
 
 
@@ -222,6 +222,7 @@ struct type_traits<spns::operators_desired_delay_lamp_off_time> :
     // EXPERIMENTAL
     static constexpr const char* name() { return "operators_desired_delay_lamp_off_time"; }
     static constexpr const char* description() { return nullptr; }
+    static constexpr const char* short_name() { return "ldelay"; }
 };
 
 

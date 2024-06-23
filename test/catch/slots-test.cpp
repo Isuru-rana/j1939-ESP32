@@ -209,12 +209,22 @@ TEST_CASE("slots")
         // Kph 1/256 precision
         using traits = slot_traits<slots::SAEvl02>;
 
-        traits::type kph1{200 * 256};
-        embr::units::meters_per_second<unsigned> v{kph1};
-        embr::units::kilometers_per_hour<unsigned> v2{kph1};
+        SECTION("200kph")
+        {
+            traits::type kph1{200 * 256};
+            embr::units::meters_per_second<unsigned> v{kph1};
+            embr::units::kilometers_per_hour<unsigned> v2{kph1};
 
-        REQUIRE(v.count() == 55);
-        REQUIRE(v2.count() == 200);
+            REQUIRE(v.count() == 55);
+            REQUIRE(v2.count() == 200);
+        }
+        SECTION("max")
+        {
+            traits::type kph1{0xFFFF};
+            embr::units::kilometers_per_hour<double> v{kph1};
+
+            REQUIRE(v.count() > 255);
+        }
     }
     SECTION("internal")
     {

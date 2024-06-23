@@ -19,6 +19,7 @@ class DataField : public QObject
 {
     QQmlPropertyMap map_;
     QQmlPropertyMap name_to_short_name_;
+    QQmlPropertyMap unit_name_;
 
     // DEBT: Use c++20 concept for 'traits'
     template <class traits, typename T>
@@ -70,30 +71,73 @@ public:
         return name_to_short_name_[s].toString();
     }
 
+    // Decomposer for particular units
     template <class Rep, class Period, class Tag, class F, spns spn>
     void operator()(j1939::spn::traits<spn>, const unit<Rep, Period, Tag, F>& value)
     {
         using traits = spn::traits<spn>;
-        unit<double, estd::ratio<1>, Tag> converted(value);
+        //using valid_signal = spn::ranges::valid_signal<Rep>;
 
-        QVariant v(converted.count());
+        QVariant v;
+
+        // Interesting, but probably everyone who arrives here originated from a slot
+        if constexpr(estd::is_base_of_v<slot::v1::internal::slot_type_tag, traits>)
+        {
+            // Does work
+            //qDebug() << "GOT HERE";
+        }
+
+        //if(value.count() <= valid_signal::max())
+        if(!traits::noop(value.count()))
+        {
+            if constexpr(
+                estd::is_base_of_v<slot::v1::internal::slot_type_tag, traits> &&
+                estd::is_base_of_v<slot::v1::internal::slot_presentation_tag, typename traits::slot_traits>)
+            {
+                using presentation_type = typename traits::slot_traits::template presentation_type<double>;
+                presentation_type converted(value);
+                v = converted.count();
+            }
+            else
+            {
+                unit<double, estd::ratio<1>, Tag> converted(value);
+                v = converted.count();
+            }
+        }
+        else
+        {
+            v = "noop";
+        }
 
         // DEBT: Whole thing was set up to use setProperty, but QML can't see it.
         // a little clunky now since we're doing both and I just tossed map in there
-        setProperty(traits::name(), v);
+        //setProperty(traits::name(), v);
         set<traits>(v);
     }
 
+    // Decomposer for generic integers
     template <class T, spns spn>
     void operator()(j1939::spn::traits<spn>, const T& value)
     {
         using traits = spn::traits<spn>;
-        // DEBT: Do a special enum variety
-        auto v2 = int(value);
-        QVariant v(v2);
+        //using valid_signal = spn::ranges::valid_signal<Rep>;
 
-        setProperty(traits::name(), v);
-        set<traits>(v);
+        // Y U NO get found, noop?
+        //if(traits::noop(value))
+        if(0)
+        {
+            set<traits>("noop");
+        }
+        else
+        {
+
+            // DEBT: Do a special enum variety
+            auto v2 = int(value);
+            QVariant v(v2);
+
+            //setProperty(traits::name(), v);
+            set<traits>(v);
+        }
     }
 
     template <pgns pgn, class Container>

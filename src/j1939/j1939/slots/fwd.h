@@ -37,6 +37,10 @@ namespace internal {
 // a slot (vs a status, command or raw intrinsic type)
 struct slot_type_tag {};
 
+// EXPERIMENTAL, indicates presence of slot name, description
+// and presentation_type.
+struct slot_presentation_tag {};
+
 }
 
 // EXPERIMENTAL

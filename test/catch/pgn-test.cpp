@@ -1,3 +1,4 @@
+#include <j1939/data_field/ccvs.hpp>
 #include <j1939/data_field/disp1.hpp>
 #include <j1939/data_field/bjm1.hpp>
 #include <j1939/data_field/oel.hpp>
@@ -49,6 +50,16 @@ TEST_CASE("pgn")
 
             REQUIRE(data.button1_pressed() == spn::measured::on);
             REQUIRE(data.button2_pressed() == spn::measured::not_available);
+        }
+        SECTION("ccvs")
+        {
+            data_field<pgns::ccvs> data(null_t{});
+            unit_type<spns::wheel_based_vehicle_speed> v(0);
+
+            v = data.wheel_based_vehicle_speed();
+
+            //REQUIRE(data.wheel_based_vehicle_speed().count() == 71);
+            //REQUIRE(v.count() == 71);
         }
         SECTION("disp1")
         {
