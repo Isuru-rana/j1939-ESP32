@@ -23,7 +23,7 @@ class API : public QObject
 public:
     explicit API(QObject* parent) : QObject(parent) {}
 
-    Q_INVOKABLE QString to_string(pgns);
+    Q_INVOKABLE QString to_string(pgns, bool abbrev);
 
     // Dummies just to test overloading
     Q_INVOKABLE QString to_string(industry_groups)  { return "ig N/A"; }

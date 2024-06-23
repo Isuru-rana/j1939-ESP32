@@ -18,7 +18,7 @@ RowLayout {
     }
 
     Label {
-        text: to_string(pdu.pgn) + ' (' + pdu.pgn.toString(16).toUpperCase() + ')'
+        text: to_string(pdu.pgn, true) + ' (' + pdu.pgn.toString(16).toUpperCase() + ')'
     }
 
     Label {

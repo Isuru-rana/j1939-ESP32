@@ -30,9 +30,12 @@ void Plugin::init()
     qmlRegisterType<embr::j1939::qt::ca::v1::CCVS>("j1939.ca", 1, 0, "CCVS");
 }
 
-QString API::to_string(pgns p)
+QString API::to_string(pgns p, bool abbrev)
 {
-    return j1939::to_string(p);
+    if(abbrev)
+        return internal::dispatch(pgn_to_string_functor<true>{}, p);
+    else
+        return j1939::to_string(p);
 }
 
 }}

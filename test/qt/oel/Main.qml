@@ -27,23 +27,28 @@ Window {
         CAContainer {
             network: Session.network
             Layout.fillWidth: true
+            Layout.fillHeight: true
         }
 
         Debug1 {
             generic: Session.generic
             ca: Session.clients[0]
             Layout.fillWidth: true
-
+            Layout.fillHeight: true
         }
 
         CCVS {
             generic: Session.generic
             ca: Session.clients[2]
             Layout.fillWidth: true
+            Layout.fillHeight: true
 
         }
 
         PDUList {
+            Layout.fillWidth: true
+            Layout.minimumHeight: 200
+            Layout.maximumHeight: 200
             generic: Session.generic
         }
     }

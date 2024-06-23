@@ -20,7 +20,7 @@ void CCVS::frameReceived(QCanBusDevice*, const QCanBusFrame&)
 
 void CCVS::brakeSwitchPressed()
 {
-    pdu<pgns::ccvs> p(network_.address());
+    pdu<pgns::ccvs> p(network_.address(), null_t{});
 
     p.brake_switch(spn::measured::on);
 
@@ -30,7 +30,7 @@ void CCVS::brakeSwitchPressed()
 
 void CCVS::brakeSwitchReleased()
 {
-    pdu<pgns::ccvs> p(network_.address());
+    pdu<pgns::ccvs> p(network_.address(), null_t{});
 
     p.brake_switch(spn::measured::off);
 

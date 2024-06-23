@@ -1,4 +1,5 @@
-#include <j1939/qt/session.h>
+#include "j1939/qt/session.h"
+#include "j1939/qt/pdu.h"
 
 namespace embr::j1939::qt { inline namespace v1 {
 
@@ -7,7 +8,20 @@ Session::Session(QObject* parent) :
     generic_(parent),
     network_(parent)
 {
+    connect(&generic_, &cs::v1::Generic::pduReceived, this, [&](const v1::Pdu* pdu)
+    {
+        if(frameLog_.size() > 100)
+        {
+            frameLog_.removeFirst();
 
+            // DEBT: Likely is an expensive operation, only do this once in a while
+            frameLog_.squeeze();
+        }
+
+        frameLog_.append(pdu);
+        // DEBT: Clunky since QList doesn't do change events
+        emit frameLogChanged();
+    });
 }
 
 

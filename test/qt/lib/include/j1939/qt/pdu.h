@@ -12,6 +12,7 @@
 
 namespace embr::j1939 {
 
+template <bool abbrev>
 struct pgn_to_string_functor
 {
     template <pgns pgn>
@@ -21,7 +22,7 @@ struct pgn_to_string_functor
         using traits = j1939::pgn::traits<pgn>;
 
         if constexpr(traits::is_specialized)
-            return traits::name();
+            return abbrev ? traits::abbrev() : traits::name();
         else
             return "N/A";
 #else
@@ -37,7 +38,7 @@ struct pgn_to_string_functor
 inline
     const char* to_string(pgns pgn)
 {
-    return internal::dispatch(pgn_to_string_functor{}, pgn);
+    return internal::dispatch(pgn_to_string_functor<false>{}, pgn);
 }
 
 }

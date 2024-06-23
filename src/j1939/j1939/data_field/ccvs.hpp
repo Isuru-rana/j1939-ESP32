@@ -19,12 +19,14 @@ template <>
 struct type_traits<spns::brake_switch> : internal::measured_type_traits
 {
     static constexpr const char* name() { return "brake_switch"; }
+    static constexpr const char* short_name() { return "brake"; }
 };
 
 template <>
 struct type_traits<spns::parking_brake_switch> : internal::measured_type_traits
 {
     static constexpr const char* name() { return "parking_brake_switch"; }
+    static constexpr const char* short_name() { return "ebrake"; }
 };
 
 template <>
@@ -38,7 +40,7 @@ struct type_traits<spns::wheel_based_vehicle_speed> :
 template<>
 constexpr descriptor get_descriptor<spns::brake_switch>()
 {
-    return descriptor{ 4, 5, 2};
+    return { 4, 5, 2 };
 }
 
 template<>
@@ -50,7 +52,7 @@ constexpr descriptor get_descriptor<spns::parking_brake_switch>()
 template<>
 constexpr descriptor get_descriptor<spns::wheel_based_vehicle_speed>()
 {
-    return descriptor{ 2, 1, 16};
+    return { 2, 1, 16 };
 }
 
 }
