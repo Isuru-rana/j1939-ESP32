@@ -4,6 +4,9 @@
 
 #include <embr/observer.h>
 
+// FIX: This guy *must* appear beforce 'dispatch.hpp' otherwise test-cs flips out
+#include <j1939/data_field/oel.hpp>
+
 // 11JUN24 New flavor
 #include <j1939/internal/dispatcher/dispatch.hpp>
 
@@ -11,15 +14,13 @@
 // 11JUN24 Such an early take on this, I forgot all about this guy
 #include <j1939/dispatcher.hpp>
 
-#include <j1939/data_field/oel.hpp>
-
 #include <can/loopback.h>
 
 #include <j1939/internal/dispatcher/incoming2.hpp>
 
 
 #include "test-data.h"
-//#include "test-cs.h"
+#include "test-cs.h"
 
 using namespace embr;
 using namespace embr::j1939;
@@ -102,6 +103,14 @@ TEST_CASE("dispatcher")
     }
     SECTION("process_incoming (v2)")
     {
+        using transport = can::loopback_transport;
+        transport t;
+        using frame_type = transport::frame;
+        using frame_traits = frame_traits<frame_type>;
+        test::SyntheticCA<transport> ca;
 
+        frame_type f = frame_traits::create(pdu<pgns::oel>(0));
+
+        //j1939::internal::v2::process_incoming(ca, t, f);
     }
 }

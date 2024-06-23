@@ -17,11 +17,16 @@ bool process_incoming(internal::app_state<Transport, Impl, Context> state, const
 
 }
 
+/*
 namespace v2 {
 
 template <class Transport, class Impl, class ...Args>
-bool process_incoming(Transport&&, const typename Transport::frame& f, Args&&...);
+bool process_incoming(Impl&,
+    Transport&&,
+    const typename estd::remove_cvref_t<Transport>::frame& f,
+    Args&&...);
 
 }
+*/
 
 }}
