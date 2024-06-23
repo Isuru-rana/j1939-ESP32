@@ -111,6 +111,6 @@ TEST_CASE("dispatcher")
 
         frame_type f = frame_traits::create(pdu<pgns::oel>(0));
 
-        //j1939::internal::v2::process_incoming(ca, t, f);
+        j1939::internal::v2::process_incoming(ca, t, f);
     }
 }

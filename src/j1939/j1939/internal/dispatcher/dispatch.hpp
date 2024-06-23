@@ -58,7 +58,7 @@ case pgns::n:   return f(in_place_pgn<pgns::n>{}, std::forward<Args>(args)...);
 // Want to do this, but the variadic portion is a little tricky
 //template <ESTD_CPP_CONCEPT(concepts::Functor) F>
 template <class F, class ...Args>
-auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}))
+auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}, args...))
 {
     // NOTE: Would be interesting to do this with estd::variadic and/or a fold expression, but I am concerned that it would
     // destroy the optimizer
@@ -119,7 +119,7 @@ auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}))
 #undef J1939_DISPATCH_TARGET
 
 template <class F, class ...Args>
-auto dispatch(F&& f, can_id id, Args&&...args) -> decltype(f(pgns{}))
+auto dispatch(F&& f, can_id id, Args&&...args) -> decltype(f(pgns{}, args...))
 {
     const uint16_t pgn_ = id.is_pdu1() ?
         pdu1_header(id).range() :
