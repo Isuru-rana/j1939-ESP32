@@ -103,6 +103,8 @@ TEST_CASE("dispatcher")
     }
     SECTION("process_incoming (v2)")
     {
+        using namespace j1939::internal;
+        using namespace j1939::internal::v2;
         using transport = can::loopback_transport;
         transport t;
         using frame_type = transport::frame;
@@ -112,5 +114,13 @@ TEST_CASE("dispatcher")
         frame_type f = frame_traits::create(pdu<pgns::oel>(0));
 
         j1939::internal::v2::process_incoming(ca, t, f);
+
+        j1939::internal::dispatch(
+            j1939::internal::v2::specialize_frame_functor{},
+            pgns::oel,
+            j1939::internal::v2::test_rcv_specialized_functor{},
+            f);
+
+        specialize_frame_functor{}(in_place_pgn<pgns::oel>{}, test_rcv_specialized_functor{}, f);
     }
 }

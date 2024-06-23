@@ -15,19 +15,21 @@ class specialize_frame_functor
 {
 public:
     template <pgns pgn, class F, class Frame, class ...Args>
-    bool operator()(j1939::internal::in_place_pgn<pgn>, F&& f, const Frame& frame, Args&&...args) const
+    constexpr auto operator()(j1939::internal::in_place_pgn<pgn>, F&& f, const Frame& frame, Args&&...args) const ->
+        decltype(f(std::declval<pdu<pgn>>(), args...))
     {
         using traits = can::frame_traits<Frame>;
 
-        f(pdu<pgn>(traits::id(f), traits::payload(f)), std::forward<Args>(args)...);
-
-        return true;
+        return f(
+            pdu<pgn>(traits::id(frame), traits::payload(frame)),
+            std::forward<Args>(args)...);
     }
 
     template <class F, class Frame, class ...Args>
-    bool operator()(pgns, F&&, const Frame&, Args&&...args)
+    constexpr auto operator()(pgns pgn, F&& f, const Frame&, Args&&...args) const ->
+        decltype(f(pgns{}, args...))
     {
-        return false;
+        return f(pgn, std::forward<Args>(args)...);
     }
 };
 
@@ -56,6 +58,22 @@ public:
 
     template <class Impl>
     bool operator()(pgns, Impl& impl, Transport&, const frame&) { return{}; }
+};
+
+
+class test_rcv_specialized_functor
+{
+public:
+    template <pgns pgn>
+    bool operator()(const pdu<pgn>& p) const
+    {
+        return true;
+    }
+
+    bool operator()(pgns) const
+    {
+        return false;
+    }
 };
 
 template <class Transport, class Impl, class ...Args>
