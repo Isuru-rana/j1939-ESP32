@@ -15,7 +15,11 @@
 
 #include <can/loopback.h>
 
+#include <j1939/internal/dispatcher/incoming2.hpp>
+
+
 #include "test-data.h"
+//#include "test-cs.h"
 
 using namespace embr;
 using namespace embr::j1939;
@@ -95,5 +99,9 @@ TEST_CASE("dispatcher")
         int specialized = j1939::internal::dispatch(dispatch_functor{}, id);
 
         REQUIRE(specialized == 1);
+    }
+    SECTION("process_incoming (v2)")
+    {
+
     }
 }

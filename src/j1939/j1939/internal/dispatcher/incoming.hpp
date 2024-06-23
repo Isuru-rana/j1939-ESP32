@@ -12,6 +12,8 @@
 
 namespace embr { namespace j1939 {
 
+inline namespace v1 {
+
 // TODO: Utilize new 'dispatch.hpp' here
 
 template <class Transport, class Impl, class Context>
@@ -157,6 +159,8 @@ bool process_incoming(internal::app_state<Transport, Impl, Context> state, const
             // this method
             return state.impl.process_incoming_default(state.t, f);
     }
+}
+
 }
 
 }}

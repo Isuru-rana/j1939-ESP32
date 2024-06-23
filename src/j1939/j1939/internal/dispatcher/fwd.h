@@ -10,7 +10,18 @@ struct app_state;
 
 }
 
+inline namespace v1 {
+
 template <class Transport, class Impl, class Context>
 bool process_incoming(internal::app_state<Transport, Impl, Context> state, const typename Transport::frame& f);
+
+}
+
+namespace v2 {
+
+template <class Transport, class Impl, class ...Args>
+bool process_incoming(Transport&&, const typename Transport::frame& f, Args&&...);
+
+}
 
 }}
