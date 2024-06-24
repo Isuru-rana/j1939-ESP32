@@ -33,7 +33,7 @@ void Plugin::init()
 QString API::to_string(pgns p, bool abbrev)
 {
     if(abbrev)
-        return internal::dispatch(pgn_to_string_functor<true>{}, p);
+        return internal::dispatch<internal::dispatch_default_policy>(pgn_to_string_functor<true>{}, p);
     else
         return j1939::to_string(p);
 }
