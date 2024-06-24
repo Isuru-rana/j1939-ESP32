@@ -11,7 +11,8 @@ namespace embr { namespace j1939 {
 
 template <class TTransport, class TOStream, class Policy = internal::dispatch_default_policy>
 class diagnostic_ca :
-    public embr::j1939::impl::controller_application<TTransport>
+    public embr::j1939::impl::controller_application<TTransport>,
+    public cs::v1::base
 {
     using base_type = embr::j1939::impl::controller_application<TTransport>;
 
@@ -19,17 +20,14 @@ class diagnostic_ca :
     typedef typename TTransport::frame frame_type;
     typedef can::frame_traits<frame_type> frame_traits;
 
-    using pgns = embr::j1939::pgns;
-
-    template <pgns pgn>
-    using pdu = embr::j1939::pdu<pgn>;
-
     template <class TPDU>
     inline bool process_incoming2(transport_type&, TPDU) { return false; }
 
     TOStream& out;
 
 public:
+    using policy_type = Policy;
+
     explicit constexpr diagnostic_ca(TOStream& out) : out(out) {}
 
     // DEBT: inline instead of constexpr seems to hels compiler not favor this

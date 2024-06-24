@@ -31,8 +31,8 @@ namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 // "SENDING" states are a signal for external party to pick up a message from
 // state machine and send it
 class transport_protocol :
-    public impl::controller_application_base,
-    public tp::v0::enum_base
+    public tp::v0::enum_base,
+    public cs::v1::base
 {
 public:
     // [1] 5.10.2.4

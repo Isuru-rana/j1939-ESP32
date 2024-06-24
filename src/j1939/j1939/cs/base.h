@@ -22,7 +22,7 @@ protected:
 public:
     // DEBT: Really belongs here, but until we combine ca_base back with this guy,
     // we get amiguous reference issues
-    //using policy_type = j1939::internal::dispatch_default_policy;
+    using policy_type = j1939::internal::dispatch_default_policy;
 
     // DEBT: Need a Context variety of this one too
     // Undefined/unhandled CAN frame

@@ -27,20 +27,17 @@ namespace embr { namespace j1939 {
 
 namespace impl {
 
-// DEBT: Dogfood improved cs::base back into original ca_base
-class controller_application_base //: cs::v1::base
+// NOTE: Was going to Dogfood improved cs::v1::base back into original ca_base,
+// however ambiguous base issues make that a pain.  Rather, phase out use
+// of this base unless really needed - and if so, multiple inhereit this *and*
+// cs::v1::base
+class controller_application_base
 {
-protected:
-    using pgns = embr::j1939::pgns;
-    using spns = embr::j1939::spns;
-
 public:
     // DEBT: We actually want layer2::data_field here but that one needs work
     // to get the constructors online
     template <pgns pgn>
     using data_field = const embr::j1939::layer1::data_field<pgn>;
-
-    using policy_type = j1939::internal::dispatch_default_policy;
 
     // EXPERIMENTAL, inactive for process_incoming assisted filtering of incoming DA
     enum address_filter
@@ -49,13 +46,6 @@ public:
         FILTER_BAM,         // We desire broadcast and directed (to our DA)
         FILTER_DA,          // We desire only traffic to this DA specifically
     };
-
-    // Effectively undefined/unhandled CAN frame.  Otherwise, you'll want to add to the switch/data_field mapper
-    template <class Transport, class Frame>
-    static constexpr bool process_incoming_default(const Transport&, const Frame&)
-    {
-        return false;
-    }
 };
 
 /// This is a noop reference type.  Only useful for testing and learning
@@ -73,8 +63,8 @@ protected:
 
 public:
 
-    template <pgns pgn>
-    constexpr bool process_incoming(transport_type&, pdu<pgn>) const { return false; }
+    //template <pgns pgn>
+    //constexpr bool process_incoming(transport_type&, pdu<pgn>) const { return false; }
 };
 
 // DEBT: Move aggregator to its own .h/.hpp file

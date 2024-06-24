@@ -76,7 +76,7 @@ struct network_ca : impl::controller_application<Transport>,
     using typename nca_base_type::states;
     using typename nca_base_type::substates;
 
-    using base_type::process_incoming_default;
+    using nca_base_type::process_incoming_default;
 
     using nca_base_type::name_;
     using nca_base_type::address_;

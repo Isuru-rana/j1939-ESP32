@@ -175,7 +175,8 @@ public:
 // Pertains to [1] 5.10
 // NOTE: Obsolete - use state machine variety instead
 template <class TTransport>
-struct transport_protocol_ca : impl::controller_application<TTransport>
+struct transport_protocol_ca : impl::controller_application<TTransport>,
+    cs::v1::base
 {
     typedef j1939::impl::controller_application<TTransport> base_type;
     using typename base_type::transport_type;

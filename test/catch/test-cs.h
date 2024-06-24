@@ -15,13 +15,15 @@ using namespace embr;
 using namespace embr::j1939;
 
 template <class TTransport>
-struct SyntheticCA : j1939::impl::controller_application<TTransport>
+struct SyntheticCA :
+    j1939::impl::controller_application<TTransport>,
+    cs::v1::base
 {
     typedef j1939::impl::controller_application<TTransport> base_type;
     using typename base_type::transport_type;
     using typename base_type::frame_type;
     using typename base_type::frame_traits;
-    using base_type::process_incoming;
+    using cs::v1::base::process_incoming;
 
     typedef transport_traits<transport_type> _transport_traits;
 
@@ -57,7 +59,9 @@ struct SyntheticCA : j1939::impl::controller_application<TTransport>
 };
 
 template <class TTransport>
-struct SyntheticCA2 : j1939::impl::controller_application<TTransport>
+struct SyntheticCA2 :
+    j1939::impl::controller_application<TTransport>,
+    cs::v1::base
 {
     int unhandled_counter = 0;
 
