@@ -1,9 +1,11 @@
 #pragma once
 
 #include <j1939/data_field/oel.hpp>
-#include <j1939/data_field/switch_bank.hpp>
+//#include <j1939/data_field/switch_bank.hpp>
 
-#include <j1939/ca.hpp>
+//#include <j1939/ca.hpp>
+#include <j1939/ca.h>
+#include <j1939/cas/internal/fwd.h>
 
 #include <j1939/pdu.h>
 
@@ -19,25 +21,20 @@ struct SyntheticCA : j1939::impl::controller_application<TTransport>
     using typename base_type::transport_type;
     using typename base_type::frame_type;
     using typename base_type::frame_traits;
-
-    template <pgns pgn>
-    using pdu = const j1939::pdu<pgn>&;
+    using base_type::process_incoming;
 
     typedef transport_traits<transport_type> _transport_traits;
-
-    template <pgns pgn>
-    inline bool process_incoming(transport_type&, pdu<pgn>) { return false; }
 
     int switch_bank_control_counter = 0;
     int oel_counter = 0;
 
-    bool process_incoming(transport_type&, pdu<pgns::switch_bank_control>)
+    bool process_incoming(transport_type&, const pdu<pgns::switch_bank_control>&)
     {
         ++switch_bank_control_counter;
         return true;
     }
 
-    bool process_incoming(transport_type& t, pdu<pgns::oel> p)
+    bool process_incoming(transport_type& t, const pdu<pgns::oel>& p)
     {
         switch(p.turn_signal_switch())
         {
