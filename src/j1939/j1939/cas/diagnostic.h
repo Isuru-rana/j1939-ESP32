@@ -20,9 +20,6 @@ class diagnostic_ca :
     typedef typename TTransport::frame frame_type;
     typedef can::frame_traits<frame_type> frame_traits;
 
-    template <class TPDU>
-    inline bool process_incoming2(transport_type&, TPDU) { return false; }
-
     TOStream& out;
 
 public:

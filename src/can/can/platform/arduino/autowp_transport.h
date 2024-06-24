@@ -84,6 +84,25 @@ struct frame_traits<struct can_frame>
         return f.can_id & ~CAN_EFF_FLAG;
     }
 
+    static constexpr unsigned length(const frame& f)
+    {
+        return f.can_dlc;
+    }
+
+    constexpr static bool extended(const frame& f)
+    {
+        return f.can_id & CAN_EFF_FLAG;
+    }
+
+    static void extended(frame& f, bool v)
+    {
+        if(v)
+            f.can_id |= CAN_EFF_FLAG;
+        else
+            f.can_id &= ~CAN_EFF_FLAG;
+    }
+
+
     static constexpr const uint8_t* payload(const frame& f)
     {
         return f.data;

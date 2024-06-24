@@ -41,15 +41,22 @@ bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
     //out << estd::hex;
     //out << "range1: " << id.range() << ", range2: " << _id.range() << estd::endl;
 
-    auto pgn = (long) (id.is_pdu1() ? id.range() : _id.range());
+    //auto pgn = (long) (id.is_pdu1() ? id.range() : _id.range());
 
-    out << "Unrecognized PDU: " << estd::dec << pgn << '/' << estd::hex << pgn << estd::endl;
+    out << "PDU: " << estd::hex;
+
+    if(id.is_pdu1())
+        out << id.range() << ' ' << id;
+    else
+        out << _id.range() << ' ' << _id;
 
     const uint8_t* payload = frame_traits::payload(f);
 
     // DEBT: Really need to only output dlc bytes, not 8
-    for(int i = 0; i < 8; i++)
-        out << payload[i] << ' ';
+    for(unsigned i = 0; i < frame_traits::length(f); i++)
+        out << ' ' << estd::setw(2) << payload[i];
+
+    out << estd::endl;
 
     return false;
 }

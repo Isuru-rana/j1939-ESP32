@@ -153,6 +153,8 @@ TEST_CASE("Controller Applications")
 
             diagnostic_ca<can::loopback_transport, ostringstream, policy> dca(out);
 
+            out.setf(estd::ios_base::uppercase);
+
             pdu<pgns::oel> p{null_t{}};
 
             frame f = frame_traits::create(p);
@@ -160,6 +162,7 @@ TEST_CASE("Controller Applications")
             j1939::internal::v2::process_incoming(dca, t, f);
 
             // Works, I just don't like the unrecognized PDU output format
+            REQUIRE(out_s == "PDU: FDCC SA:0 FF FF FF FF FF FF FF FF\n");
         }
     }
     SECTION("aggregated")
