@@ -26,7 +26,7 @@ public:
     }
 
     template <class Transport, pgns pgn>
-    constexpr bool process_incoming(Transport&, pdu<pgn>) const { return false; }
+    constexpr bool process_incoming(const Transport&, pdu<pgn>) const { return false; }
 
     template <class Transport, pgns pgn, class Context>
     constexpr bool process_incoming(Transport&, pdu<pgn>, Context) const { return false; }

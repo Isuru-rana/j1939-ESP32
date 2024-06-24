@@ -40,24 +40,21 @@ class process_incoming_functor
     using frame = typename Transport::frame;
 public:
     template <pgns pgn, class Impl, class ...Args>
-    bool operator()(j1939::internal::in_place_pgn<pgn>, Impl& impl, Transport& t, const frame& f, Args&&...args) const
+    constexpr bool operator()(j1939::internal::in_place_pgn<pgn>, Impl& impl, Transport& t, const frame& f, Args&&...args) const
     {
         //using traits = j1939::frame_traits<frame>;
         using traits = can::frame_traits<frame>;
         using pdu_type = pdu<pgn>;
 
         // DEBT: Ensure payload size is correct
-        pdu_type p(
-            traits::id(f),
-            traits::payload(f));
 
-        impl.process_incoming(t, p, std::forward<Args>(args)...);
-
-        return {};
+        return impl.process_incoming(t,
+            pdu_type(traits::id(f), traits::payload(f)),
+            std::forward<Args>(args)...);
     }
 
     template <class Impl>
-    bool operator()(pgns, Impl& impl, Transport&, const frame&) { return{}; }
+    constexpr bool operator()(pgns, Impl&, Transport&, const frame&) const { return{}; }
 };
 
 
@@ -92,14 +89,13 @@ bool process_incoming(Impl& impl,
         pdu1_header(id).range() :
         pdu2_header(id).range();
 
-    internal::dispatch(process_incoming_functor<transport_type>{},
+    return internal::dispatch(process_incoming_functor<transport_type>{},
         //id,
         pgns(pgn_),
         impl,
         transport,
         f,
         std::forward<Args>(args)...);
-    return {};
 }
 
 }

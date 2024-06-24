@@ -111,9 +111,15 @@ TEST_CASE("dispatcher")
         using frame_traits = frame_traits<frame_type>;
         test::SyntheticCA<transport> ca;
 
-        frame_type f = frame_traits::create(pdu<pgns::oel>(0));
+        pdu<pgns::oel> p(0);
+
+        p.turn_signal_switch(enum_type<spns::turn_signal_switch>::left_turn_to_be_flashing);
+
+        frame_type f = frame_traits::create(p);
 
         j1939::internal::v2::process_incoming(ca, t, f);
+
+        REQUIRE(ca.oel_counter == 1);
 
         j1939::internal::dispatch(
             j1939::internal::v2::specialize_frame_functor{},

@@ -30,6 +30,14 @@
 #include "scheduler.h"
 #include "transport.h"
 
+#define FEATURE_AGGREGATED_CA 0
+#define FEATURE_V2_DISPATCH 0
+
+#if FEATURE_V2_DISPATCH
+#include <j1939/internal/dispatcher/incoming2.hpp>
+#endif
+
+
 uint32_t start_ms;
 
 using namespace estd;
@@ -65,8 +73,6 @@ uint8_t source_address_ = 0x70;
 constexpr embr::word<3> ecu_instance(2);
 #endif
 #endif
-
-#define FEATURE_AGGREGATED_CA 0
 
 scheduler_type scheduler;
 using dca_type = diagnostic_ca<transport, our_arduino_ostream>;
@@ -581,6 +587,9 @@ bool on_frame_received(transport::frame& frame)
     bool r;
 #if FEATURE_AGGREGATED_CA
     r = process_incoming(app_ca, t, frame);
+#elif FEATURE_V2_DISPATCH
+    r = embr::j1939::internal::v2::process_incoming(dca, t, frame);
+    embr::j1939::internal::v2::process_incoming(nca, t, frame);
 #else
     r = process_incoming(dca, t, frame);
     process_incoming(nca, t, frame);

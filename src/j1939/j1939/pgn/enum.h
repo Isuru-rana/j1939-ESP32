@@ -104,7 +104,8 @@ enum class pgns : uint32_t
     extended_joystick_message_1 = 64983,        // [13]
     basic_joystick_message_2 = 64984,           // [17]
     bjm2 = basic_joystick_message_2,
-    basic_joystick_message_3 = 64984,           // [17]
+    ejm2 = 64985,
+    basic_joystick_message_3 = 64986,           // [17]
     bjm3 = basic_joystick_message_3,
     wsmem = 65036,                              ///< "Working Set Master Message" [10] 4.2.4.2
     wsmstr = 65037,                             ///< "Working Set Member Message" [10] 4.2.4.4
