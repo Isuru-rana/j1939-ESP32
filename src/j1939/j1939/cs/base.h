@@ -4,6 +4,9 @@
 #include "../pgn/enum.h"
 #include "../spn/enum.h"
 
+#include "../internal/dispatcher/dispatch.h"    // EXPERIMENTAL, just for policy
+
+
 namespace embr { namespace j1939 { namespace cs { inline namespace v1 {
 
 // Adapted from old controller_application_base
@@ -17,6 +20,10 @@ protected:
     using pdu = embr::j1939::pdu<p>;
 
 public:
+    // DEBT: Really belongs here, but until we combine ca_base back with this guy,
+    // we get amiguous reference issues
+    //using policy_type = j1939::internal::dispatch_default_policy;
+
     // DEBT: Need a Context variety of this one too
     // Undefined/unhandled CAN frame
     template <class Transport, class Frame>

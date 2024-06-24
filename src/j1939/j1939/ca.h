@@ -18,13 +18,17 @@
 #include "pdu.h"
 #include "pgn.h"
 
+#include "cs/base.h"
 #include "cs/aggregate.h"
+
+#include "internal/dispatcher/dispatch.h"    // EXPERIMENTAL, just for policy
 
 namespace embr { namespace j1939 {
 
 namespace impl {
 
-class controller_application_base
+// DEBT: Dogfood improved cs::base back into original ca_base
+class controller_application_base //: cs::v1::base
 {
 protected:
     using pgns = embr::j1939::pgns;
@@ -35,6 +39,8 @@ public:
     // to get the constructors online
     template <pgns pgn>
     using data_field = const embr::j1939::layer1::data_field<pgn>;
+
+    using policy_type = j1939::internal::dispatch_default_policy;
 
     // EXPERIMENTAL, inactive for process_incoming assisted filtering of incoming DA
     enum address_filter

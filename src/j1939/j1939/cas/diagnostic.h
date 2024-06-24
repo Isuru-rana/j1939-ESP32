@@ -5,9 +5,11 @@
 #include "../ca.h"
 #include "../pgn/traits.h"
 
+#include "fwd.h"
+
 namespace embr { namespace j1939 {
 
-template <class TTransport, class TOStream>
+template <class TTransport, class TOStream, class Policy = internal::dispatch_default_policy>
 class diagnostic_ca :
     public embr::j1939::impl::controller_application<TTransport>
 {

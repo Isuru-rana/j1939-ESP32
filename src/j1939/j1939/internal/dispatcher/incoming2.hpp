@@ -84,8 +84,9 @@ constexpr bool process_incoming(Impl& impl,
     // DEBT: Be careful, j1939::frame_traits is different than can::frame_traits.  Could
     // we derive j1939 flavor from can flavor?
     using traits = embr::can::frame_traits<frame>;
+    using policy_type = typename Impl::policy_type;
 
-    return internal::dispatch<dispatch_default_policy>(
+    return internal::dispatch<policy_type>(
         process_incoming_functor<transport_type>{},
         //id,
         get_pgn(traits::id(f)),

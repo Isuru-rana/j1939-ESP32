@@ -22,17 +22,17 @@ struct is_type_complete : estd::false_type {};
 template<typename T>
 struct is_type_complete<T, estd::enable_if_t<(sizeof(T) > 0)> > : estd::true_type {};
 
-template <class TTransport, class TOStream>
+template <class TTransport, class TOStream, class Policy>
 template <embr::j1939::pgns pgn>
-bool diagnostic_ca<TTransport, TOStream>::process_incoming(transport_type& t, const pdu<pgn>& p)
+bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming(transport_type& t, const pdu<pgn>& p)
 {
     out << p << estd::endl;
 
     return true;
 }
 
-template <class TTransport, class TOStream>
-bool diagnostic_ca<TTransport, TOStream>::process_incoming_default(
+template <class TTransport, class TOStream, class Policy>
+bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
     transport_type& t, const frame_type& f) const
 {
     pdu1_header id{frame_traits::id(f)};
