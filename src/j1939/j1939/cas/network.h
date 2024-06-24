@@ -87,6 +87,14 @@ struct network_ca : impl::controller_application<Transport>,
     using nca_base_type::next_event_;
     using nca_base_type::process_incoming;
 
+    // DEBT: Use base_type::policy_type once cs::v1::base ambiguity is worked out
+    // DEBT: Put this down at sm level once cs::v1::base ambiguity is worked out
+    struct policy_type : internal::dispatch_default_policy
+    {
+        using whitelist = pgn_list<pgns::request, pgns::address_claimed>;
+    };
+
+
     typedef transport_traits<transport_type> _transport_traits;
 
     typedef Scheduler scheduler_type;

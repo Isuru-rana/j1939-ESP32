@@ -22,6 +22,8 @@ struct network_base : network_enum,
     cs::v1::base
     //embr::Service   // Ready and waiting, premature to start migrating to this atm
 {
+    using base_type = cs::v1::base;
+
     template <class TimePoint>
     using context = sm::v0::context<TimePoint>;
 
