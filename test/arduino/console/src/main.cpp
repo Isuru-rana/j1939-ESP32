@@ -75,7 +75,27 @@ constexpr embr::word<3> ecu_instance(2);
 #endif
 
 scheduler_type scheduler;
-using dca_type = diagnostic_ca<transport, our_arduino_ostream>;
+
+// 24JUN24 Both whitelist and blacklist work.  Keeping defaults for now since
+// we have 10% space left still
+struct dca_policy : embr::j1939::internal::dispatch_default_policy
+{
+    /*
+    using whitelist = pgn_list<
+        pgns::address_claimed,
+        pgns::tp_dt,
+        pgns::tp_cm,
+        pgns::oel,
+        pgns::bjm1
+        >;
+    */
+    // Does work
+    //using blacklist = pgn_list<
+    //    pgns::ac_switching_device_status
+    //    >;
+};
+
+using dca_type = diagnostic_ca<transport, our_arduino_ostream, dca_policy>;
 
 using proto_name = embr::j1939::layer0::NAME<true,
     industry_groups::process_control,
