@@ -74,7 +74,7 @@ public:
 };
 
 template <class Transport, class Impl, class ...Args>
-bool process_incoming(Impl& impl,
+constexpr bool process_incoming(Impl& impl,
     Transport& transport,
     const typename estd::remove_cvref_t<Transport>::frame& f,
     Args&&...args)
@@ -84,14 +84,11 @@ bool process_incoming(Impl& impl,
     // DEBT: Be careful, j1939::frame_traits is different than can::frame_traits.  Could
     // we derive j1939 flavor from can flavor?
     using traits = embr::can::frame_traits<frame>;
-    can_id id(traits::id(f));
-    const uint16_t pgn_ = id.is_pdu1() ?
-        pdu1_header(id).range() :
-        pdu2_header(id).range();
 
-    return internal::dispatch(process_incoming_functor<transport_type>{},
+    return internal::dispatch(
+        process_incoming_functor<transport_type>{},
         //id,
-        pgns(pgn_),
+        get_pgn(traits::id(f)),
         impl,
         transport,
         f,

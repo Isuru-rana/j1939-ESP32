@@ -54,7 +54,6 @@ using in_place_pgn = j1939::internal::traits_wrapper<pgn>;
 #define J1939_DISPATCH_TARGET(n)    \
 case pgns::n:   return f(in_place_pgn<pgns::n>{}, std::forward<Args>(args)...);
 
-
 // Want to do this, but the variadic portion is a little tricky
 //template <ESTD_CPP_CONCEPT(concepts::Functor) F>
 template <class F, class ...Args>
@@ -133,13 +132,20 @@ auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}, args...))
 
 #undef J1939_DISPATCH_TARGET
 
+constexpr pgns get_pgn(const can_id& id)
+{
+    return id.is_pdu1() ?
+        pgns(pdu1_header(id).range()) :
+        pgns(pdu2_header(id).range());
+}
+
 template <class F, class ...Args>
 auto dispatch(F&& f, can_id id, Args&&...args) -> decltype(f(pgns{}, args...))
 {
-    const uint16_t pgn_ = id.is_pdu1() ?
-        pdu1_header(id).range() :
-        pdu2_header(id).range();
-    return dispatch(std::forward<F>(f), pgns(pgn_), std::forward<Args>(args)...);
+    return dispatch(
+        std::forward<F>(f),
+        get_pgn(id),
+        std::forward<Args>(args)...);
 }
 
 
