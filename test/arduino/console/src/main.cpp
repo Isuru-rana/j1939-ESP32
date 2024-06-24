@@ -31,7 +31,7 @@
 #include "transport.h"
 
 #define FEATURE_AGGREGATED_CA 0
-#define FEATURE_V2_DISPATCH 0
+#define FEATURE_V2_DISPATCH 1
 
 #if FEATURE_V2_DISPATCH
 #include <j1939/internal/dispatcher/incoming2.hpp>

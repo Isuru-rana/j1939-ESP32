@@ -51,12 +51,70 @@ using in_place_pgn = j1939::internal::pdu_traits<pgn>;
 using in_place_pgn = j1939::internal::traits_wrapper<pgn>;
 #endif
 
+enum policy_modes
+{
+    DISPATCH_POLICY_BLACKLIST,          // Execute all pgns except for ones in list
+    DISPATCH_POLICY_WHITELIST,          // Execute only pgns in list
+};
+
+// TODO: Need variadic value_selector built out just a bit more for this to work
+struct dispatch_default_policy
+{
+    // idea#1
+    static constexpr policy_modes policy = DISPATCH_POLICY_BLACKLIST;
+
+    using list = estd::variadic::values<pgns>;
+
+    // alternate idea#2
+
+    // empty whitelist = allow all (implicit *)
+    using whitelist = estd::variadic::values<pgns>;
+    // empty blacklist = deny none
+    using blacklist = estd::variadic::values<pgns>;
+};
+
+template <class Policy, pgns pgn, class Enabled = void>
+struct should_execute_pgn : estd::bool_constant<false> {};
+
+template <class Policy, pgns pgn>
+struct should_execute_pgn<
+    Policy,
+    pgn,
+    estd::enable_if_t<Policy::policy == DISPATCH_POLICY_BLACKLIST>> :
+    estd::bool_constant<true>
+{
+
+};
+
+
+template <class Policy, pgns pgn, class Enabled = void>
+struct exec_dispatch;
+
+// DEBT: Can probably do this with a regular bool specialization not enable_if, just
+// hedging our bets for now
+template <class Policy, pgns pgn>
+struct exec_dispatch<
+    Policy,
+    pgn,
+    estd::enable_if_t<should_execute_pgn<Policy, pgn>::value> >
+{
+    template <class F, class ...Args>
+    constexpr auto operator()(F&& f, Args&&...args) -> decltype(f(pgns{}, args...))
+    {
+        return f(in_place_pgn<pgn>{}, std::forward<Args>(args)...);
+    }
+};
+
+
 #define J1939_DISPATCH_TARGET(n)    \
-case pgns::n:   return f(in_place_pgn<pgns::n>{}, std::forward<Args>(args)...);
+case pgns::n:   return exec_dispatch<Policy, pgns::n>{}(std::forward<F>(f), std::forward<Args>(args)...);
+//case pgns::n:   return f(in_place_pgn<pgns::n>{}, std::forward<Args>(args)...);
+
+
 
 // Want to do this, but the variadic portion is a little tricky
 //template <ESTD_CPP_CONCEPT(concepts::Functor) F>
-template <class F, class ...Args>
+template <class Policy, class F, class ...Args>
 auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}, args...))
 {
     // NOTE: Would be interesting to do this with estd::variadic and/or a fold expression, but I am concerned that it would
@@ -142,7 +200,7 @@ constexpr pgns get_pgn(const can_id& id)
 template <class F, class ...Args>
 auto dispatch(F&& f, can_id id, Args&&...args) -> decltype(f(pgns{}, args...))
 {
-    return dispatch(
+    return dispatch<dispatch_default_policy>(
         std::forward<F>(f),
         get_pgn(id),
         std::forward<Args>(args)...);

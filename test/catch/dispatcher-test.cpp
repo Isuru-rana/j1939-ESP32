@@ -121,7 +121,7 @@ TEST_CASE("dispatcher")
 
         REQUIRE(ca.oel_counter == 1);
 
-        j1939::internal::dispatch(
+        j1939::internal::dispatch<j1939::internal::dispatch_default_policy>(
             j1939::internal::v2::specialize_frame_functor{},
             pgns::oel,
             j1939::internal::v2::test_rcv_specialized_functor{},

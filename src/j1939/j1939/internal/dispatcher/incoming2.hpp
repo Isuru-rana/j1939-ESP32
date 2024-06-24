@@ -85,7 +85,7 @@ constexpr bool process_incoming(Impl& impl,
     // we derive j1939 flavor from can flavor?
     using traits = embr::can::frame_traits<frame>;
 
-    return internal::dispatch(
+    return internal::dispatch<dispatch_default_policy>(
         process_incoming_functor<transport_type>{},
         //id,
         get_pgn(traits::id(f)),
