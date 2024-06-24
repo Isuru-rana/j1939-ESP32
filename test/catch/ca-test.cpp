@@ -14,6 +14,8 @@
 
 #include <j1939/cas/internal/prng_address_manager.h>
 
+#include <j1939/internal/dispatcher/incoming2.hpp>
+
 #include "test-data.h"
 #include "test-cs.h"
 
@@ -129,16 +131,36 @@ TEST_CASE("Controller Applications")
     }
     SECTION("diagnostic ca")
     {
-        diagnostic_ca<can::loopback_transport, ostringstream> dca(out);
+        SECTION("regular")
+        {
+            diagnostic_ca<can::loopback_transport, ostringstream> dca(out);
 
-        pdu<pgns::oel> p{null_t{}};
+            pdu<pgns::oel> p{null_t{}};
 
-        frame f = frame_traits::create(p);
+            frame f = frame_traits::create(p);
 
-        process_incoming(dca, t, f);
+            process_incoming(dca, t, f);
 
-        //REQUIRE(out_s == "OEL SA:0 ff ff ff ff ff ff ff ff \n");
-        REQUIRE(out_s == "OEL SA:0 high beam=no change, turn signal=noop\n");
+            //REQUIRE(out_s == "OEL SA:0 ff ff ff ff ff ff ff ff \n");
+            REQUIRE(out_s == "OEL SA:0 high beam=no change, turn signal=noop\n");
+        }
+        SECTION("filtered")
+        {
+            struct policy : embr::j1939::internal::dispatch_default_policy
+            {
+                using blacklist = pgn_list<pgns::oel>;
+            };
+
+            diagnostic_ca<can::loopback_transport, ostringstream, policy> dca(out);
+
+            pdu<pgns::oel> p{null_t{}};
+
+            frame f = frame_traits::create(p);
+
+            j1939::internal::v2::process_incoming(dca, t, f);
+
+            // Works, I just don't like the unrecognized PDU output format
+        }
     }
     SECTION("aggregated")
     {

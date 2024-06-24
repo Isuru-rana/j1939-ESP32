@@ -53,8 +53,14 @@ public:
             std::forward<Args>(args)...);
     }
 
-    template <class Impl>
-    constexpr bool operator()(pgns, Impl&, Transport&, const frame&) const { return{}; }
+    template <class Impl, class ...Args>
+    constexpr bool operator()(pgns p, Impl& impl, Transport& t, const frame& frame,
+        Args&&...args) const
+    {
+        return impl.process_incoming_default(t,
+            frame,
+            std::forward<Args>(args)...);
+    }
 };
 
 
