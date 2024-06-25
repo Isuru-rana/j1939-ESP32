@@ -39,9 +39,10 @@ void out_pdu_helper(estd::detail::basic_ostream<Streambuf, Base>& out,
 {
     out << pgn << ' ' << estd::hex << can_id << ' ';
 
-    using data_field_type = estd::remove_cvref_t<decltype(payload)>;
+    //using data_field_type = estd::remove_cvref_t<decltype(payload)>;
 
-    payload_put_base<typename data_field_type::container_type>{payload}(out);
+    write_raw_payload(out, payload);
+    //payload_put_base<typename data_field_type::container_type>{payload}(out);
 }
 
 template <pgns pgn>

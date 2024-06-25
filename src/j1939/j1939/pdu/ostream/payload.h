@@ -9,6 +9,17 @@ namespace embr { namespace j1939 {
 
 namespace internal {
 
+// DEBT: Consolidate this with diagnostic payload output
+// No fancy PDU specializations, just raw bytes
+template <class Streambuf, class Base, class Container>
+void write_raw_payload(estd::detail::basic_ostream<Streambuf, Base>& out,
+    const internal::data_field_base<Container>& payload)
+{
+    out.fill('0');
+
+    for(unsigned v : payload) out << estd::setw(2) << v << ' ';
+}
+
 template <class Container>
 struct payload_put_base : estd::internal::ostream_functor_tag
 {
@@ -20,9 +31,7 @@ struct payload_put_base : estd::internal::ostream_functor_tag
     template <class Streambuf, class Base>
     void operator()(estd::detail::basic_ostream<Streambuf, Base>& out) const
     {
-        out.fill('0');
-
-        for(unsigned v : payload) out << estd::setw(2) << v << ' ';
+        write_raw_payload(out, payload);
     }
 };
 

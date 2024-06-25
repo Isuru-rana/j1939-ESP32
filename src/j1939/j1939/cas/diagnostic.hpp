@@ -59,7 +59,6 @@ bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
 
     const uint8_t* payload = frame_traits::payload(f);
 
-    // DEBT: Really need to only output dlc bytes, not 8
     for(unsigned i = 0; i < frame_traits::length(f); i++)
         out << ' ' << estd::setw(2) << payload[i];
 
