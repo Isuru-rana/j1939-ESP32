@@ -15,12 +15,13 @@ namespace embr { namespace j1939 {
 // NOTE: They are correct that there are some limitations/problems with this
 // is_type_complete
 
-
+/*
 template<typename, typename = void>
 struct is_type_complete : estd::false_type {};
 
 template<typename T>
 struct is_type_complete<T, estd::enable_if_t<(sizeof(T) > 0)> > : estd::true_type {};
+ */
 
 template <class TTransport, class TOStream, class Policy>
 template <embr::j1939::pgns pgn>
@@ -32,9 +33,15 @@ bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming(transport_typ
 }
 
 template <class TTransport, class TOStream, class Policy>
+#if EXP_DIAGNOSTIC_OPT1
+constexpr
+#endif
 bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
     transport_type& t, const frame_type& f) const
 {
+#if EXP_DIAGNOSTIC_OPT1
+    return false;
+#else
     pdu1_header id{frame_traits::id(f)};
     pdu2_header _id{frame_traits::id(f)};
 
@@ -59,6 +66,7 @@ bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
     out << estd::endl;
 
     return false;
+#endif
 }
 
 

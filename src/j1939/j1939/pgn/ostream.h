@@ -20,11 +20,11 @@ namespace embr { namespace j1939 {
 namespace internal {
 
 // DEBT: Not great naming
-// Helper to reduce code bloat slightly (this has better change of not inlining)
-template <class TPduHeader, class TStreambuf, class TBase>
+// Helper to reduce code bloat slightly (this has better chance of not inlining)
+template <class PduHeader, class Streambuf, class Base>
 void out_helper(const char* abbrev,
-    const TPduHeader& can_id,
-    estd::detail::basic_ostream<TStreambuf, TBase>& out)
+    const PduHeader& can_id,
+    estd::detail::basic_ostream<Streambuf, Base>& out)
 {
     out << abbrev << ' ';
 

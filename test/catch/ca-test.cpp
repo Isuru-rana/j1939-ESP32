@@ -161,7 +161,6 @@ TEST_CASE("Controller Applications")
 
             j1939::internal::v2::process_incoming(dca, t, f);
 
-            // Works, I just don't like the unrecognized PDU output format
             REQUIRE(out_s == "PDU: FDCC SA:0 FF FF FF FF FF FF FF FF\n");
         }
     }

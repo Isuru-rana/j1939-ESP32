@@ -43,6 +43,10 @@ void dispatch_assist(estd::integer_sequence<Key, keys...>, F&& f, Key key)
 case pgns::n:   return exec_dispatch<Policy, pgns::n>{}(std::forward<F>(f), std::forward<Args>(args)...);
 //case pgns::n:   return f(in_place_pgn<pgns::n>{}, std::forward<Args>(args)...);
 
+// See if dispatcher uses more or less memory if we sort things.
+// 0 = off, 1 = limited set, sorted, 2 = limited set, not sorted
+// Surprisingly, so far 'sorted' flavor takes slightly more ROM
+#define EXP_SORTED_MODE 0
 
 // Want to do this, but the variadic portion is a little tricky
 //template <ESTD_CPP_CONCEPT(concepts::Functor) F>
@@ -61,6 +65,7 @@ auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}, args...))
 
     switch(pgn_)
     {
+#if EXP_SORTED_MODE == 0
         J1939_DISPATCH_TARGET(ac_switching_device_status)
         J1939_DISPATCH_TARGET(acknowledgement)
         J1939_DISPATCH_TARGET(address_claimed)
@@ -110,12 +115,42 @@ auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}, args...))
         J1939_DISPATCH_TARGET(time_date_adjust)
         J1939_DISPATCH_TARGET(trip_fan_information)
         J1939_DISPATCH_TARGET(vehicle_direction_speed)
+        J1939_DISPATCH_TARGET(vehicle_distance)
         J1939_DISPATCH_TARGET(vehicle_hours)
         J1939_DISPATCH_TARGET(vehicle_position)
         J1939_DISPATCH_TARGET(vep1)
         J1939_DISPATCH_TARGET(vep2)
         J1939_DISPATCH_TARGET(vep3)
-
+        J1939_DISPATCH_TARGET(wireless_communications_message_1)
+#elif EXP_SORTED_MODE == 1
+        J1939_DISPATCH_TARGET(request)
+        J1939_DISPATCH_TARGET(tp_dt)
+        J1939_DISPATCH_TARGET(tp_cm)
+        J1939_DISPATCH_TARGET(address_claimed)
+        J1939_DISPATCH_TARGET(oel)
+        J1939_DISPATCH_TARGET(lighting_command)
+        J1939_DISPATCH_TARGET(fan_drive_1)
+        J1939_DISPATCH_TARGET(time_date)
+        J1939_DISPATCH_TARGET(vep1)
+        J1939_DISPATCH_TARGET(switch_bank_status)
+        J1939_DISPATCH_TARGET(switch_bank_control)
+        J1939_DISPATCH_TARGET(system_time)
+#elif EXP_SORTED_MODE == 2
+        J1939_DISPATCH_TARGET(address_claimed)
+        J1939_DISPATCH_TARGET(fan_drive_1)
+        J1939_DISPATCH_TARGET(oel)
+        J1939_DISPATCH_TARGET(lighting_command)
+        J1939_DISPATCH_TARGET(request)
+        J1939_DISPATCH_TARGET(switch_bank_control)
+        J1939_DISPATCH_TARGET(switch_bank_status)
+        J1939_DISPATCH_TARGET(system_time)
+        J1939_DISPATCH_TARGET(tp_cm)
+        J1939_DISPATCH_TARGET(tp_dt)
+        J1939_DISPATCH_TARGET(time_date)
+        J1939_DISPATCH_TARGET(vep1)
+#else
+#error
+#endif
         default:    return f(pgn_, std::forward<Args>(args)...);
     }
 }

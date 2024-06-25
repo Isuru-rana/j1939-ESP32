@@ -120,6 +120,7 @@ enum class pgns : uint32_t
     fan_drive_1 = 65213,                        // [17]
     active_diagnostic_trouble_codes = 65226,    // [19]
     auxiliary_input_output_status_1 = 65241,    // [18]
+    vehicle_distance = 65248,                   // [17]
     shutdown = 65252,                           // [13]
     time_date = 65254,                          // [13]
     vehicle_hours = 65255,                      // [13]

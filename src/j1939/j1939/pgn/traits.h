@@ -51,9 +51,9 @@ struct traits_base
 {
     using s = embr::j1939::spns;
 
+    static constexpr unsigned length = 8;
     // "The default for all other informational, proprietary, request, and
     // ACK messages is 6" [1] 5.2.1
-    static constexpr unsigned length = 8;
     // DEBT: Decide whether we like "default" explicit name, probably leave it out
     static constexpr unsigned default_priority = 6;
     static constexpr unsigned priority = 6;
