@@ -12,6 +12,8 @@
 #include <j1939/cas/internal/prng_address_manager.h>
 #include <j1939/ca.hpp>
 
+#include <j1939/internal/dispatcher/incoming2.hpp>
+
 #include <j1939/data_field/all.hpp>
 #include <j1939/state-machines/transport_protocol.hpp>
 
@@ -35,6 +37,7 @@ static transport t;
 
 scheduler_type scheduler;
 
+// 25JUN24 - Pre v2 dispatcher numbers
 #define FEATURE_DIAGNOSTIC  1       // ~7k ROM
 #define FEATURE_NETWORK     1       // ~6k ROM
 #define FEATURE_TP          1       // ~7k ROM w/ responder disabled
@@ -46,6 +49,8 @@ using proto_name = embr::j1939::layer0::NAME<true,
     vehicle_systems::ig5_not_available, // DEBT: Change to a better IG/Veh Sys,
     function_fields::ig5_not_available>;
 
+// TODO: Change this to state machine only flavor, scheduler-based NCA
+// falling out of favor
 using nca_type = embr::j1939::impl::network_ca<transport,
     scheduler_type,
     embr::j1939::internal::prng_address_manager>;
@@ -130,11 +135,13 @@ void loop()
         process_incoming(dca, t, f);
 #endif
 #if FEATURE_NETWORK
-        process_incoming(nca, t, f);
+        embr::j1939::internal::v2::process_incoming(nca, t, f);
 #endif
 #if FEATURE_TP
         process_incoming(tp, t, f, ctx);
-        process_incoming(cidca, t, f);
+        // Doesn't compile yet.  Use catch unit tests to work this out
+        //embr::j1939::internal::v2::process_incoming(tp, t, f, ctx);
+        embr::j1939::internal::v2::process_incoming(cidca, t, f);
 #endif
     }
 

@@ -34,7 +34,16 @@ class transport_protocol :
     public tp::v0::enum_base,
     public cs::v1::base
 {
+    using base_type = cs::v1::base;
+
 public:
+    using base_type::process_incoming;
+
+    struct policy_type : base_type::policy_type
+    {
+        using whitelist = pgn_list<pgns::tp_dt, pgns::tp_cm>;
+    };
+
     // [1] 5.10.2.4
     struct timeouts
     {
@@ -246,9 +255,6 @@ public:
         originator().payload_ = v;
         state_ = ORIGINATOR_SENDING_DT;
     }
-
-    template <class Transport, pgns pgn>
-    static constexpr bool process_incoming(Transport& t, pdu<pgn> p, context) { return false; }
 
     // Using dispatcher methodology
     template <class Transport>
