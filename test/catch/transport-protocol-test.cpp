@@ -3,6 +3,8 @@
 #include <j1939/state-machines/transport_protocol.hpp>
 #include <j1939/ca.hpp>
 
+#include <j1939/internal/dispatcher/incoming2.hpp>
+
 #include <can/loopback.h>
 
 #include "test-data.h"
@@ -238,6 +240,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         REQUIRE(t.receive(&frame));
 
+        internal::v2::
         process_incoming(h.tp_orig, t, frame, ctx{transport_protocol::timeouts::T2 + 50, h.orig_sa});
 
         REQUIRE(h.tp_orig.originator().resequence_requested());

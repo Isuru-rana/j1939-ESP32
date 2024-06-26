@@ -32,6 +32,11 @@ struct network_base : network_enum,
 
     using address_type = estd::layer1::optional<uint8_t, addresses::null>;
 
+    struct policy_type : internal::dispatch_default_policy
+    {
+        using whitelist = pgn_list<pgns::request, pgns::address_claimed>;
+    };
+
 protected:
     // TODO: Optimize to use sparse/layer0/layer2 name but not at the exclusion
     // of the edge case where a NAME can be totally changed

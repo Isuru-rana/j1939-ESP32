@@ -61,14 +61,13 @@ struct ca_time_helper<TSchedulerImpl, estd::chrono::duration<Rep, Period> >
 // Pertains to [1] 5.10
 template <class Transport, class Scheduler,
     ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
-struct network_ca : impl::controller_application<Transport>,
+struct network_ca :
         sm::network<AddressManager, typename Scheduler::time_point>
 {
-    typedef j1939::impl::controller_application<Transport> base_type;
     using nca_base_type = sm::network<AddressManager, typename Scheduler::time_point>;
 
-    using typename base_type::transport_type;
-    using typename base_type::frame_type;
+    using transport_type = Transport;
+    using frame_type = typename transport_type::frame;
     using frame_traits = can::frame_traits<frame_type>;
 
     using typename nca_base_type::time_point;
@@ -86,14 +85,6 @@ struct network_ca : impl::controller_application<Transport>,
     using nca_base_type::find_new_address;
     using nca_base_type::next_event_;
     using nca_base_type::process_incoming;
-
-    // DEBT: Use base_type::policy_type once cs::v1::base ambiguity is worked out
-    // DEBT: Put this down at sm level once cs::v1::base ambiguity is worked out
-    struct policy_type : internal::dispatch_default_policy
-    {
-        using whitelist = pgn_list<pgns::request, pgns::address_claimed>;
-    };
-
 
     typedef transport_traits<transport_type> _transport_traits;
 

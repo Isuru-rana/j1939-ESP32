@@ -87,7 +87,8 @@ static const char software_id[] =
 
 #if FEATURE_TP
 template <class Transport>
-bool component_identification_ca::process_incoming(Transport&, pdu<pgns::request>& p)
+bool component_identification_ca::process_incoming(
+    Transport&, const pdu<pgns::request>& p)
 {
     uint32_t pgn = p.payload().pgn();
 
@@ -138,9 +139,7 @@ void loop()
         embr::j1939::internal::v2::process_incoming(nca, t, f);
 #endif
 #if FEATURE_TP
-        process_incoming(tp, t, f, ctx);
-        // Doesn't compile yet.  Use catch unit tests to work this out
-        //embr::j1939::internal::v2::process_incoming(tp, t, f, ctx);
+        embr::j1939::internal::v2::process_incoming(tp, t, f, ctx);
         embr::j1939::internal::v2::process_incoming(cidca, t, f);
 #endif
     }
