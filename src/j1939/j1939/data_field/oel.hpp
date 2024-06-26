@@ -212,6 +212,7 @@ struct type_traits<spns::hazard_light_switch> : internal::measured_type_traits
 };
 
 
+// DEBT: This one seems like it really wants to be a 'slot'
 template <>
 struct type_traits<spns::operators_desired_delay_lamp_off_time> :
     internal::type_traits_base<uint16_t>
@@ -219,7 +220,6 @@ struct type_traits<spns::operators_desired_delay_lamp_off_time> :
     // gets upset about it
     //internal::type_traits_base<estd::chrono::duration<uint16_t, estd::ratio<1>>>
 {
-    // EXPERIMENTAL
     static constexpr const char* name() { return "operators_desired_delay_lamp_off_time"; }
     static constexpr const char* description() { return nullptr; }
     static constexpr const char* short_name() { return "ldelay"; }

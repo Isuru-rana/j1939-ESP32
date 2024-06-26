@@ -35,6 +35,7 @@ public:
     };
 
 protected:
+    void main_light_switch();
     void prep(pdu<pgns::lcmd>&, const context&);
 
     j1939::layer1::data_field<pgns::oel> last_oel_;
@@ -45,6 +46,11 @@ public:
     constexpr estd::chrono::milliseconds flash_delay() const
     {
         return estd::chrono::milliseconds{500};
+    }
+
+    constexpr estd::chrono::milliseconds off_delay() const
+    {
+        return estd::chrono::milliseconds{4000};
     }
 
     constexpr lighting_command();

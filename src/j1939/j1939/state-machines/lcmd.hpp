@@ -19,11 +19,20 @@ constexpr lighting_command<TimePoint>::lighting_command() :
 
 }
 
+
+template <class TimePoint>
+void lighting_command<TimePoint>::main_light_switch()
+{
+
+}
+
+
 template <class TimePoint>
 void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
 {
     if(state_ == STATE_IDLE)
     {
+        // Lazy init
         next_event_ = c.current;
     }
 
@@ -82,6 +91,48 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
             break;
 
         default: break;
+    }
+
+    // DEBT: This main light switch code may belong elsewhere, 'prep' may be poorly named
+    // and is somewhat specific to process_outgoing/timer specificity
+
+    using type = enum_type<spns::main_light_switch>;
+    using htype = enum_type<spns::high_low_beam_switch>;
+    // high beam only activates if expressly specified on.  Otherwise default to low beam
+    const bool hibeam = last_oel_.high_low_beam_switch() == htype::high_beam_selected;
+
+    // NOTE: Incomplete
+    switch(last_oel_.main_light_switch())
+    {
+        case type::off:
+            out_p.high_beam_headlight(spn::control_commands::disable);
+            out_p.low_beam_headlight(spn::control_commands::disable);
+            break;
+
+        case type::park_on:
+            // Unknown what the preferred action is here
+            break;
+
+        case type::headlight_on:
+            out_p.low_beam_headlight(!hibeam ?
+                spn::control_commands::enable :
+                spn::control_commands::disable);
+            out_p.high_beam_headlight(hibeam ?
+                spn::control_commands::enable :
+                spn::control_commands::disable);
+            // DEBT: Do FALLTHROUGH here
+            break;
+
+        case type::headlight_and_park_on:
+            break;
+
+        // Time for some state machine magic
+        case type::delayed_off:
+            next_event_ += off_delay();
+            break;
+
+        default:
+            break;
     }
 
     state_ = on_already ? STATE_FLASH_OFF : STATE_FLASH_ON;
