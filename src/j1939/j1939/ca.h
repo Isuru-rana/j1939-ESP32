@@ -34,11 +34,6 @@ namespace impl {
 class controller_application_base
 {
 public:
-    // DEBT: We actually want layer2::data_field here but that one needs work
-    // to get the constructors online
-    template <pgns pgn>
-    using data_field = const embr::j1939::layer1::data_field<pgn>;
-
     // EXPERIMENTAL, inactive for process_incoming assisted filtering of incoming DA
     enum address_filter
     {
@@ -59,7 +54,6 @@ protected:
     using frame_type = typename transport_type::frame;
     //using endpoint_type = typename transport_type::endpoint_type;
     //using message_type = typename transport_type::message_type;
-    using frame_traits = can::frame_traits<frame_type>;
 
 public:
 

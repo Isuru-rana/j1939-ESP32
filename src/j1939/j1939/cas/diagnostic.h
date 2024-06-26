@@ -12,23 +12,24 @@ namespace embr { namespace j1939 {
 // Just to see how much ROM 'process_incoming_default' really uses
 #define EXP_DIAGNOSTIC_OPT1 0
 
-template <class TTransport, class TOStream, class Policy = internal::dispatch_default_policy>
-class diagnostic_ca :
-    public embr::j1939::impl::controller_application<TTransport>,
-    public cs::v1::base
+// DEBT: He has now become a 'cs'
+template <class TTransport, class OStream, class Policy = internal::dispatch_default_policy>
+class diagnostic_ca : public cs::v1::base
 {
     using base_type = embr::j1939::impl::controller_application<TTransport>;
 
-    using typename base_type::transport_type;
+    using transport_type = TTransport;
     typedef typename TTransport::frame frame_type;
-    typedef can::frame_traits<frame_type> frame_traits;
+    using frame_traits = can::frame_traits<frame_type>;
 
-    TOStream& out;
+    // DEBT: Consider passing this in as process_incoming param
+    // DEBT: Really wants to be estd::detail::basic_ostream<Streambuf, Base>
+    OStream& out;
 
 public:
     using policy_type = Policy;
 
-    explicit constexpr diagnostic_ca(TOStream& out) : out(out) {}
+    explicit constexpr diagnostic_ca(OStream& out) : out(out) {}
 
     // DEBT: inline instead of constexpr seems to hels compiler not favor this
     // one.  However, that is obnoxious

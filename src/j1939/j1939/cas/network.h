@@ -69,7 +69,7 @@ struct network_ca : impl::controller_application<Transport>,
 
     using typename base_type::transport_type;
     using typename base_type::frame_type;
-    using typename base_type::frame_traits;
+    using frame_traits = can::frame_traits<frame_type>;
 
     using typename nca_base_type::time_point;
     using typename nca_base_type::address_type;

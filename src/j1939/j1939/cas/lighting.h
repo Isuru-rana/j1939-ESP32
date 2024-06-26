@@ -17,8 +17,8 @@ struct lighting_command_ca : impl::controller_application<TTransport>
 {
     typedef j1939::impl::controller_application<TTransport> base_type;
     using typename base_type::transport_type;
-    using typename base_type::frame_type;
-    using typename base_type::frame_traits;
+    using frame_type = typename transport_type::frame;
+    using frame_traits = can::frame_traits<frame_type>;
     typedef TScheduler scheduler_type;
 
     typedef transport_traits<transport_type> _transport_traits;

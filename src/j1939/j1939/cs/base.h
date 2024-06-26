@@ -20,8 +20,11 @@ protected:
     using pdu = embr::j1939::pdu<p>;
 
 public:
-    // DEBT: Really belongs here, but until we combine ca_base back with this guy,
-    // we get amiguous reference issues
+    // DEBT: We actually want layer2::data_field here but that one needs work
+    // to get the constructors online
+    template <pgns pgn>
+    using data_field = const embr::j1939::layer1::data_field<pgn>;
+
     using policy_type = j1939::internal::dispatch_default_policy;
 
     // DEBT: Need a Context variety of this one too

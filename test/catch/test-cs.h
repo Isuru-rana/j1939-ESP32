@@ -22,7 +22,7 @@ struct SyntheticCA :
     typedef j1939::impl::controller_application<TTransport> base_type;
     using typename base_type::transport_type;
     using typename base_type::frame_type;
-    using typename base_type::frame_traits;
+    using frame_traits = can::frame_traits<frame_type>;
     using cs::v1::base::process_incoming;
 
     typedef transport_traits<transport_type> _transport_traits;

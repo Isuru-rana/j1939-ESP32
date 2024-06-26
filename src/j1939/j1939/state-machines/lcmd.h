@@ -22,6 +22,11 @@ class lighting_command : public cs::v1::base
 public:
     using context = sm::v0::context<TimePoint>;
 
+    struct policy_type : base_type::policy_type
+    {
+        using whitelist = pgn_list<pgns::oel, pgns::ccvs>;
+    };
+
     enum states
     {
         STATE_IDLE,
@@ -32,7 +37,7 @@ public:
 protected:
     void prep(pdu<pgns::lcmd>&, const context&);
 
-    data_field<pgns::oel> last_oel_;
+    j1939::layer1::data_field<pgns::oel> last_oel_;
 
     states state_;
 

@@ -181,7 +181,7 @@ struct transport_protocol_ca : impl::controller_application<TTransport>,
     typedef j1939::impl::controller_application<TTransport> base_type;
     using typename base_type::transport_type;
     using typename base_type::frame_type;
-    using typename base_type::frame_traits;
+    using frame_traits = can::frame_traits<frame_type>;
 
     template <pgns pgn>
     using pdu = pdu<pgn>;
