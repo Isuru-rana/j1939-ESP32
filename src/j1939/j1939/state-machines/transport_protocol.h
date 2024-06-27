@@ -16,6 +16,7 @@
 #include "../ca.h"
 #include "../data_field/transport_protocol.hpp"
 
+#include "tp/base.h"
 #include "tp/enum.h"
 #include "tp/feature.h"
 #include "tp/originator.h"
@@ -23,84 +24,6 @@
 
 
 // DEBT: Although I did a version before, the state machine flavor is far more flexible
-
-namespace embr { namespace j1939 { namespace sm { namespace tp { inline namespace v0 {
-
-class base : public tp::v0::enum_base,
-    public cs::v1::base
-{
-    static constexpr unsigned role_shift = 8;
-
-public:
-    struct policy_type : cs::v1::base::policy_type
-    {
-        using whitelist = pgn_list<pgns::tp_dt, pgns::tp_cm>;
-    };
-
-
-    enum states
-    {
-        IDLE = ROLE_UNINITIALIZED << role_shift,
-        // Invalid state observed, but occurred at a time which doesn't hurt us
-        WARN,
-        // Active listener mode, think of this as a reservation for a particular originator address
-        ANTICIPATING_RTS,
-        RECEIVING,
-        SENDING_ABORT,
-        SENT_ABORT,
-        OFFLINE,
-
-        // Originator node states
-        ORIGINATOR = ROLE_ORIGINATOR << role_shift,
-        ORIGINATOR_SENDING_RTS,
-        ORIGINATOR_SENT_RTS,
-        ORIGINATOR_SENDING_BAM,
-        ORIGINATOR_SENT_BAM,
-        ORIGINATOR_WAITING_CTS,
-        ORIGINATOR_RECEIVED_CTS,
-        ORIGINATOR_SENDING_DT,
-        ORIGINATOR_SENT_DT,
-        ORIGINATOR_SENT_ALL_DT,
-        ORIGINATOR_RECEIVED_ABORT,
-        ORIGINATOR_RECEIVED_EOM_ACK,
-        ORIGINATOR_TIMEOUT,     // Timed out waiting for responder
-        ORIGINATOR_ERROR,
-
-        // Responder node states
-        RESPONDER = ROLE_RESPONDER << role_shift,
-        RESPONDER_RECEIVED_RTS,
-        RESPONDER_RECEIVED_BAM,
-        RESPONDER_SENDING_CTS,
-        RESPONDER_SENT_CTS,
-        RESPONDER_SENDING_CTS_HOLD,
-        RESPONDER_SENT_CTS_HOLD,
-        RESPONDER_RECEIVING_DT,
-        RESPONDER_RECEIVED_DT,
-        RESPONDER_SENDING_EOM_ACK,
-        RESPONDER_SENT_EOM_ACK,
-        RESPONDER_SENDING_ABORT,
-        RESPONDER_SENT_ABORT,
-        RESPONDER_TIMEOUT,      // Timeout out waiting for originator
-        RESPONDER_ERROR,
-    };
-
-protected:
-    states state_ = IDLE;
-
-#if UNIT_TESTING
-public:
-#endif
-
-    // For responder role only, requests that a CTS of 0 can_send (hold) emit
-    void request_hold();
-
-public:
-    constexpr states state() const { return state_; }
-
-    roles role() const;
-};
-
-}}}}}
 
 // v0 designates still in development, not functional
 namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
@@ -116,22 +39,6 @@ class transport_protocol : public tp::v0::base
 public:
     using base_type::process_incoming;
 
-    // [1] 5.10.2.4
-    struct timeouts
-    {
-        // all in ms
-
-        static constexpr unsigned bam = 50;         // DEBT: Would be better if this was configurable
-        static constexpr unsigned Tr = 200;
-        static constexpr unsigned Th = 500;
-        static constexpr unsigned T1 = 750;
-        static constexpr unsigned T2 = 1250;
-        static constexpr unsigned T3 = 1250;
-        static constexpr unsigned T4 = 1050;
-    };
-
-
-
     // DEBT: Heavy debt, need context to fully support proper chrono-style time_point
     using time_point = TimePoint;
     using duration = TimePoint;
@@ -140,12 +47,12 @@ public:
 private:
     time_point last_event_;
 
-    duration elapsed(const context& ctx) const
+    constexpr duration elapsed(const context& ctx) const
     {
         return ctx.current - last_event_;
     }
 
-    bool elapsed(const context& ctx, duration d) const
+    constexpr bool elapsed(const context& ctx, duration d) const
     {
         return ctx.current - last_event_ >= d;
     }
@@ -153,14 +60,6 @@ private:
     // DEBT: Would prefer this to come in via transport or some pseudo global thing
     // or perhaps only pass in traffic matched to global or our address in the first place
     //uint8_t self_address_ = uint8_t(addresses::null_address);
-
-    struct idle_state
-    {
-        uint8_t anticipated_address_;
-    };
-
-    using responder_state = tp::v0::responder_state;
-    using originator_state = tp::v0::originator_state;
 
     // DEBT: Default constructor seems a little ornery
     estd::internal::variant_storage<
@@ -217,30 +116,6 @@ public:
         return *storage_.template get<originator_state>();
     }
 
-    void set_offline()
-    {
-#if FEATURE_EMBR_J1939_STRICT_STATES
-        assert(state_ == IDLE || state_ == WARN);
-#endif
-
-        state_ = OFFLINE;
-    }
-
-    void set_online()
-    {
-#if FEATURE_EMBR_J1939_STRICT_STATES
-        assert(state_ == OFFLINE);
-#endif
-
-        state_ = IDLE;
-    }
-
-    // DEBT: Poor naming, only applies to responder mode
-    constexpr bool payload_present() const
-    {
-        return state_ == RESPONDER_RECEIVING_DT;
-    }
-
     ///
     /// @return
     /// @remarks last pdu<tp_dt> passed in to process_incoming must still be in scope
@@ -254,14 +129,6 @@ public:
         state_ = RESPONDER_RECEIVED_DT;
 
         return responder().payload();
-    }
-
-    // DEBT: Poor naming, only applies to originator mode
-    bool ready_for_payload() const
-    {
-        return state_ == ORIGINATOR_SENT_DT ||
-            state_ == ORIGINATOR_RECEIVED_CTS ||
-            state_ == ORIGINATOR_SENT_BAM;
     }
 
     void payload(const uint8_t* v)
