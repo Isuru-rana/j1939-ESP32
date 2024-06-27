@@ -13,11 +13,21 @@ template <class TimePoint>
 struct context
 {
     using time_point = TimePoint;
+    using duration = typename time_point::duration;
 
     const time_point current;
     const uint8_t self_address = addresses::null;
 #if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
     time_point* const next_;
+
+#if UNIT_TESTING
+    // FIX: Avoid production use (time_point preferred) + depends on 'std'
+    constexpr context(std::chrono::milliseconds current, uint8_t sa = addresses::null, time_point* next = nullptr) :
+        current{current},
+        self_address{sa},
+        next_{next}
+    {}
+#endif
 
     constexpr context(time_point current, uint8_t sa = addresses::null, time_point* next = nullptr) :
         current{current},

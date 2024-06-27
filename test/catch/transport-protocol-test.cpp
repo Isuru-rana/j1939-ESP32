@@ -1,5 +1,7 @@
 #include <catch2/catch.hpp>
 
+#include <chrono>
+
 #include <j1939/state-machines/transport_protocol.hpp>
 #include <j1939/ca.hpp>
 
@@ -12,38 +14,45 @@
 using namespace embr::j1939;
 using namespace embr::j1939::sm::v0;
 
+using time_point = std::chrono::system_clock::time_point;
+using duration = time_point::duration;
+using ms_type = std::chrono::milliseconds;
+
 // Mainly useful for testing, not so much production though bears some resemblance
 // to aggregated CA handler
 struct helper
 {
     const uint8_t orig_sa = 1, recv_sa = 2;
-    transport_protocol<unsigned> tp_orig, tp_recv;
+    transport_protocol<time_point> tp_orig, tp_recv;
     using states = sm::tp::v0::base::states;
 
     // Theory being CA/state machine should not get confused by its own traffic,
     // plus we auto aggregate to both for convenience
 
-    using ctx = transport_protocol<unsigned>::context;
-    using time_point = transport_protocol<unsigned>::time_point;
+    using ctx = transport_protocol<time_point>::context;
 
     template <class Transport>
-    unsigned incoming(Transport& t, const typename Transport::frame& f, time_point current = {})
+    unsigned incoming(Transport& t, const typename Transport::frame& f, unsigned current_ms = {})
     {
+        time_point c{ms_type{current_ms}};
         unsigned processed = 0;
 
-        processed += process_incoming(tp_orig, t, f, ctx{current, orig_sa});
-        processed += process_incoming(tp_recv, t, f, ctx{current, recv_sa});
+        processed += process_incoming(tp_orig, t, f, ctx{c, orig_sa});
+        processed += process_incoming(tp_recv, t, f, ctx{c, recv_sa});
 
         return processed;
     }
 
+    // DEBT: prefer to pass in a time_point
     template <class Transport>
-    unsigned outgoing(Transport& t, time_point current = {})
+    unsigned outgoing(Transport& t, unsigned current_ms = 0)
     {
+        time_point c{ms_type(current_ms)};
+
         unsigned processed = 0;
 
-        processed += tp_orig.process_outgoing(t, ctx{current, orig_sa});
-        processed += tp_recv.process_outgoing(t, ctx{current, recv_sa});
+        processed += tp_orig.process_outgoing(t, ctx{c, orig_sa});
+        processed += tp_recv.process_outgoing(t, ctx{c, recv_sa});
 
         return processed;
     }
@@ -52,20 +61,21 @@ struct helper
     // then performs incoming phase
     // NOTE: Will need a diff version of this with frame* at some point
     template <class Transport>
-    void cycle(Transport& t, time_point current = {})
+    void cycle(Transport& t, unsigned current_ms = {})
     {
+        time_point c{ms_type(current_ms)};
         typename Transport::frame f;
 
         CAPTURE(
-            current, to_string(tp_recv.state()), tp_recv.state(),
+            c, to_string(tp_recv.state()), tp_recv.state(),
             to_string(tp_orig.state()));
 
-        REQUIRE(outgoing(t, current) >= 1);
+        REQUIRE(outgoing(t, current_ms) >= 1);
         REQUIRE(t.receive(&f));
 
         CAPTURE(tp_recv.state(), tp_orig.state());
 
-        REQUIRE(incoming(t, f, current) == 1);
+        REQUIRE(incoming(t, f, current_ms) == 1);
     }
 
     void verify_incoming_payload(const uint8_t* expected, unsigned expected_sz)
@@ -88,10 +98,10 @@ struct helper
 class feeder
 {
     const uint8_t* data_;
-    transport_protocol<unsigned>& tp_;
+    transport_protocol<time_point>& tp_;
 
 public:
-    feeder(transport_protocol<unsigned>& tp, const uint8_t* data) :
+    feeder(transport_protocol<time_point>& tp, const uint8_t* data) :
         data_{data},
         tp_{tp}
     {}
@@ -114,10 +124,10 @@ public:
 class recv_feeder
 {
     uint8_t* data_;
-    transport_protocol<unsigned>& tp_;
+    transport_protocol<time_point>& tp_;
 
 public:
-    recv_feeder(transport_protocol<unsigned>& tp, uint8_t* data) :
+    recv_feeder(transport_protocol<time_point>& tp, uint8_t* data) :
         data_{data},
         tp_{tp}
     {}
@@ -146,7 +156,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
     feeder feed(h.tp_orig, (uint8_t*)test::test_str2);
     constexpr unsigned sz = sizeof(test::test_str2) - 1;    // Zapping null terminator
     using states = sm::tp::v0::base::states;
-    using tp_type = transport_protocol<unsigned>;
+    using tp_type = transport_protocol<time_point>;
     using ctx = tp_type::context;
 
     SECTION("core")
@@ -155,7 +165,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         tp_type& tp_recv = h.tp_recv;
 
         {
-            tp_orig.initiate_originator(sz, {0, addresses::null}, h.recv_sa,
+            tp_orig.initiate_originator(sz, {ms_type{0}, addresses::null}, h.recv_sa,
                 (uint32_t)pgns::software_identification);
 
             h.cycle(t, 0);      // Send RTS, receive RTS
@@ -229,22 +239,25 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         REQUIRE(t.peek() == nullptr);
 
         h.tp_orig.payload((uint8_t*)test::test_str2);                   // mark payload as ready to send
-        h.tp_orig.process_outgoing(black_hole, { 100, h.orig_sa });     // lose the DT
-        h.tp_recv.process_outgoing(t, { 100, h.recv_sa });
+        h.tp_orig.process_outgoing(black_hole, { ms_type{100}, h.orig_sa });     // lose the DT
+        h.tp_recv.process_outgoing(t, { ms_type{100}, h.recv_sa });
 
         REQUIRE(t.peek() == nullptr);
 
         // DEBT: Minor debt only, two consecutive process_outgoing are needed since one
         // detects the timeout and the next actually emits the resend
-        h.tp_recv.process_outgoing(t, { tp_type::timeouts::T2, h.recv_sa });
-        h.tp_recv.process_outgoing(t, { tp_type::timeouts::T2, h.recv_sa });
+        h.tp_recv.process_outgoing(t, { time_point{tp_type::timeouts::T2}, h.recv_sa });
+        h.tp_recv.process_outgoing(t, { time_point{tp_type::timeouts::T2}, h.recv_sa });
 
         REQUIRE(h.tp_recv.responder().retransmit_counter_ == 1);
 
         REQUIRE(t.receive(&frame));
 
         internal::v2::
-        process_incoming(h.tp_orig, t, frame, ctx{tp_type::timeouts::T2 + 50, h.orig_sa});
+            process_incoming(
+                h.tp_orig,
+                t, frame,
+                ctx{time_point{tp_type::timeouts::T2 + ms_type{50}}, h.orig_sa});
 
         REQUIRE(h.tp_orig.originator().resequence_requested());
     }
@@ -257,15 +270,15 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         h.cycle(t, 0);      // Send BAM, receive BAM
 
         h.tp_orig.payload((uint8_t*)test::test_str2);
-        h.tp_orig.process_outgoing(t, {25, h.orig_sa}); // Too early
+        h.tp_orig.process_outgoing(t, {ms_type{25}, h.orig_sa}); // Too early
 
         REQUIRE(t.peek() == nullptr);
 
-        h.tp_orig.process_outgoing(t, {50, h.orig_sa});
+        h.tp_orig.process_outgoing(t, {ms_type{50}, h.orig_sa});
 
         REQUIRE(t.receive(&frame));
 
-        process_incoming(h.tp_recv, t, frame, ctx{51, h.recv_sa});
+        process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
     }
     SECTION("experimental feeder test")
     {
@@ -348,13 +361,13 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
             // tp_recv Send CTS (too late)
             // DEBT: tp_recv is able to detect it's too late, but does nothing
             // about it - maybe it should emit an abort message too
-            h.outgoing(t, tp_type::timeouts::T2 + 1);
+            h.outgoing(t, tp_type::timeouts::T2.count() + 1);
 
             // Here we have two messages now, a CTS and abort
             REQUIRE(t.queue.size() == 2);
             REQUIRE(t.receive(&frame));
 
-            h.incoming(t, frame, tp_type::timeouts::T2 + 2);
+            h.incoming(t, frame, tp_type::timeouts::T2.count() + 2);
         }
     }
 }

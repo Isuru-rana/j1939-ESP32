@@ -40,16 +40,17 @@ public:
     {
         // all in ms
 
-        using mst = estd::chrono::milliseconds;
+        // FIX: Change this to estd
+        using mst = std::chrono::milliseconds;
 
-        static constexpr unsigned bam = 50;         // DEBT: Would be better if this was configurable
+        static constexpr mst bam = mst{50};         // DEBT: Would be better if this was configurable
 
-        static constexpr unsigned Tr = 200;
-        static constexpr unsigned Th = 500;
-        static constexpr unsigned T1 = 750;
-        static constexpr unsigned T2 = 1250;
-        static constexpr unsigned T3 = 1250;
-        static constexpr unsigned T4 = 1050;
+        static constexpr mst Tr = mst{200};
+        static constexpr mst Th = mst{500};
+        static constexpr mst T1 = mst{750};
+        static constexpr mst T2 = mst{1250};
+        static constexpr mst T3 = mst{1250};
+        static constexpr mst T4 = mst{1050};
     };
 
 

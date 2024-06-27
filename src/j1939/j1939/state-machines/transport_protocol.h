@@ -39,9 +39,8 @@ class transport_protocol : public tp::v0::base
 public:
     using base_type::process_incoming;
 
-    // DEBT: Heavy debt, need context to fully support proper chrono-style time_point
     using time_point = TimePoint;
-    using duration = TimePoint;
+    using duration = typename time_point::duration;
     using context = sm::v0::context<time_point>;
 
 private:
@@ -162,7 +161,7 @@ public:
     void initiate_originator(uint16_t sz, const context&, uint8_t responder_address, uint32_t pgn);
     void initiate_originator(uint8_t responder_address, uint32_t pgn, uint16_t sz)
     {
-        initiate_originator(sz, {0, 0}, responder_address, pgn);
+        initiate_originator(sz, {time_point{}, 0}, responder_address, pgn);
     }
 
     // TODO: Make "advanced" flavor so that priority is possible too
