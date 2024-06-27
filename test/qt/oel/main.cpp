@@ -9,6 +9,7 @@
 #include <j1939/qt/ca/ccvs.h>
 #include <j1939/qt/ca/oel.h>
 #include <j1939/qt/ca/lighting_command.h>
+#include <j1939/qt/cs/tp.h>
 
 using namespace embr;
 
@@ -34,10 +35,12 @@ int main(int argc, char *argv[])
     auto oel = new j1939::qt::ca::OEL(session);
     auto lcmd = new j1939::qt::ca::LightingCommand(session);
     auto ccvs = new j1939::qt::ca::CCVS(session);
+    auto tp = new j1939::qt::cs::TransportProtocol(session);
 
     session->clients().push_back(oel);
     session->clients().push_back(lcmd);
     session->clients().push_back(ccvs);
+    session->clients().push_back(tp);
 
     qmlRegisterSingletonInstance("j1939", 1, 0, "Session", session);
 

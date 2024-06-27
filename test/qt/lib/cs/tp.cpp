@@ -3,8 +3,15 @@
 namespace embr::j1939::qt::cs { inline namespace v1 {
 
 TransportProtocol::TransportProtocol(QObject *parent) :
-    QObject(parent)
+    Base(parent)
 {
 }
+
+
+void TransportProtocol::frameReceived(QCanBusDevice*, const QCanBusFrame&)
+{
+
+}
+
 
 }}
