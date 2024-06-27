@@ -22,43 +22,21 @@
 #include "tp/responder.h"
 
 
-// DEBT: I am so sure I did this before.  Can't seem to find it though
+// DEBT: Although I did a version before, the state machine flavor is far more flexible
 
-// v0 designates still in development, not functional
-namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
+namespace embr { namespace j1939 { namespace sm { namespace tp { inline namespace v0 {
 
-// DEBT: Probably we want a separate responder & originator state machine
-// "SENDING" states are a signal for external party to pick up a message from
-// state machine and send it
-class transport_protocol :
-    public tp::v0::enum_base,
+class base : public tp::v0::enum_base,
     public cs::v1::base
 {
-    using base_type = cs::v1::base;
+    static constexpr unsigned role_shift = 8;
 
 public:
-    using base_type::process_incoming;
-
-    struct policy_type : base_type::policy_type
+    struct policy_type : cs::v1::base::policy_type
     {
         using whitelist = pgn_list<pgns::tp_dt, pgns::tp_cm>;
     };
 
-    // [1] 5.10.2.4
-    struct timeouts
-    {
-        // all in ms
-
-        static constexpr unsigned bam = 50;         // DEBT: Would be better if this was configurable
-        static constexpr unsigned Tr = 200;
-        static constexpr unsigned Th = 500;
-        static constexpr unsigned T1 = 750;
-        static constexpr unsigned T2 = 1250;
-        static constexpr unsigned T3 = 1250;
-        static constexpr unsigned T4 = 1050;
-    };
-
-    static constexpr unsigned role_shift = 8;
 
     enum states
     {
@@ -106,9 +84,57 @@ public:
         RESPONDER_ERROR,
     };
 
-    using time_point = unsigned;
-    using duration = unsigned;
-    // DEBT: Heavy debt, need context to fully support time_point
+protected:
+    states state_ = IDLE;
+
+#if UNIT_TESTING
+public:
+#endif
+
+    // For responder role only, requests that a CTS of 0 can_send (hold) emit
+    void request_hold();
+
+public:
+    constexpr states state() const { return state_; }
+
+    roles role() const;
+};
+
+}}}}}
+
+// v0 designates still in development, not functional
+namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
+
+// DEBT: Probably we want a separate responder & originator state machine
+// "SENDING" states are a signal for external party to pick up a message from
+// state machine and send it
+template <class TimePoint>
+class transport_protocol : public tp::v0::base
+{
+    using base_type = tp::v0::base;
+
+public:
+    using base_type::process_incoming;
+
+    // [1] 5.10.2.4
+    struct timeouts
+    {
+        // all in ms
+
+        static constexpr unsigned bam = 50;         // DEBT: Would be better if this was configurable
+        static constexpr unsigned Tr = 200;
+        static constexpr unsigned Th = 500;
+        static constexpr unsigned T1 = 750;
+        static constexpr unsigned T2 = 1250;
+        static constexpr unsigned T3 = 1250;
+        static constexpr unsigned T4 = 1050;
+    };
+
+
+
+    // DEBT: Heavy debt, need context to fully support proper chrono-style time_point
+    using time_point = TimePoint;
+    using duration = TimePoint;
     using context = sm::v0::context<time_point>;
 
 private:
@@ -123,8 +149,6 @@ private:
     {
         return ctx.current - last_event_ >= d;
     }
-
-    states state_ = IDLE;
 
     // DEBT: Would prefer this to come in via transport or some pseudo global thing
     // or perhaps only pass in traffic matched to global or our address in the first place
@@ -163,21 +187,18 @@ public:
 
     idle_state& idle()
     {
-        return *storage_.get<idle_state>();
-    };
+        return *storage_.template get<idle_state>();
+    }
 
     responder_state& responder()
     {
-        return *storage_.get<responder_state>();
+        return *storage_.template get<responder_state>();
     }
 
     originator_state& originator()
     {
-        return *storage_.get<originator_state>();
+        return *storage_.template get<originator_state>();
     }
-
-    // For responder role only, requests that a CTS of 0 can_send (hold) emit
-    void request_hold();
 
 public:
     // NOTE: Just a formality, idle_state doesn't need init, and since state machines
@@ -188,17 +209,13 @@ public:
 
     const responder_state& responder() const
     {
-        return *storage_.get<responder_state>();
+        return *storage_.template get<responder_state>();
     }
 
     const originator_state& originator() const
     {
-        return *storage_.get<originator_state>();
+        return *storage_.template get<originator_state>();
     }
-
-    constexpr states state() const { return state_; }
-
-    roles role() const;
 
     void set_offline()
     {
@@ -297,6 +314,6 @@ public:
 
 }}
 
-const char* to_string(sm::v0::transport_protocol::states v);
+const char* to_string(sm::tp::v0::base::states v);
 
 }}

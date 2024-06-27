@@ -4,9 +4,9 @@
 
 namespace embr { namespace j1939 {
 
-const char* to_string(sm::v0::transport_protocol::states v)
+const char* to_string(sm::tp::v0::base::states v)
 {
-    using states = sm::v0::transport_protocol::states;
+    using states = sm::tp::v0::base::states;
 
     switch(v)
     {

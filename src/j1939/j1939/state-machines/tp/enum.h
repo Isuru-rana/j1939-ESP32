@@ -62,7 +62,8 @@ struct enum_base
         frame_states state_ : 4;
         frame_types type_ : 4;
         frame_errors error_ : 4;
-    };};
+    };
+};
 
 
 }}}}}

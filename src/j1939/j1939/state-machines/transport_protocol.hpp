@@ -29,8 +29,9 @@ inline responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
 
 inline namespace v0 {
 
+template <class TimePoint>
 template <class Transport>
-bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p, const context& ctx)
+bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns::tp_cm>& p, const context& ctx)
 {
     const uint8_t da = p.destination_address();
     if(da != ctx.self_address &&
@@ -41,9 +42,8 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
     {
         case ANTICIPATING_RTS:
             if(idle().anticipated_address_ != p.source_address())   return false;
-#if __cplusplus >= 201703L
-            [[fallthrough]];
-#endif
+            // "Fallthrough" attribute is only allowed on empty statements. Really...
+            //ATTR_FALLTHROUGH
 
         case IDLE:
         {
@@ -56,14 +56,14 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
                 case modes::bam:
                 {
                     state_ = RESPONDER_RECEIVED_BAM;
-                    storage_.emplace<responder_state>(p);
+                    storage_.template emplace<responder_state>(p);
                     return true;
                 }
 
                 case modes::rts:
                 {
                     state_ = RESPONDER_RECEIVED_RTS;
-                    storage_.emplace<responder_state>(p);
+                    storage_.template emplace<responder_state>(p);
                     return true;
                 }
 #endif
@@ -142,8 +142,9 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_cm>& p,
 }
 
 #if FEATURE_EMBR_J1939_TP_RESPONDER
+template <class TimePoint>
 template <class Transport>
-bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
+bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
     const context& ctx)
 {
     bool bam = responder().bam() && role() == ROLE_RESPONDER;
@@ -195,8 +196,9 @@ bool transport_protocol::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
 }
 #endif
 
+template <class TimePoint>
 template <class Transport>
-bool transport_protocol::process_outgoing(Transport& t, const context& ctx)
+bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context& ctx)
 {
     using traits = transport_traits<Transport>;
 
@@ -440,9 +442,10 @@ inline bool transport_protocol::process_time(time_point)
 }
  */
 
-inline void transport_protocol::initiate_originator(
+template <class TimePoint>
+inline void transport_protocol<TimePoint>::initiate_originator(
     uint16_t sz,
-    const context& ctx,
+    const context&,
     uint8_t dest_address,
     uint32_t pgn)
 {
@@ -459,11 +462,12 @@ inline void transport_protocol::initiate_originator(
         state_ = ORIGINATOR_SENDING_RTS;
     }
 
-    storage_.emplace<originator_state>(sz, dest_address, pgn);
+    storage_.template emplace<originator_state>(sz, dest_address, pgn);
 }
 
 #if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
-inline void transport_protocol::initiate_originator(
+template <class TimePoint>
+inline void transport_protocol<TimePoint>::initiate_originator(
     uint8_t dest_address,
     uint32_t pgn,
     const void* payload,
@@ -476,16 +480,8 @@ inline void transport_protocol::initiate_originator(
 }
 #endif
 
-inline void transport_protocol::request_hold()
-{
-#if FEATURE_EMBR_J1939_STRICT_STATES
-    assert(state_ == RESPONDER_RECEIVED_DT);
-#endif
-
-    state_ = RESPONDER_SENDING_CTS_HOLD;
-}
-
-inline auto transport_protocol::next_event() const -> time_point
+template <class TimePoint>
+inline auto transport_protocol<TimePoint>::next_event() const -> time_point
 {
     switch(state_)
     {
@@ -512,19 +508,35 @@ inline auto transport_protocol::next_event() const -> time_point
     }
 }
 
-inline void transport_protocol::initiate_responder(uint8_t originator_address)
+template <class TimePoint>
+inline void transport_protocol<TimePoint>::initiate_responder(uint8_t originator_address)
 {
 #if FEATURE_EMBR_J1939_STRICT_STATES
     assert(state_ == IDLE);
 #endif
 
-    storage_.get<idle_state>()->anticipated_address_ = originator_address;
+    storage_.template get<idle_state>()->anticipated_address_ = originator_address;
     state_ = ANTICIPATING_RTS;
 }
 
+
+}}}}
+
+namespace embr { namespace j1939 { namespace sm { namespace tp { inline namespace v0 {
+
+inline void base::request_hold()
+{
+#if FEATURE_EMBR_J1939_STRICT_STATES
+    assert(state_ == RESPONDER_RECEIVED_DT);
+#endif
+
+    state_ = RESPONDER_SENDING_CTS_HOLD;
+}
+
+
 // DEBT: A little clumsy.  Might be better to track role explicitly and rework state machine
 // into a 2 way sending/receiving/sent, etc and ack, cts, rts, etc.
-inline auto transport_protocol::role() const -> roles
+inline auto base::role() const -> roles
 {
     return roles(state_ >> role_shift);
     /*
@@ -545,4 +557,4 @@ inline auto transport_protocol::role() const -> roles
     }   */
 }
 
-}}}}
+}}}}}
