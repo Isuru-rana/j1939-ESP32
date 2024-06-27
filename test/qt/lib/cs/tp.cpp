@@ -45,6 +45,11 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
 
             default: break;
         }
+
+        // TODO: IIRC we can and do have our own std lhs estd rhs + and - operators.
+        // They either aren't quite right, or not existing as I recall them.  They definitely weren't build out
+        // much
+        //next_event_ = std::min(next_event_, sess.tp_.next_event());
     }
 }
 
@@ -55,20 +60,32 @@ auto TransportProtocol::reserve() -> Session&
 }
 
 
-void TransportProtocol::broadcast(uint8_t sa, pgns pgn, const QByteArray& v)
+void TransportProtocol::send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray& v)
 {
     Session& sess = reserve();
 
     sess.buffer_ = v;
-    sess.tp_.initiate_originator(j1939::addresses::global, uint32_t(pgn), v.data(), v.size());
+    sess.tp_.initiate_originator(
+        da, uint32_t(pgn),
+        sess.buffer_.data(),
+        sess.buffer_.size());
+    sess.sa_ = sa;
 }
 
-void TransportProtocol::respond(uint8_t sa, uint8_t da, pgns pgn, const QByteArray& v)
-{
-    Session& sess = reserve();
 
-    sess.buffer_ = v;
-    sess.tp_.initiate_originator(da, uint32_t(pgn), v.data(), v.size());
+void TransportProtocol::processOutgoing(QCanBusDevice* device)
+{
+    transport_type t{device};
+
+    for(Session& sess : sessions_)
+    {
+        context_type ctx(clock::now(), sess.sa_);
+
+        //if(sess.tp_.next_event() >= ctx.current)
+        {
+            //sess.tp_.process_outgoing(t, ctx);
+        }
+    }
 }
 
 

@@ -38,19 +38,33 @@ class TransportProtocol : public Base
         uint8_t sa_;
     };
 
+    // DEBT: Use a priority queue here
+    time_point next_event_;
+
     std::vector<Session> sessions_;
 
     Session& reserve();
 
     Q_OBJECT
 
+    void send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&);
+
 public:
     TransportProtocol(QObject* parent = nullptr);
 
     void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
+    void processOutgoing(QCanBusDevice*);
 
-    void broadcast(uint8_t sa, pgns pgn,const QByteArray&);
-    void respond(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&);
+    void broadcast(uint8_t sa, pgns pgn,const QByteArray& v)
+    {
+        send(sa, addresses::global, pgn, v);
+    }
+
+    void respond(uint8_t sa, uint8_t da, pgns pgn, const QByteArray& v)
+    {
+        send(sa, da, pgn, v);
+    }
+
 
     // TODO: This is only for the rare case of request whose payload is > 8 bytes
     void request(uint8_t sa, uint8_t da, pgns) {}
