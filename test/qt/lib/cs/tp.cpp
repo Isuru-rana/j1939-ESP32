@@ -13,13 +13,38 @@ TransportProtocol::TransportProtocol(QObject *parent) :
 
 void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
 {
-    //using context = sm::v0::transport_protocol::context;
-
-    //context ctx();
+    // DEBT: process_incoming needs an lvalue
+    transport_type t{device};
 
     for(Session& sess : sessions_)
     {
-        //internal::v2::process_incoming(sess.tp_, transport_type{device}, f);
+        context_type ctx(clock::now(), sess.sa_);
+
+        internal::v2::process_incoming(sess.tp_, t, f, ctx);
+
+        switch(sess.tp_.state())
+        {
+            case states::RESPONDER_RECEIVING_DT:
+            {
+                const estd::span<const uint8_t> p(sess.tp_.payload());
+                sess.buffer_.append((const char*)p.data(), p.size());
+                break;
+            }
+
+            case states::RESPONDER_SENT_EOM_ACK:
+            {
+                // DEBT: Send proper can_id
+                emit packetReceived(0, sess.buffer_);
+                // DEBT: Remove session
+                break;
+            }
+
+            case states::ORIGINATOR_RECEIVED_EOM_ACK:
+                // DEBT: Remove session
+                break;
+
+            default: break;
+        }
     }
 }
 

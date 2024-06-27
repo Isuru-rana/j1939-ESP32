@@ -18,21 +18,23 @@ namespace embr::j1939::qt::cs { inline namespace v1 {
 class TransportProtocol : public Base
 {
     using clock = std::chrono::system_clock;
-    using sm_type = sm::v0::transport_protocol;
+    using time_point = clock::time_point;
+    using sm_type = sm::v0::transport_protocol<time_point>;
     // DEBT: Heavy debt, need context to fully support time_point
     using context_type = sm_type::context; //<clock::time_point>;
+    using states = sm_type::states;
 
     // Tracked according to:
     // - source address when responder
     // - dest address when originator
     struct Session
     {
-        sm::v0::transport_protocol tp_;
+        sm_type tp_;
         // Theoretically some kind of stream/pipe would be interesting here.
         // Practically, ~1.7k is the maximum size, so lots of in memory buffers are appropriate
         QByteArray buffer_;
 
-        // If originating, we track sa here (since we're a pool)
+        // If originating, we track sa here (since we're a pool & state machine doesn't track this)
         uint8_t sa_;
     };
 

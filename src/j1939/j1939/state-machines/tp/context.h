@@ -21,8 +21,9 @@ struct context
     time_point* const next_;
 
 #if UNIT_TESTING
-    // FIX: Avoid production use (time_point preferred) + depends on 'std'
-    constexpr context(std::chrono::milliseconds current, uint8_t sa = addresses::null, time_point* next = nullptr) :
+    // NOTE: Avoid production use (time_point preferred)
+    template <class Rep, class Period>
+    constexpr context(estd::chrono::duration<Rep, Period> current, uint8_t sa = addresses::null, time_point* next = nullptr) :
         current{current},
         self_address{sa},
         next_{next}

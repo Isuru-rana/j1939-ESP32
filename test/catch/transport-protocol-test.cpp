@@ -14,22 +14,26 @@
 using namespace embr::j1939;
 using namespace embr::j1939::sm::v0;
 
-using time_point = std::chrono::system_clock::time_point;
-using duration = time_point::duration;
-using ms_type = std::chrono::milliseconds;
+struct fake_clock { };
+
+using duration = estd::chrono::milliseconds;
+using time_point = estd::chrono::time_point<fake_clock, duration>;
+using ms_type = estd::chrono::milliseconds;
 
 // Mainly useful for testing, not so much production though bears some resemblance
 // to aggregated CA handler
+template <class TimePoint>
 struct helper
 {
     const uint8_t orig_sa = 1, recv_sa = 2;
+    using time_point = TimePoint;
     transport_protocol<time_point> tp_orig, tp_recv;
     using states = sm::tp::v0::base::states;
 
     // Theory being CA/state machine should not get confused by its own traffic,
     // plus we auto aggregate to both for convenience
 
-    using ctx = transport_protocol<time_point>::context;
+    using ctx = typename transport_protocol<time_point>::context;
 
     template <class Transport>
     unsigned incoming(Transport& t, const typename Transport::frame& f, unsigned current_ms = {})
@@ -152,7 +156,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 {
     embr::can::loopback_transport t;
     embr::can::loopback_transport::frame frame;
-    helper h;
+    helper<time_point> h;
     feeder feed(h.tp_orig, (uint8_t*)test::test_str2);
     constexpr unsigned sz = sizeof(test::test_str2) - 1;    // Zapping null terminator
     using states = sm::tp::v0::base::states;

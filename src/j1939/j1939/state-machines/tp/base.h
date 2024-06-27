@@ -38,10 +38,7 @@ public:
     // [1] 5.10.2.4
     struct timeouts
     {
-        // all in ms
-
-        // FIX: Change this to estd
-        using mst = std::chrono::milliseconds;
+        using mst = estd::chrono::milliseconds;
 
         static constexpr mst bam = mst{50};         // DEBT: Would be better if this was configurable
 
