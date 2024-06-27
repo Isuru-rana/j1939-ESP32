@@ -50,15 +50,6 @@ namespace impl {
 // Transport abstraction is very hard.  Do up impl pattern for some auxiliary
 // transport specifics rather than a full on transport abstraction
 
-// CLion is throwing a serious warning fit
-#if __cplusplus >= 201703L
-#define ATTR_NODISCARD      [[nodiscard]]
-#define ATTR_FALLTHROUGH    [[fallthrough]]
-#else
-#define ATTR_NODISCARD
-#define ATTR_FALLTHROUGH
-#endif
-
 struct shared
 {
     static constexpr const char* OK = "\r";

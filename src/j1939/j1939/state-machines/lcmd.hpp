@@ -35,30 +35,38 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
         // Lazy init
         next_event_ = c.current;
     }
+    else if(state_ == STATE_DELAYED_OFF)
+    {
+        state_ = STATE_IDLE;
+        out_p.high_beam_headlight(spn::control_commands::disable);
+        out_p.low_beam_headlight(spn::control_commands::disable);
+        return;
+    }
 
-    bool on_already = state_ == STATE_FLASH_ON;
+    bool flash_requested = false;
+    const bool on_already = state_ == STATE_FLASH_ON;
 
     using signal = enum_type<spns::turn_signal_switch>;
     using hazard = enum_type<spns::hazard_light_switch>;    // aka spn::measured
+    using cc = spn::control_commands;
 
-    const spn::control_commands cmd = on_already ?
-        spn::control_commands::disable :
-        spn::control_commands::enable;
+    const auto cmd = on_already ?
+        cc::disable :
+        cc::enable;
 
     // TODO: Switch these next_event_ to +=
 
     switch(last_oel_.turn_signal_switch())
     {
         case signal::right_turn_to_be_flashing:
-            next_event_ += flash_delay();
+            flash_requested = true;
             //c.next(flash_delay);
             out_p.right_turn_signal(cmd);
             out_p.left_turn_signal(spn::control_commands::disable); // DEBT: Cache this to know to leave this as noop
             break;
 
         case signal::left_turn_to_be_flashing:
-            next_event_ += flash_delay();
-            //c.next(flash_delay);
+            flash_requested = true;
             out_p.left_turn_signal(cmd);
             out_p.right_turn_signal(spn::control_commands::disable);
             break;
@@ -66,6 +74,13 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
         case signal::no_turn_being_signaled:
             out_p.right_turn_signal(spn::control_commands::disable);
             out_p.left_turn_signal(spn::control_commands::disable);
+            state_ = STATE_IDLE;
+            break;
+
+        // NOTE: Hazard lights will override this solid-on behavior
+        case signal::error:
+            out_p.right_turn_signal(spn::control_commands::enable);
+            out_p.left_turn_signal(spn::control_commands::enable);
             state_ = STATE_IDLE;
             break;
 
@@ -79,7 +94,7 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
     switch(last_oel_.hazard_light_switch())
     {
         case hazard::enabled:
-            next_event_ += flash_delay();
+            flash_requested = true;
             out_p.right_turn_signal(cmd);
             out_p.left_turn_signal(cmd);
             break;
@@ -110,24 +125,28 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
             break;
 
         case type::park_on:
-            // Unknown what the preferred action is here
-            break;
-
-        case type::headlight_on:
-            out_p.low_beam_headlight(!hibeam ?
-                spn::control_commands::enable :
-                spn::control_commands::disable);
-            out_p.high_beam_headlight(hibeam ?
-                spn::control_commands::enable :
-                spn::control_commands::disable);
-            // DEBT: Do FALLTHROUGH here
+            // DEBT: fog lights are not really parking lights, right
+            out_p.front_fog_lights(cc::enable);
+            out_p.rear_fog_lights(cc::enable);
             break;
 
         case type::headlight_and_park_on:
+            out_p.front_fog_lights(cc::enable);
+            out_p.rear_fog_lights(cc::enable);
+            out_p.low_beam_headlight(!hibeam ? cc::enable : cc::disable);
+            out_p.high_beam_headlight(hibeam ? cc::enable : cc::disable);
+            break;
+
+        case type::headlight_on:
+            out_p.front_fog_lights(cc::disable);
+            out_p.rear_fog_lights(cc::disable);
+            out_p.low_beam_headlight(!hibeam ? cc::enable : cc::disable);
+            out_p.high_beam_headlight(hibeam ? cc::enable : cc::disable);
             break;
 
         // Time for some state machine magic
         case type::delayed_off:
+            state_ = STATE_DELAYED_OFF;
             next_event_ += off_delay();
             break;
 
@@ -135,8 +154,11 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
             break;
     }
 
-    state_ = on_already ? STATE_FLASH_OFF : STATE_FLASH_ON;
-
+    if(flash_requested)
+    {
+        state_ = on_already ? STATE_FLASH_OFF : STATE_FLASH_ON;
+        next_event_ += flash_delay();
+    }
 }
 
 

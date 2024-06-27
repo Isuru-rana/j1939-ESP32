@@ -37,7 +37,7 @@ TEST_CASE("controller subsystems")
 
         SECTION("oel input")
         {
-            pdu<pgns::oel> oel;
+            pdu<pgns::oel> oel{null_t{}};
 
             SECTION("blinkers")
             {

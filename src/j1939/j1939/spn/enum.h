@@ -177,6 +177,7 @@ enum class spns
     tractor_fog_lights = 2388,                      // [7]
     rear_fog_lights_cmd = 2389,
     backup_lights_and_alarm_horn_cmd = 2391,        // [5]
+    backup_lights_and_alarm_horn = 2392,
     lighting_data_message_request = 2393,           ///< "requesting the lighting data message from all lighting controllers, providing the state of all lights." [5]
                                                     ///< ISO 11783-7
     implement_oem_option1_light_command = 2395,     // [13]

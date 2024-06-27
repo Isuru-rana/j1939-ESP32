@@ -52,7 +52,9 @@ struct type_traits<spns::turn_signal_switch>
         no_turn_being_signaled = 0,
         left_turn_to_be_flashing = 1,
         right_turn_to_be_flashing = 2,
-        error = 0b1110, // NOTE: Hard to tell what [2]'s comment really means
+        // NOTE: Hard to tell what [2]'s comment really means, bvt I believe it
+        // is left & right signal to be solid on
+        error = 0b1110,
         no_change = 0b1111
     };
 
@@ -302,6 +304,7 @@ struct data_field<pgns::oel, Container> :
     EMBR_J1939_PROPERTY(turn_signal_switch);
     EMBR_J1939_PROPERTY(high_low_beam_switch);
     EMBR_J1939_PROPERTY(main_light_switch);
+    EMBR_J1939_PROPERTY(work_light_switch);
     EMBR_J1939_PROPERTY(hazard_light_switch);
 };
 

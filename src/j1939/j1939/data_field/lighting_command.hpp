@@ -13,6 +13,15 @@ namespace embr { namespace j1939 {
 
 namespace spn {
 
+
+template <>
+struct type_traits<spns::daytime_running_lights_cmd> : internal::status_type_traits
+{
+    // EXPERIMENTAL
+    static constexpr const char* name() { return "running_lights"; }
+    static constexpr const char* short_name() { return "running"; }
+};
+
 template <>
 struct type_traits<spns::left_stop_lights_cmd> : internal::status_type_traits
 {
@@ -70,7 +79,18 @@ struct type_traits<spns::high_beam_headlight_cmd> : internal::status_type_traits
 };
 
 template <>
-struct type_traits<spns::front_fog_lights_cmd> : internal::status_type_traits {};
+struct type_traits<spns::front_fog_lights_cmd> : internal::status_type_traits
+{
+    static constexpr const char* name() { return "front_fog_lights"; }
+    static constexpr const char* short_name() { return "ffog"; }
+};
+
+template <>
+struct type_traits<spns::rear_fog_lights_cmd> : internal::status_type_traits
+{
+    static constexpr const char* name() { return "rear_fog_lights"; }
+    static constexpr const char* short_name() { return "rfog"; }
+};
 
 template <>
 struct type_traits<spns::lighting_data_message_request> : internal::type_traits_base<uint8_t>
@@ -155,18 +175,16 @@ constexpr descriptor get_descriptor<spns::high_beam_headlight_cmd>()
 };
 
 
-// FIX: Not working right yet, just here to satisfy compilation
 template <>
 constexpr descriptor get_descriptor<spns::backup_lights_and_alarm_horn_cmd>()
 {
-    return descriptor{1, 1, 0};
+    return {3, 1, 2};
 };
 
-// FIX: Not working right yet, just here to satisfy compilation
 template <>
 constexpr descriptor get_descriptor<spns::rear_fog_lights_cmd>()
 {
-    return descriptor{1, 1, 0};
+    return {5, 1, 2};
 };
 
 
@@ -182,6 +200,7 @@ struct data_field<pgns::lighting_command, Container> :
     ESTD_CPP_FORWARDING_CTOR(data_field)
 
     EMBR_J1939_PROPERTY_ALIAS(front_fog_lights_cmd, front_fog_lights);
+    EMBR_J1939_PROPERTY_ALIAS(rear_fog_lights_cmd, rear_fog_lights);
     EMBR_J1939_PROPERTY_ALIAS(low_beam_headlight_cmd, low_beam_headlight);
     EMBR_J1939_PROPERTY_ALIAS(high_beam_headlight_cmd, high_beam_headlight);
     EMBR_J1939_PROPERTY_ALIAS(left_turn_signal_lights_cmd, left_turn_signal);
@@ -190,6 +209,7 @@ struct data_field<pgns::lighting_command, Container> :
     EMBR_J1939_PROPERTY_ALIAS(center_stop_lights_cmd, center_stop);
     EMBR_J1939_PROPERTY_ALIAS(right_stop_lights_cmd, right_stop);
     EMBR_J1939_PROPERTY_ALIAS(left_stop_lights_cmd, left_stop);
+    EMBR_J1939_PROPERTY_ALIAS(backup_lights_and_alarm_horn_cmd, backup_lights_and_alarm_horn)
 };
 
 namespace pgn {

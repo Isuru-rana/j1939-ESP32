@@ -32,6 +32,7 @@ public:
         STATE_IDLE,
         STATE_FLASH_OFF,            // off cycle of flashing phase, finishing at next_event_
         STATE_FLASH_ON,             // on cycle of flashing phase, finishing at next_event_
+        STATE_DELAYED_OFF
     };
 
 protected:
