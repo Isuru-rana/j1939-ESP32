@@ -36,7 +36,7 @@ public:
     };
 
 protected:
-    void main_light_switch();
+    void main_light_switch(pdu<pgns::lcmd>&, const context&);
     void prep(pdu<pgns::lcmd>&, const context&);
 
     j1939::layer1::data_field<pgns::oel> last_oel_;

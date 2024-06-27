@@ -21,15 +21,64 @@ constexpr lighting_command<TimePoint>::lighting_command() :
 
 
 template <class TimePoint>
-void lighting_command<TimePoint>::main_light_switch()
+void lighting_command<TimePoint>::main_light_switch(pdu<pgns::lcmd>& out_p, const context&)
 {
+    using cc = spn::control_commands;
+    using type = enum_type<spns::main_light_switch>;
+    using htype = enum_type<spns::high_low_beam_switch>;
+    // high beam only activates if expressly specified on.  Otherwise default to low beam
+    const bool hibeam = last_oel_.high_low_beam_switch() == htype::high_beam_selected;
 
+    // NOTE: Incomplete
+    switch(last_oel_.main_light_switch())
+    {
+        case type::off:
+            out_p.high_beam_headlight(spn::control_commands::disable);
+            out_p.low_beam_headlight(spn::control_commands::disable);
+            break;
+
+        case type::park_on:
+            // DEBT: fog lights are not really parking lights, right
+            out_p.front_fog_lights(cc::enable);
+            out_p.rear_fog_lights(cc::enable);
+            break;
+
+        case type::headlight_and_park_on:
+            out_p.front_fog_lights(cc::enable);
+            out_p.rear_fog_lights(cc::enable);
+            out_p.low_beam_headlight(!hibeam ? cc::enable : cc::disable);
+            out_p.high_beam_headlight(hibeam ? cc::enable : cc::disable);
+            break;
+
+        case type::headlight_on:
+            out_p.front_fog_lights(cc::disable);
+            out_p.rear_fog_lights(cc::disable);
+            out_p.low_beam_headlight(!hibeam ? cc::enable : cc::disable);
+            out_p.high_beam_headlight(hibeam ? cc::enable : cc::disable);
+            break;
+
+        case type::delayed_off:
+            // DEBT: Supersedes blinker flash state.  Ideally should coexist
+            // DEBT: Will loop right now between IDLE and DELAYED_OFF states
+            // since we anticipate last_oel_ will continue to indicate 'delayed_off'.
+            state_ = STATE_DELAYED_OFF;
+            // DEBT: Get off delay from  last_oel_.operators_desired_delay_lamp_off_time()
+            next_event_ += off_delay();
+            break;
+
+        default:
+            break;
+    }
 }
 
 
+// DEBT: This main 'prep' may be poorly named
+// and is somewhat specific to process_outgoing/timer specificity
 template <class TimePoint>
 void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
 {
+    using cc = spn::control_commands;
+
     if(state_ == STATE_IDLE)
     {
         // Lazy init
@@ -38,8 +87,8 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
     else if(state_ == STATE_DELAYED_OFF)
     {
         state_ = STATE_IDLE;
-        out_p.high_beam_headlight(spn::control_commands::disable);
-        out_p.low_beam_headlight(spn::control_commands::disable);
+        out_p.high_beam_headlight(cc::disable);
+        out_p.low_beam_headlight(cc::disable);
         return;
     }
 
@@ -48,13 +97,8 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
 
     using signal = enum_type<spns::turn_signal_switch>;
     using hazard = enum_type<spns::hazard_light_switch>;    // aka spn::measured
-    using cc = spn::control_commands;
 
-    const auto cmd = on_already ?
-        cc::disable :
-        cc::enable;
-
-    // TODO: Switch these next_event_ to +=
+    const auto cmd = on_already ? cc::disable : cc::enable;
 
     switch(last_oel_.turn_signal_switch())
     {
@@ -108,52 +152,6 @@ void lighting_command<TimePoint>::prep(pdu<pgns::lcmd>& out_p, const context& c)
         default: break;
     }
 
-    // DEBT: This main light switch code may belong elsewhere, 'prep' may be poorly named
-    // and is somewhat specific to process_outgoing/timer specificity
-
-    using type = enum_type<spns::main_light_switch>;
-    using htype = enum_type<spns::high_low_beam_switch>;
-    // high beam only activates if expressly specified on.  Otherwise default to low beam
-    const bool hibeam = last_oel_.high_low_beam_switch() == htype::high_beam_selected;
-
-    // NOTE: Incomplete
-    switch(last_oel_.main_light_switch())
-    {
-        case type::off:
-            out_p.high_beam_headlight(spn::control_commands::disable);
-            out_p.low_beam_headlight(spn::control_commands::disable);
-            break;
-
-        case type::park_on:
-            // DEBT: fog lights are not really parking lights, right
-            out_p.front_fog_lights(cc::enable);
-            out_p.rear_fog_lights(cc::enable);
-            break;
-
-        case type::headlight_and_park_on:
-            out_p.front_fog_lights(cc::enable);
-            out_p.rear_fog_lights(cc::enable);
-            out_p.low_beam_headlight(!hibeam ? cc::enable : cc::disable);
-            out_p.high_beam_headlight(hibeam ? cc::enable : cc::disable);
-            break;
-
-        case type::headlight_on:
-            out_p.front_fog_lights(cc::disable);
-            out_p.rear_fog_lights(cc::disable);
-            out_p.low_beam_headlight(!hibeam ? cc::enable : cc::disable);
-            out_p.high_beam_headlight(hibeam ? cc::enable : cc::disable);
-            break;
-
-        // Time for some state machine magic
-        case type::delayed_off:
-            state_ = STATE_DELAYED_OFF;
-            next_event_ += off_delay();
-            break;
-
-        default:
-            break;
-    }
-
     if(flash_requested)
     {
         state_ = on_already ? STATE_FLASH_OFF : STATE_FLASH_ON;
@@ -175,6 +173,7 @@ bool lighting_command<TimePoint>::process_incoming(Transport& t, const pdu<pgns:
     pdu<pgns::lcmd> out_p(c.self_address, null_t{});
 
     prep(out_p, c);
+    main_light_switch(out_p, c);
 
     traits::send(t, out_p);
 
