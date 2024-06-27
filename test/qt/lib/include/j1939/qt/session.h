@@ -5,6 +5,7 @@
 
 #include "cs/generic.h"
 #include "cs/network.h"
+#include "cs/tp.h"
 
 namespace embr::j1939::qt { inline namespace v1 {
 
@@ -19,6 +20,7 @@ class Session : public QObject
 
     cs::v1::Generic generic_;
     cs::v1::Network network_;
+    cs::v1::TransportProtocol tp_;
 
     QList<cs_type> css_;
     QList<const QObject*> frameLog_;
@@ -27,6 +29,7 @@ class Session : public QObject
 
     Q_PROPERTY(cs::v1::Generic* generic READ generic CONSTANT)
     Q_PROPERTY(cs::v1::Network* network READ network CONSTANT)
+    Q_PROPERTY(cs::v1::TransportProtocol* tp READ tp CONSTANT)
     Q_PROPERTY(QList<cs_type> clients READ clients CONSTANT)
     Q_PROPERTY(QList<const QObject*> frameLog READ frameLog NOTIFY frameLogChanged)
 
@@ -37,6 +40,7 @@ public:
 
     cs::v1::Generic* generic() { return &generic_; }
     cs::v1::Network* network() { return &network_; }
+    cs::v1::TransportProtocol* tp() { return &tp_; }
     QList<cs_type>& clients() { return css_; }
     QList<const QObject*> frameLog() const { return frameLog_; }
 

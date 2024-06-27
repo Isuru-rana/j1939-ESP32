@@ -108,6 +108,7 @@ public:
 
     using time_point = unsigned;
     using duration = unsigned;
+    // DEBT: Heavy debt, need context to fully support time_point
     using context = sm::v0::context<time_point>;
 
 private:
@@ -279,6 +280,9 @@ public:
     {
         initiate_originator(sz, {0, 0}, responder_address, pgn);
     }
+
+    // TODO: Make "advanced" flavor so that priority is possible too
+    void initiate_originator(can_id);
 
 #if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
     // auto-payload mode

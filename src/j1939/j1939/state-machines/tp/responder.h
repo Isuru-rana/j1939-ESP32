@@ -70,7 +70,7 @@ struct responder_state : enum_base
         return originator_.destination_address() == uint8_t(addresses::global);
     }
 
-    // Requested pgn
+    // Requested/announced pgn
     j1939::pgns pgn() const { return (j1939::pgns)originator_.payload().pgn(); }
 
     uint8_t max_packets() const { return originator_.max_packets(); }
