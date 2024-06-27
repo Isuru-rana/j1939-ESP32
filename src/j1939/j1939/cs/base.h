@@ -4,7 +4,8 @@
 #include "../pgn/enum.h"
 #include "../spn/enum.h"
 
-#include "../internal/dispatcher/dispatch.h"    // EXPERIMENTAL, just for policy
+#include "../internal/dispatcher/policy.h"
+#include "../data_field/fwd.h"
 
 
 namespace embr { namespace j1939 { namespace cs { inline namespace v1 {
