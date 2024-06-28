@@ -82,7 +82,7 @@ struct originator_state : enum_base
         return last_position() >= total_size_;
     }
 
-    constexpr bool bam() const { return responder_address_ == 0xFF; }
+    constexpr bool bam() const { return responder_address_ == addresses::global; }
 
     template <class TimePoint>
     pdu<pgns::tp_cm> build_abort(const context<TimePoint>& ctx, abort_reasons r) const

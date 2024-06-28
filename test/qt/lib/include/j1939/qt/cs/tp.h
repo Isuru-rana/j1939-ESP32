@@ -36,6 +36,10 @@ class TransportProtocol : public Base
         uint8_t sa_;
 
         // NOTE: Consider storing QCanBusDevice* here for multiple transport outs
+
+        void frameReceived(QCanBusDevice *, const QCanBusFrame &);
+        void processOutgoing(QCanBusDevice *);
+        void send(addr_type sa, addr_type da, pgns pgn, const QByteArray& v);
     };
 
     // DEBT: Use a priority queue here

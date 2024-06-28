@@ -4,7 +4,7 @@
 
 namespace embr { namespace j1939 {
 
-const char* to_string(sm::tp::v0::base::states v)
+const char* to_string(sm::tp::v0::base::states v, const char* unknown)
 {
     using states = sm::tp::v0::base::states;
 
@@ -12,20 +12,29 @@ const char* to_string(sm::tp::v0::base::states v)
     {
         case states::IDLE:                      return "Idle";
         case states::ORIGINATOR_RECEIVED_CTS:   return "Received CTS";
+        case states::ORIGINATOR_RECEIVED_EOM_ACK:   return "Received EOM ACK";
+        case states::ORIGINATOR_RECEIVED_ABORT: return "Received Abort";
         case states::ORIGINATOR_SENDING_BAM:    return "Sending BAM";
-        case states::ORIGINATOR_SENT_BAM:       return "Sent BAM";
         case states::ORIGINATOR_SENDING_DT:     return "Sending DT";
+        case states::ORIGINATOR_SENT_ALL_DT:    return "Sent all DT";
+        case states::ORIGINATOR_SENT_BAM:       return "Sent BAM";
         case states::ORIGINATOR_SENT_DT:        return "Sent DT";
         case states::ORIGINATOR_SENDING_RTS:    return "Sending RTS";
         case states::ORIGINATOR_SENT_RTS:       return "Sent RTS";
+        case states::ORIGINATOR_WAITING_CTS:    return "Waiting CTS";
 
+        case states::RESPONDER_RECEIVED_BAM:    return "Received BAM";
+        case states::RESPONDER_RECEIVED_DT:     return "Received DT";
         case states::RESPONDER_RECEIVED_RTS:    return "Received RTS";
         case states::RESPONDER_RECEIVING_DT:    return "Receiving DT";
-        case states::RESPONDER_RECEIVED_DT:     return "Received DT";
+        case states::RESPONDER_SENDING_ABORT:   return "Sending Abort (responder)";
         case states::RESPONDER_SENDING_CTS:     return "Sending CTS";
+        case states::RESPONDER_SENDING_EOM_ACK: return "Sending EOM ACK";
+        case states::RESPONDER_SENT_ABORT:      return "Sent Abort";
         case states::RESPONDER_SENT_CTS:        return "Sent CTS";
+        case states::RESPONDER_SENT_EOM_ACK:    return "Sent EOM ACK";
 
-        default:    return "N/A";
+        default:    return unknown;
     }
 }
 

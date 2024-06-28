@@ -189,6 +189,6 @@ public:
 
 }}
 
-const char* to_string(sm::tp::v0::base::states v);
+const char* to_string(sm::tp::v0::base::states v, const char* unknown = "N/A");
 
 }}

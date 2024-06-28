@@ -453,7 +453,7 @@ inline void transport_protocol<TimePoint>::initiate_originator(
     assert(state_ == IDLE);
 #endif
 
-    if(dest_address == (uint8_t)addresses::global)
+    if(dest_address == addresses::global)
     {
         state_ = ORIGINATOR_SENDING_BAM;
     }
