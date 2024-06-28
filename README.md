@@ -8,6 +8,7 @@ Features include:
     * Network address negotiation
     * Transport Protocol (~1.7k packets)
 * Compile-time optimized units such as percentages, volts, kilometers, etc. by way of `embr` lib
+* Lean and highly portable.  No dynamic allocation.
 
 What makes this particular library interesting compared to some others?  In a word: specialization.
 
@@ -27,15 +28,14 @@ basis, or ignore completely - "only pay for what you use"
 
 ## Quick Start
 
-* `git submodule update --init --recursive`
-* Naturally you'll need a CAN transciever.  See [TBD add local desc link which itself has local
-desc and also links out to other guides]
+* Initialize `estd` and `embr` via `git submodule update --init --recursive`
+* Naturally you'll need a (Can Transiever)[doc/Transciever.md]
 
 ### Quick Start: ESP-IDF
 
-ESP-IDF is the primary target of this library.
-
 See `examples/esp32/lcmd_sink` (TBD, example not yet existing - make a simple GPIO blinker responder)
+
+Use `idf.py menuconfig` to specify CAN speed and TX/RX pins via `embr` config menu item
 
 ### Quick Start: CMake
 
@@ -75,6 +75,8 @@ This implements the SLCAN (LAWICEL) protocol for ESP-IDF.
 Linux `slcand` happily speaks to this firmware.  From there any SocketCAN tool is
 theoretically usable.  Works with all CAN, not just J1939
 
+* Full read/write capability
+* Auto-poll (default) as well as legacy polled mode
 * Tested OK with Wireshark and Qt `QCanDeviceBus` (TBD fix name)
 * Tested OK with ESP32C6 and ESP32S3
 
@@ -92,3 +94,4 @@ TBD
 
 [Rejsacan]
 [Jetbrains]
+[Seeed Xiao]
