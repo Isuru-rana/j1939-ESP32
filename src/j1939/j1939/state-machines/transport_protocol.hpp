@@ -169,6 +169,7 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
             state_ = WARN;
             break;
 
+        case RESPONDER_RECEIVED_BAM:
         case RESPONDER_RECEIVED_DT:
         case RESPONDER_SENT_CTS:
         {
@@ -223,6 +224,18 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             last_event_ = ctx.current;
             return true;
         }
+
+#if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
+        case ORIGINATOR_SENT_BAM:
+            if(originator().auto_payload_)
+            {
+                state_ = ORIGINATOR_SENDING_DT;
+                // DEBT: Fallthrough would be more elegant
+                process_outgoing(t, ctx);
+            }
+            // else, underflow error
+            break;
+#endif
 
         case ORIGINATOR_SENDING_DT:
         {

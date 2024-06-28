@@ -267,22 +267,54 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
     }
     SECTION("broadcast (bam)")
     {
-        h.tp_orig.initiate_originator(0xFF,
-            (uint32_t)pgns::software_identification,
-            sz);
+        SECTION("normal")
+        {
+            h.tp_orig.initiate_originator(
+                0xFF,
+                (uint32_t)pgns::software_identification,
+                sz);
 
-        h.cycle(t, 0);      // Send BAM, receive BAM
+            h.cycle(t, 0);      // Send BAM, receive BAM
 
-        h.tp_orig.payload((uint8_t*)test::test_str2);
-        h.tp_orig.process_outgoing(t, {ms_type{25}, h.orig_sa}); // Too early
+            h.tp_orig.payload((uint8_t*)test::test_str2);
+            h.tp_orig.process_outgoing(t, {ms_type{25}, h.orig_sa}); // Too early
 
-        REQUIRE(t.peek() == nullptr);
+            REQUIRE(t.peek() == nullptr);
 
-        h.tp_orig.process_outgoing(t, {ms_type{50}, h.orig_sa});
+            h.tp_orig.process_outgoing(t, {ms_type{50}, h.orig_sa});
 
-        REQUIRE(t.receive(&frame));
+            REQUIRE(t.receive(&frame));
 
-        process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
+            process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
+        }
+        SECTION("auto-payload")
+        {
+            h.tp_orig.initiate_originator(
+                0xFF,
+                (uint32_t)pgns::software_identification,
+                test::test_str2,
+                sz);
+
+            h.cycle(t, 0);      // Send BAM, receive BAM
+
+            h.tp_orig.process_outgoing(t, {ms_type{25}, h.orig_sa}); // Too early
+
+            REQUIRE(t.peek() == nullptr);
+
+            h.tp_orig.process_outgoing(t, {ms_type{50}, h.orig_sa});
+
+            REQUIRE(h.tp_recv.state() == states::RESPONDER_RECEIVED_BAM);
+            REQUIRE(h.tp_orig.state() == states::ORIGINATOR_SENT_DT);
+
+            REQUIRE(t.receive(&frame));
+
+            embr::j1939::internal::v2::process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
+
+            // Remember, no auto-payload on receive, just on send
+            estd::span<const uint8_t> payload(h.tp_recv.payload());
+
+            REQUIRE(payload[0] == '0');
+        }
     }
     SECTION("experimental feeder test")
     {
