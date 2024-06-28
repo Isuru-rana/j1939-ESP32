@@ -1,7 +1,5 @@
 # J1939 C++ Library
 
-# 1. Introduction, Scope and Goals
-
 Welcome to `embr::j1939` library!  What makes this particular library interesting
 compared to some others?  In a word: specialization
 
@@ -15,21 +13,29 @@ p.requested_percent_fan_speed(speed);
 transport_traits::send(t, p);
 ```
 
-DBC files are excellent, but hardly translate well to highly constrained devices.
+DBC files are useful, but hardly translate well to highly constrained devices.  `embr::j1939` features:
 
-## 1.1. Quick Start: CMake
+* Network address negotiation
+* Transport Protocol (~1.7k packets)
+* Compile-time optimized units such as percentages, volts, kilometers, etc. by way of `embr` lib
+
+## Quick Start: CMake
 
 This is the preferred and easiest bringup approach.
 
-## 1.2. Quick Start: ESP-IDF
+`git submodule update --init --recursive`
 
-## 1.3. Quick Start: PlatformIO
+## Quick Start: ESP-IDF
+
+ESP-IDF is the primary target of this library.
+
+## Quick Start: PlatformIO
 
 TBD create instructions for making a new project from scratch
 
-# 2. Infrastructure
+# Infrastructure
 
-## 2.1. Primary Targets
+## Primary Targets
 
 Supported:
 
@@ -39,7 +45,7 @@ Supported:
 | Arduino  | M4 SAMC (TBD)  | Adafruit Feather CAN M4
 | ESP-IDF  | ESP32          | Many
 
-## 2.2. Secondary Targets
+## Secondary Targets
 
 Although this library is tuned for embedded use, it compiles under most GCC and Clang environments.  Secondary targets include:
 
