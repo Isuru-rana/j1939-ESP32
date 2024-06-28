@@ -1,7 +1,15 @@
 # J1939 C++ Library
 
-Welcome to `embr::j1939` library!  What makes this particular library interesting
-compared to some others?  In a word: specialization
+Welcome to `embr::j1939` library!  
+
+Features include:
+
+* J939-21 Network support:
+    * Network address negotiation
+    * Transport Protocol (~1.7k packets)
+* Compile-time optimized units such as percentages, volts, kilometers, etc. by way of `embr` lib
+
+What makes this particular library interesting compared to some others?  In a word: specialization.
 
 We've gone all-in with C++ specialization to bring you a robust, intuitive yet lean implementation.  For example, setting up and sending a `cab message 1` PDU is as easy as:
 
@@ -13,15 +21,11 @@ p.requested_percent_fan_speed(speed);
 transport_traits::send(t, p);
 ```
 
-DBC files are useful, but hardly translate well to highly constrained devices.  `embr::j1939` features:
+DBC files are useful, but hardly translate well to highly constrained devices.  With `embr::j1939`,
+compile-time traits are available for you to fold expression over, interrogate on a case by case
+basis, or ignore completely - "only pay for what you use"
 
-* Network address negotiation
-* Transport Protocol (~1.7k packets)
-* Compile-time optimized units such as percentages, volts, kilometers, etc. by way of `embr` lib
-
-## Quick Start: CMake
-
-This is the preferred and easiest bringup approach.
+## Quick Start Prerequisites
 
 `git submodule update --init --recursive`
 
@@ -29,7 +33,16 @@ This is the preferred and easiest bringup approach.
 
 ESP-IDF is the primary target of this library.
 
+See `examples/esp32/lcmd_sink` (TBD, example not yet existing - make a simple GPIO blinker responder)
+
+## Quick Start: CMake
+
+This is the easiest bringup approach.
+
 ## Quick Start: PlatformIO
+
+I have yet to crack the nut to make platformio work smoothly with local libraries.  Therefore,
+usage in this context is complicated.  See `test/arduino/lcmd_sink`
 
 TBD create instructions for making a new project from scratch
 
@@ -52,4 +65,22 @@ Although this library is tuned for embedded use, it compiles under most GCC and 
 * Linux (see catch unit testing area)
 * Qt
 
-# 3. 
+# Extras
+
+## SLCAN firmware
+
+This implements the SLCAN (TBD retrieve other acronym too) protocol for ESP-IDF.
+Linux `slcand` happily speaks to this firmware.  From there any SocketCAN tool is
+theoretically usable.
+
+Tested OK with Wireshark and Qt
+Tested OK with ESP32C6 and ESP32S3
+
+## Interesting Hardware
+
+TBD
+
+## External Links & Special Thanks
+
+[Rejsacan]
+[Jetbrains]

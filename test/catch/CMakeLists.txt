@@ -55,7 +55,7 @@ else()
         )
 endif()
 
-add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES})
+add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES} ${ROOT_DIR}/README.md)
 
 target_compile_definitions(j1939 PUBLIC FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT=0)
 target_compile_definitions(${PROJECT_NAME} PUBLIC FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT=0)
