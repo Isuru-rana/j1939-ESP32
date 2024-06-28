@@ -25,30 +25,32 @@ DBC files are useful, but hardly translate well to highly constrained devices.  
 compile-time traits are available for you to fold expression over, interrogate on a case by case
 basis, or ignore completely - "only pay for what you use"
 
-## Quick Start Prerequisites
+## Quick Start
 
-`git submodule update --init --recursive`
+* `git submodule update --init --recursive`
+* Naturally you'll need a CAN transciever.  See [TBD add local desc link which itself has local
+desc and also links out to other guides]
 
-## Quick Start: ESP-IDF
+### Quick Start: ESP-IDF
 
 ESP-IDF is the primary target of this library.
 
 See `examples/esp32/lcmd_sink` (TBD, example not yet existing - make a simple GPIO blinker responder)
 
-## Quick Start: CMake
+### Quick Start: CMake
 
 This is the easiest bringup approach.
 
-## Quick Start: PlatformIO
+### Quick Start: PlatformIO
 
 I have yet to crack the nut to make platformio work smoothly with local libraries.  Therefore,
 usage in this context is complicated.  See `test/arduino/lcmd_sink`
 
 TBD create instructions for making a new project from scratch
 
-# Infrastructure
+## Infrastructure
 
-## Primary Targets
+### Primary Targets
 
 Supported:
 
@@ -58,29 +60,35 @@ Supported:
 | Arduino  | M4 SAMC (TBD)  | Adafruit Feather CAN M4
 | ESP-IDF  | ESP32          | Many
 
-## Secondary Targets
+### Secondary Targets
 
 Although this library is tuned for embedded use, it compiles under most GCC and Clang environments.  Secondary targets include:
 
 * Linux (see catch unit testing area)
 * Qt
 
-# Extras
+## Extras
 
-## SLCAN firmware
+### SLCAN firmware (USB-CAN bridge)
 
-This implements the SLCAN (TBD retrieve other acronym too) protocol for ESP-IDF.
+This implements the SLCAN (LAWICEL) protocol for ESP-IDF.
 Linux `slcand` happily speaks to this firmware.  From there any SocketCAN tool is
-theoretically usable.
+theoretically usable.  Works with all CAN, not just J1939
 
-Tested OK with Wireshark and Qt
-Tested OK with ESP32C6 and ESP32S3
+* Tested OK with Wireshark and Qt `QCanDeviceBus` (TBD fix name)
+* Tested OK with ESP32C6 and ESP32S3
 
-## Interesting Hardware
+Find this under `test/esp32/slcan`
+
+### Interesting Hardware
+
+* Rejsacan
+* ENGH-45 (TBD check name)
+* Adafruit Feather M4 CAN
 
 TBD
 
-## External Links & Special Thanks
+### External Links & Special Thanks
 
 [Rejsacan]
 [Jetbrains]
