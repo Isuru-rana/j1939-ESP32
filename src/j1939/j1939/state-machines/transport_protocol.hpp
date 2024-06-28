@@ -493,7 +493,7 @@ inline auto transport_protocol<TimePoint>::next_event() const -> time_point
 
         // If not BAM, no waiting
         case ORIGINATOR_SENT_DT:
-            return last_event_ + (originator().bam() ? timeouts::bam : 0);
+            return last_event_ + (originator().bam() ? timeouts::bam : timeouts::mst{0});
 
         case RESPONDER_SENT_CTS_HOLD:
             return last_event_ + timeouts::Th;
@@ -504,7 +504,7 @@ inline auto transport_protocol<TimePoint>::next_event() const -> time_point
         case RESPONDER_RECEIVED_DT:
             return last_event_ + timeouts::T1;
 
-        default: return 0;
+        default: return time_point{};
     }
 }
 

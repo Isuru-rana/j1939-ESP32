@@ -17,8 +17,6 @@ namespace embr::j1939::qt::cs { inline namespace v1 {
 // pool of transport protocols
 class TransportProtocol : public Base
 {
-    using clock = std::chrono::system_clock;
-    using time_point = clock::time_point;
     using sm_type = sm::v0::transport_protocol<time_point>;
     // DEBT: Heavy debt, need context to fully support time_point
     using context_type = sm_type::context; //<clock::time_point>;

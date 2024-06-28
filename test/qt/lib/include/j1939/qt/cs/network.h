@@ -44,9 +44,7 @@ signals:
 
 class Network : public Base
 {
-    using clock = std::chrono::system_clock;
-    using milliseconds = std::chrono::milliseconds;
-    using addr_type = uint8_t;
+    using base_type = Base;
     using state_type = sm::v1::network_enum::states;
     using substates = sm::v1::network_enum::substates;
     using addrmgr_type = internal::prng_address_manager;
@@ -54,28 +52,20 @@ class Network : public Base
     using context_type = sm_type::context<clock::time_point>;
 
     //layer1::NAME name_;
-    QTimer timer_;
     sm_type sm_;
     can::qt_transport transport_;
-
-    void schedule()
-    {
-        const clock::time_point now = clock::now();
-
-        // DEBT: Need better way to determine if a future schedule
-        // is requested.  This ought to do for the short term though
-        if(sm_.next_event() < now)  return;
-
-        milliseconds interval(
-            std::chrono::duration_cast<milliseconds>(
-                sm_.next_event() - now));
-        timer_.start(interval);
-    }
 
     state_type last_state_ = state_type::unstarted;
     substates last_substate_ = substates::unstarted;
 
     void updateState();
+
+    void schedule()
+    {
+        // DEBT: Need better way to determine if a future schedule
+        // is requested.  This ought to do for the short term though
+        base_type::schedule(sm_.next_event());
+    }
 
     Q_OBJECT
 
@@ -88,19 +78,15 @@ public:
     // DEBT: Dedup these two constructors
     Network(QObject* parent = nullptr) :
         Base(parent),
-        timer_{parent},
         sm_{addrmgr_type{}, layer1::NAME{j1939::null_t{}}}
     {
-        timer_.setSingleShot(true);
         connect(&timer_, &QTimer::timeout, this, &Network::handler);
     }
 
     Network(layer1::NAME name, QObject* parent = nullptr) :
         Base(parent),
-        timer_{parent},
         sm_{addrmgr_type{}, name}
     {
-        timer_.setSingleShot(true);
         connect(&timer_, &QTimer::timeout, this, &Network::handler);
     }
 

@@ -49,8 +49,10 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
         // TODO: IIRC we can and do have our own std lhs estd rhs + and - operators.
         // They either aren't quite right, or not existing as I recall them.  They definitely weren't build out
         // much
-        //next_event_ = std::min(next_event_, sess.tp_.next_event());
+        next_event_ = std::min(next_event_, sess.tp_.next_event());
     }
+
+    schedule(next_event_);
 }
 
 
@@ -81,11 +83,18 @@ void TransportProtocol::processOutgoing(QCanBusDevice* device)
     {
         context_type ctx(clock::now(), sess.sa_);
 
-        //if(sess.tp_.next_event() >= ctx.current)
+        if(sess.tp_.next_event() >= ctx.current)
         {
-            //sess.tp_.process_outgoing(t, ctx);
+            // DEBT: state machine itself doesn't filter process_outgoing by next_event, but maybe
+            // it should.  Decision is because some consumers themselves are schedulers and only call
+            // SM when it's time.  Smells of premature optimization
+            sess.tp_.process_outgoing(t, ctx);
         }
+
+        next_event_ = std::min(next_event_, sess.tp_.next_event());
     }
+
+    schedule(next_event_);
 }
 
 

@@ -56,6 +56,15 @@ private:
         return ctx.current - last_event_ >= d;
     }
 
+    // DEBT: make an estd::chrono overload for >= with std on lhs and estd on rhs
+    template <class Rep, class Period>
+    constexpr bool elapsed(const context& ctx, const estd::chrono::duration<Rep, Period>& d) const
+    {
+        return estd::chrono::duration<
+            typename duration::rep,
+            typename duration::period>(ctx.current - last_event_) >= d;
+    }
+
     // DEBT: Would prefer this to come in via transport or some pseudo global thing
     // or perhaps only pass in traffic matched to global or our address in the first place
     //uint8_t self_address_ = uint8_t(addresses::null_address);
