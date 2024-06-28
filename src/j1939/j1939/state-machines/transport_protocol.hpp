@@ -144,7 +144,9 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
 #if FEATURE_EMBR_J1939_TP_RESPONDER
 template <class TimePoint>
 template <class Transport>
-bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
+bool transport_protocol<TimePoint>::process_incoming(
+    Transport&,
+    const pdu<pgns::tp_dt>& p,
     const context& ctx)
 {
     bool bam = responder().bam() && role() == ROLE_RESPONDER;
@@ -181,6 +183,10 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
                 state_ = RESPONDER_RECEIVING_DT;
                 responder().last_dt_ = p.payload();
                 ++responder().current_packet_per_cts_;
+
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                next_event_ += timeouts::T1;
+#endif
             }
             else
             {

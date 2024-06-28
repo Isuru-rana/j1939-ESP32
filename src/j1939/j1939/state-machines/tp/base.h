@@ -153,5 +153,19 @@ public:
 
 };
 
+template <class TimePoint>
+class to_schedule
+{
+public:
+    using time_point = TimePoint;
+    using duration = typename time_point::duration;
+
+protected:
+    time_point next_event_;
+
+public:
+    time_point next_event() const { return next_event_; }
+};
+
 
 }}}}}

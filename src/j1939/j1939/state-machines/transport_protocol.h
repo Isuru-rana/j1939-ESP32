@@ -32,15 +32,29 @@ namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 // "SENDING" states are a signal for external party to pick up a message from
 // state machine and send it
 template <class TimePoint>
-class transport_protocol : public tp::v0::base
+class transport_protocol :
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    // DEBT: Prefer this after base once feature is fully active
+    public tp::v0::to_schedule<TimePoint>,
+#endif
+    public tp::v0::base
 {
     using base_type = tp::v0::base;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    using ts_base_type = tp::v0::to_schedule<TimePoint>;
+#endif
 
 public:
     using base_type::process_incoming;
 
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    using typename ts_base_type::time_point;
+    using typename ts_base_type::duration;
+    using ts_base_type::next_event_;
+#else
     using time_point = TimePoint;
     using duration = typename time_point::duration;
+#endif
     using context = sm::v0::context<time_point>;
 
 private:
