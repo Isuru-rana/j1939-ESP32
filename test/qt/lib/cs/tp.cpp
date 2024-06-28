@@ -8,6 +8,7 @@ namespace embr::j1939::qt::cs { inline namespace v1 {
 TransportProtocol::TransportProtocol(QObject *parent) :
     Base(parent)
 {
+    connect(&timer_, &QTimer::timeout, this, &TransportProtocol::processOutgoing2);
 }
 
 
@@ -72,6 +73,12 @@ void TransportProtocol::send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&
         sess.buffer_.data(),
         sess.buffer_.size());
     sess.sa_ = sa;
+
+    // DEBT: Brute force the kickoff
+    transport_type t{device_};
+    context_type ctx(clock::now(), sess.sa_);
+    sess.tp_.process_outgoing(t, ctx);
+    schedule(sess.tp_.next_event());
 }
 
 

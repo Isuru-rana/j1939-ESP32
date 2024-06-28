@@ -34,6 +34,8 @@ class TransportProtocol : public Base
 
         // If originating, we track sa here (since we're a pool & state machine doesn't track this)
         uint8_t sa_;
+
+        // NOTE: Consider storing QCanBusDevice* here for multiple transport outs
     };
 
     // DEBT: Use a priority queue here
@@ -41,17 +43,25 @@ class TransportProtocol : public Base
 
     std::vector<Session> sessions_;
 
+    QCanBusDevice* device_ = nullptr;
+
     Session& reserve();
+
+    void processOutgoing(QCanBusDevice*);
+    // DEBT: Fixup naming, just naming this so 'connect' deosn't get confused
+    void processOutgoing2()
+    {
+        processOutgoing(device_);
+    }
+    void send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&);
 
     Q_OBJECT
 
-    void send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&);
 
 public:
     TransportProtocol(QObject* parent = nullptr);
 
     void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
-    void processOutgoing(QCanBusDevice*);
 
     void broadcast(uint8_t sa, pgns pgn,const QByteArray& v)
     {
@@ -64,8 +74,19 @@ public:
     }
 
 
+    Q_INVOKABLE void broadcast(uint8_t sa, pgns pgn, const QString& v)
+    {
+        broadcast(sa, pgn, v.toUtf8());
+    }
+
+
     // TODO: This is only for the rare case of request whose payload is > 8 bytes
     void request(uint8_t sa, uint8_t da, pgns) {}
+
+    void start(QCanBusDevice* device)
+    {
+        device_ = device;
+    }
 
 signals:
     void packetReceived(can_id, QByteArray);

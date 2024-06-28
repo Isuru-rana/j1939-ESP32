@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import j1939 1.0
@@ -20,14 +21,38 @@ Window {
         }
     }
 
+    Connections {
+        target: Session.tp
+
+        function onPacketReceived(id, payload) {
+            console.log("tp recv: ", payload)
+        }
+    }
+
     ColumnLayout {
 
         anchors.fill: parent
 
-        CAContainer {
-            network: Session.network
+        RowLayout {
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            //Layout.fillHeight: true
+            Layout.maximumHeight: 50
+
+            CAContainer {
+                Layout.fillWidth: true
+                //Layout.fillHeight: true
+                network: Session.network
+            }
+
+            Button {
+                //Layout.fillWidth: true
+                //Layout.fillHeight: true
+                text: "software_id"
+                onClicked: {
+                    // software id
+                    Session.tp.broadcast(0, 0xFEDA, "1234");
+                }
+            }
         }
 
         Debug1 {
