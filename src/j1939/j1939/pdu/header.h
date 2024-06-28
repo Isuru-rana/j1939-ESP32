@@ -37,7 +37,7 @@ struct pdu1_header : can_id
         can_id{((uint32_t)priority << d::priority().bitpos) | (((uint32_t)pgn) << d::range_pdu1().bitpos)}
     {}
 
-    uint8_t destination_address() const { return pdu_specific(); }
+    constexpr uint8_t destination_address() const { return pdu_specific(); }
     void destination_address(uint8_t v) { pdu_specific(v); }
 
     // Limited 10-bit pdu1 command range
@@ -70,9 +70,9 @@ struct pdu2_header : can_id
     void range(uint32_t v) { value.set(d::range_pdu2(), v); }
 };
 
-inline bool is_bam(const pdu1_header& id)
+constexpr bool is_bam(const pdu1_header& id)
 {
-    return id.destination_address() == internal::address_type_traits_base::global;
+    return id.destination_address() == addresses::global;
 }
 
 }}

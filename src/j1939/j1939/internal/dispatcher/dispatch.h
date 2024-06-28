@@ -52,7 +52,7 @@ struct exec_dispatch<
     estd::enable_if_t<should_execute_pgn<Policy, pgn>::value> >
 {
     template <class F, class ...Args>
-    constexpr auto operator()(F&& f, Args&&...args) -> decltype(f(pgns{}, args...))
+    constexpr auto operator()(F&& f, Args&&...args) const -> decltype(f(pgns{}, args...))
     {
         return f(in_place_pgn<pgn>{}, std::forward<Args>(args)...);
     }
@@ -66,7 +66,7 @@ struct exec_dispatch<
     estd::enable_if_t<!should_execute_pgn<Policy, pgn>::value> >
 {
     template <class F, class ...Args>
-    constexpr auto operator()(F&& f, Args&&...args) -> decltype(f(pgns{}, args...))
+    constexpr auto operator()(F&& f, Args&&...args) const -> decltype(f(pgns{}, args...))
     {
         return f(pgn, std::forward<Args>(args)...);
     }

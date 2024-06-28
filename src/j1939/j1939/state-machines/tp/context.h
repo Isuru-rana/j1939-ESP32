@@ -13,7 +13,7 @@ template <class TimePoint>
 struct context
 {
     using time_point = TimePoint;
-    using duration = typename time_point::duration;
+    //using duration = typename time_point::duration;
 
     const time_point current;
     const uint8_t self_address = addresses::null;

@@ -12,6 +12,7 @@ namespace embr { namespace j1939 {
 namespace internal {
 
 // DEBT: Fix up naming
+// DEBT: Favor addresses::global & null
 struct address_type_traits_base
 {
     static constexpr uint8_t global = 255;
