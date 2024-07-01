@@ -11,6 +11,8 @@ namespace embr::j1939::qt::cs { inline namespace v1 {
 TransportProtocol::TransportProtocol(QObject *parent) :
     Base(parent)
 {
+    // start with one idle
+    reserve();
     connect(&timer_, &QTimer::timeout, this, &TransportProtocol::processOutgoing2);
 }
 
@@ -46,8 +48,9 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
     // DEBT: process_incoming needs an lvalue
     transport_type t{device};
 
-    for(Session& sess : sessions_)
+    for(std::unique_ptr<Session>& _sess : sessions_)
     {
+        Session& sess = *_sess.get();
         sess.frameReceived(device, f);
 
         switch(sess.tp_.state())
@@ -86,17 +89,21 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
             next_event_ = next_event;
     }
 
+    // NOTE: Beware, all this gets activated even when it's not tp traffic!
+
     // If no idle sessions are around to pick up potential new incoming connection,
     // set one up.
     if(idle_count == 0)
     {
-        Session& sess = reserve();
+        reserve();  // gauruntees at least 1 idle is present
+        //Session& sess = reserve();
 
         // FIX: At the moment, duplicates new sessions
-        sess.frameReceived(device, f);
+        //sess.frameReceived(device, f);
     }
     else if(idle_count > 1)
     {
+        // works to keep it at one idle, otherwise we get duplicate incoming sessions
         //sessions_.erase(first_idle);
     }
 
@@ -108,7 +115,7 @@ auto TransportProtocol::reserve() -> Session&
 {
     qDebug() << "TransportProtocol::reserve: current count:" << sessions_.size();
 
-    return sessions_.emplace_back();
+    return *sessions_.emplace_back(new Session).get();
 }
 
 
@@ -165,8 +172,9 @@ void TransportProtocol::processOutgoing(QCanBusDevice* device)
 {
     //qDebug() << "TransportProtocol::processOutgoing";
 
-    for(Session& sess : sessions_)
+    for(std::unique_ptr<Session>& _sess : sessions_)
     {
+        Session& sess = *_sess.get();
         sess.processOutgoing(device);
 
         time_point next_event = std::min(next_event_, sess.tp_.next_event());

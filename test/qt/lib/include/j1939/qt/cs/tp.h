@@ -45,7 +45,9 @@ class TransportProtocol : public Base
     // DEBT: Use a priority queue here
     time_point next_event_;
 
-    std::vector<Session> sessions_;
+    // DEBT: Using pointers instead of values because surreptitiously ::send cascades out to
+    // frameReceived which in turn MT-changes vector and sometimes modifies Session values
+    std::vector<std::unique_ptr<Session>> sessions_;
 
     QCanBusDevice* device_ = nullptr;
 
