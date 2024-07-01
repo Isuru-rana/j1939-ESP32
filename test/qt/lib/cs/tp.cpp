@@ -146,17 +146,17 @@ void TransportProtocol::send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&
 }
 
 
-void TransportProtocol::Session::processOutgoing(QCanBusDevice* device)
+void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, context_type& ctx)
 {
     transport_type t{device};
-    context_type ctx(clock::now(), sa_);
     const time_point next_event = tp_.next_event();
 
     if(tp_.state() == states::IDLE) return;
 
+    // DEBT: Upgrade to_string to handle different bases
     auto str = estd::to_string((int)tp_.state());
 
-    qDebug() << "TransportProtocol::Session::processOutgoing:" << this << j1939::to_string(tp_.state(), str.data());
+    qDebug() << "TransportProtocol::Session::processOutgoing phase 1:" << this << j1939::to_string(tp_.state(), str.data());
 
     if(ctx.current >= next_event)
     {
@@ -164,6 +164,10 @@ void TransportProtocol::Session::processOutgoing(QCanBusDevice* device)
         // it should.  Decision is because some consumers themselves are schedulers and only call
         // SM when it's time.  Smells of premature optimization
         tp_.process_outgoing(t, ctx);
+
+        auto str = estd::to_string((int)tp_.state());
+
+        qDebug() << "TransportProtocol::Session::processOutgoing phase 2:" << this << j1939::to_string(tp_.state());
     }
 }
 
@@ -172,14 +176,25 @@ void TransportProtocol::processOutgoing(QCanBusDevice* device)
 {
     //qDebug() << "TransportProtocol::processOutgoing";
 
+    // DEBT: Slight debt, it really would be better to do 'now' as close as possible
+    // to process_outgoing, but debugging is easier if we capture a 'now' point in time
+    time_point now = clock::now();
+
     for(std::unique_ptr<Session>& _sess : sessions_)
     {
         Session& sess = *_sess.get();
-        sess.processOutgoing(device);
+        context_type ctx(now, sess.sa_);
+        sess.processOutgoing(device, ctx);
 
-        time_point next_event = std::min(next_event_, sess.tp_.next_event());
+        // DEBT: 'none' value may be better served as 'max()'
+        constexpr time_point none;
 
-        if(next_event != time_point::min())
+        time_point next_event = sess.tp_.next_event();
+
+        if(next_event_ != none)
+            next_event = std::min(next_event_, sess.tp_.next_event());
+
+        if(next_event != none)
             next_event_ = next_event;
     }
 

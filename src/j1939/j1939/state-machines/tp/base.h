@@ -40,6 +40,11 @@ public:
     {
         using mst = estd::chrono::milliseconds;
 
+        // DEBT: bam and Tr are both somewhat variable.
+        // bam is between 50-200mS, at discretion of us
+        // Tr (seems to be) official upper limit of BAM
+        // Tr is upper limit of non-bam data sends, but there is no lower limit
+
         static constexpr mst bam = mst{50};         // DEBT: Would be better if this was configurable
 
         static constexpr mst Tr = mst{200};

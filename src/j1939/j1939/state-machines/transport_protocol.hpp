@@ -228,6 +228,10 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
 
             state_ = ORIGINATOR_SENT_BAM;
             last_event_ = ctx.current;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            // A bit of lazy-ish init, could have done this at initiate_originator
+            next_event_ = ctx.current + timeouts::bam;
+#endif
             return true;
         }
 
@@ -246,9 +250,10 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
         case ORIGINATOR_SENDING_DT:
         {
             pdu<pgns::tp_dt> dt{null_t{}};
+            const bool bam = originator().bam();
 
             // BAM emissions all delay for 50ms
-            if(originator().bam() && !elapsed(ctx, timeouts::bam))  return false;
+            if(bam && !elapsed(ctx, timeouts::bam))  return false;
 
             uint8_t& seq = originator().last_sequence_;
 
@@ -271,6 +276,10 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
 
             state_ = ORIGINATOR_SENT_DT;
             last_event_ = ctx.current;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            // DEBT: 25 is arbitrary lower limit below timeout::Tr - needs improvement
+            next_event_ += bam ? timeouts::bam : timeouts::mst{25};
+#endif
             return true;
         }
 
@@ -312,6 +321,10 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
 
             state_ = ORIGINATOR_SENT_RTS;
             last_event_ = ctx.current;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            // A bit of lazy-ish init, could have done this at initiate_originator
+            next_event_ = ctx.current + timeouts::T3;
+#endif
             return true;
         }
 

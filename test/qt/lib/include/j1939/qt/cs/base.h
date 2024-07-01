@@ -18,17 +18,7 @@ protected:
 
     QTimer timer_;
 
-    void schedule(time_point next_event)
-    {
-        const time_point now = clock::now();
-
-        if(next_event < now)  return;
-
-        milliseconds interval(
-            std::chrono::duration_cast<milliseconds>(
-                next_event - now));
-        timer_.start(interval);
-    }
+    void schedule(time_point next_event);
 
     Q_OBJECT
 

@@ -40,4 +40,24 @@ void Generic::send(const Pdu*)
     // TBD
 }
 
+
+void Base::schedule(time_point next_event)
+{
+    constexpr time_point none;
+
+    if(next_event == none) return;
+
+    const time_point now = clock::now();
+
+    if(next_event < now)  return;
+
+    milliseconds interval(
+        std::chrono::duration_cast<milliseconds>(
+            next_event - now));
+
+    qDebug() << "Base::schedule interval:" << interval;
+
+    timer_.start(interval);
+}
+
 }}

@@ -38,7 +38,7 @@ class TransportProtocol : public Base
         // NOTE: Consider storing QCanBusDevice* here for multiple transport outs
 
         void frameReceived(QCanBusDevice *, const QCanBusFrame &);
-        void processOutgoing(QCanBusDevice *);
+        void processOutgoing(QCanBusDevice *, context_type&);
         void send(addr_type sa, addr_type da, pgns pgn, const QByteArray& v);
     };
 
