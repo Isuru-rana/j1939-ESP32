@@ -41,6 +41,7 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
 {
     unsigned idle_count = 0;
     Session* first_idle = nullptr;
+    Session* new_sess = nullptr;
 
     // DEBT: process_incoming needs an lvalue
     transport_type t{device};
@@ -51,6 +52,10 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
 
         switch(sess.tp_.state())
         {
+            case states::RESPONDER_RECEIVED_BAM:
+                new_sess = &sess;
+                break;
+
             case states::RESPONDER_SENT_EOM_ACK:
             {
                 // DEBT: Send proper can_id
@@ -87,6 +92,7 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
     {
         Session& sess = reserve();
 
+        // FIX: At the moment, duplicates new sessions
         sess.frameReceived(device, f);
     }
     else if(idle_count > 1)
@@ -100,6 +106,8 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
 
 auto TransportProtocol::reserve() -> Session&
 {
+    qDebug() << "TransportProtocol::reserve: current count:" << sessions_.size();
+
     return sessions_.emplace_back();
 }
 
@@ -141,7 +149,7 @@ void TransportProtocol::Session::processOutgoing(QCanBusDevice* device)
 
     auto str = estd::to_string((int)tp_.state());
 
-    qDebug() << "TransportProtocol::Session::processOutgoing:" << j1939::to_string(tp_.state(), str.data());
+    qDebug() << "TransportProtocol::Session::processOutgoing:" << this << j1939::to_string(tp_.state(), str.data());
 
     if(ctx.current >= next_event)
     {
