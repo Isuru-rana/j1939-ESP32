@@ -240,28 +240,44 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         h.cycle(t, 0);      // Send RTS, receive RTS
         h.cycle(t, 50);      // Send CTS, receive CTS
 
+        // NOTE: Above 50 demarcates beginning of CTS T2 timeout, only computed exactly right
+        // with 'next_event' flavor
+
         REQUIRE(t.peek() == nullptr);
+
+        time_point current(ms_type(50));
 
         h.tp_orig.payload((uint8_t*)test::test_str2);                   // mark payload as ready to send
-        h.tp_orig.process_outgoing(black_hole, { ms_type{100}, h.orig_sa });     // lose the DT
-        h.tp_recv.process_outgoing(t, { ms_type{100}, h.recv_sa });
+        h.tp_orig.process_outgoing(black_hole, { current, h.orig_sa });     // lose the DT
+        h.tp_recv.process_outgoing(t, { current, h.recv_sa });     // ensure state machine just sits there
 
         REQUIRE(t.peek() == nullptr);
+
+        // Wait long enough for CTS retry to kick in
+        current += tp_type::timeouts::T2;
+
+#if FEATURE_EMBR_J1939_TP_FUTURE
+        // DEBT: Put together to_string overloads
+        REQUIRE(current.time_since_epoch().count() ==
+            h.tp_recv.next_event().time_since_epoch().count());
+#endif
 
         // DEBT: Minor debt only, two consecutive process_outgoing are needed since one
         // detects the timeout and the next actually emits the resend
-        h.tp_recv.process_outgoing(t, { time_point{tp_type::timeouts::T2}, h.recv_sa });
-        h.tp_recv.process_outgoing(t, { time_point{tp_type::timeouts::T2}, h.recv_sa });
+        h.tp_recv.process_outgoing(t, { current, h.recv_sa });
+        h.tp_recv.process_outgoing(t, { current, h.recv_sa });
 
         REQUIRE(h.tp_recv.responder().retransmit_counter_ == 1);
 
         REQUIRE(t.receive(&frame));
 
+        current += ms_type{50};
+
         internal::v2::
             process_incoming(
                 h.tp_orig,
                 t, frame,
-                ctx{time_point{tp_type::timeouts::T2 + ms_type{50}}, h.orig_sa});
+                ctx{current, h.orig_sa});
 
         REQUIRE(h.tp_orig.originator().resequence_requested());
     }

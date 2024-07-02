@@ -58,6 +58,14 @@ public:
     using context = sm::v0::context<time_point>;
 
 private:
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    constexpr bool elapsed(const context& ctx, duration) const
+    {
+        return ctx.current >= next_event_;
+    }
+#else
+    // TODO: Keep last_event & elapsed around as an internal diagnostic double checking our
+    // own timeouts against next_event_
     time_point last_event_;
 
     constexpr duration elapsed(const context& ctx) const
@@ -78,6 +86,7 @@ private:
             typename duration::rep,
             typename duration::period>(ctx.current - last_event_) >= d;
     }
+#endif
 
     // DEBT: Would prefer this to come in via transport or some pseudo global thing
     // or perhaps only pass in traffic matched to global or our address in the first place

@@ -38,5 +38,5 @@
 // 0: Track next event by last event time, calculating on request
 // Feature not ready yet
 #ifndef FEATURE_EMBR_J1939_TP_FUTURE
-#define FEATURE_EMBR_J1939_TP_FUTURE 1
+#define FEATURE_EMBR_J1939_TP_FUTURE 0
 #endif

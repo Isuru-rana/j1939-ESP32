@@ -167,6 +167,8 @@ public:
 
 };
 
+// DEBT: Move this into sm::v1 once FEATURE_EMBR_J1939_TP_FUTURE is fully settled down
+// (we're close)
 template <class TimePoint>
 class to_schedule
 {
@@ -179,6 +181,13 @@ protected:
 
 public:
     time_point next_event() const { return next_event_; }
+
+    // DEBT: Experimenting, may want to change name.  May prefer old one with
+    // explicit duration on it
+    ATTR_NODISCARD constexpr bool elapsed(const sm::v0::context<TimePoint>& ctx) const
+    {
+        return ctx.current >= next_event_;
+    }
 };
 
 

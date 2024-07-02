@@ -47,7 +47,9 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
 
         case IDLE:
         {
+#if FEATURE_EMBR_J1939_TP_FUTURE == 0
             last_event_ = ctx.current;
+#endif
 
             switch(p.control())
             {
@@ -234,10 +236,11 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             traits::send(t, cm);
 
             state_ = ORIGINATOR_SENT_BAM;
-            last_event_ = ctx.current;
 #if FEATURE_EMBR_J1939_TP_FUTURE
             // A bit of lazy-ish init, could have done this at initiate_originator
             next_event_ = ctx.current + timeouts::bam;
+#else
+            last_event_ = ctx.current;
 #endif
             return true;
         }
@@ -283,10 +286,11 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             traits::send(t, dt);
 
             state_ = ORIGINATOR_SENT_DT;
-            last_event_ = ctx.current;
 #if FEATURE_EMBR_J1939_TP_FUTURE
             // DEBT: 25 is arbitrary lower limit below timeout::Tr - needs improvement
             next_event_ = ctx.current + (bam ? timeouts::bam : timeouts::mst{25});
+#else
+            last_event_ = ctx.current;
 #endif
             return true;
         }
@@ -335,10 +339,11 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             traits::send(t, cm);
 
             state_ = ORIGINATOR_SENT_RTS;
-            last_event_ = ctx.current;
 #if FEATURE_EMBR_J1939_TP_FUTURE
             // A bit of lazy-ish init, could have done this at initiate_originator
             next_event_ = ctx.current + timeouts::T3;
+#else
+            last_event_ = ctx.current;
 #endif
             return true;
         }
@@ -481,6 +486,8 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
                 }
                 else
                     state_ = RESPONDER_SENDING_CTS;
+
+                return true;
             }
             break;
 #endif
@@ -541,6 +548,10 @@ inline void transport_protocol<TimePoint>::initiate_originator(
 template <class TimePoint>
 inline auto transport_protocol<TimePoint>::next_event() const -> time_point
 {
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    // DEBT: In this case, parent class will do.  Only doing this during transition
+    return next_event_;
+#else
     switch(state_)
     {
         case ORIGINATOR_SENT_RTS:
@@ -564,6 +575,7 @@ inline auto transport_protocol<TimePoint>::next_event() const -> time_point
 
         default: return time_point{};
     }
+#endif
 }
 
 template <class TimePoint>
