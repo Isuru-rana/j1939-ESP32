@@ -1,3 +1,5 @@
+#include <memory>
+
 #include <estd/charconv.h>
 #include <estd/string.h>
 
@@ -54,6 +56,9 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
 
 void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
 {
+    // DEBT: Not ideal that we do pool management in here, but pools being somewhat
+    // lazy in the first place, it's not bad.
+
     const unsigned offline_threshold = 4;
     unsigned offline_count = 0;
     unsigned idle_count = 0;
@@ -64,20 +69,25 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
     // DEBT: process_incoming needs an lvalue
     transport_type t{device};
 
+    // Only place in which this mutex_ can lock for a long time.
+    mutex_.lock();
+
     for(it = sessions_.begin(); it != sessions_.end(); )
     {
-        Session* _sess = *it;
+        Session* _sess = it->get();
         Session& sess = *_sess;
 
         sess.mutex_.lock();
 
         if(sess.tp_.state() == states::IDLE)
         {
-            // DEBT: psuedo-race condition
             if(++idle_count > 1)
             {
+                // We always want one and only one IDLE.  Flip others into
+                // offline mode to pool them
                 sess.tp_.take_offline();
                 sess.mutex_.unlock();
+                offline_candidate_ = *it;
                 continue;
             }
         }
@@ -86,11 +96,11 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
             if(++offline_count > offline_threshold)
             {
                 it = sessions_.erase(it);
-                sess.mutex_.unlock();
-                delete _sess;
             }
             else
-                sess.mutex_.unlock();
+                offline_candidate_ = *it;
+
+            sess.mutex_.unlock();
 
             continue;
         }
@@ -137,22 +147,21 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
             next_event = std::min(next_event, tp_next_event);
     }
 
-    // NOTE: Beware, all this gets activated even when it's not tp traffic!
+    // NOTE: Beware, all this gets activated even when it's not tp traffic!  Therefore,
+    // may want to skip scheduling when next_event_ is already scheduled
+
+    next_event_ = next_event == time_point::max() ? time_point{} : next_event;  // DEBT
+
+    schedule(next_event_);
+
+    mutex_.unlock();
 
     // If no idle sessions are around to pick up potential new incoming connection,
     // set one up.
     if(idle_count == 0)
     {
-        reserve();  // gauruntees at least 1 idle is present
-        //Session& sess = reserve();
-
-        // FIX: At the moment, duplicates new sessions
-        //sess.frameReceived(device, f);
+        reserve();  // gauruntees 1 idle is present
     }
-
-    next_event_ = next_event == time_point::max() ? time_point{} : next_event;  // DEBT
-
-    schedule(next_event_);
 }
 
 
@@ -160,14 +169,19 @@ auto TransportProtocol::reserve() -> Session&
 {
     qDebug() << "TransportProtocol::reserve: current count:" << sessions_.size();
 
-    return *sessions_.emplace_back(new Session);
+    mutex_.lock();
+    // TODO: Grab an offline one if it's already present.  find_if not perfect since
+    // it unlocks session before completing
+    session_type& session = sessions_.emplace_back(new Session);
+    mutex_.unlock();
+
+    return *session;
 }
 
 
 void TransportProtocol::Session::send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray& v)
 {
     buffer_ = v;
-    // FIX: auto payload not working for BAM
     tp_.initiate_originator(
         da, uint32_t(pgn),
         buffer_.data(),
@@ -248,13 +262,13 @@ void TransportProtocol::processOutgoing(QCanBusDevice* device)
     time_point now = clock::now();
     time_point next_event = time_point::max();
 
-    std::vector<Session*> sessions(sessions_);
+    mutex_.lock();
+    std::vector<session_type> sessions(sessions_);
+    mutex_.unlock();
 
-    for(Session* _sess : sessions)
+    for(session_type& _sess : sessions)
     {
         Session& sess = *_sess;
-        // FIX: semi-race condition with sess and friends here vs frameReceived
-        // because outgoing traffic immediately triggers frameReceived
         context_type ctx(now, sess.sa_);
         sess.processOutgoing(device, ctx);
 

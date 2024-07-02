@@ -47,13 +47,19 @@ class TransportProtocol : public Base
         void send(addr_type sa, addr_type da, pgns pgn, const QByteArray& v);
     };
 
+    using session_type = std::shared_ptr<Session>;
+
     // DEBT: Consider this might be just a formality now since 'schedule' does the heavy lifting
     time_point next_event_;
 
+    // Protects 'sessions_'
     QMutex mutex_;
     // DEBT: Using pointers instead of values because surreptitiously ::send cascades out to
     // frameReceived which in turn MT-changes vector and sometimes modifies Session values
-    std::vector<Session*> sessions_;
+    std::vector<session_type> sessions_;
+    session_type offline_candidate_;
+
+    using iterator = std::vector<session_type>::iterator;
 
     QCanBusDevice* device_ = nullptr;
 
