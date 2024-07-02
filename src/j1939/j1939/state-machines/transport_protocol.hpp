@@ -64,6 +64,9 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
                 {
                     state_ = RESPONDER_RECEIVED_RTS;
                     storage_.template emplace<responder_state>(p);
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = ctx.current + timeouts::T1;
+#endif
                     return true;
                 }
 #endif
@@ -169,6 +172,9 @@ bool transport_protocol<TimePoint>::process_incoming(
             // Not finding in spec what to do in this case.  I suppose we can go into WARN mode
             // and treat them as lost packets
             state_ = WARN;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            next_event_ = {};       // No further events expected
+#endif
             break;
 
         case RESPONDER_RECEIVED_BAM:
@@ -185,10 +191,11 @@ bool transport_protocol<TimePoint>::process_incoming(
                 ++responder().current_packet_per_cts_;
 
 #if FEATURE_EMBR_J1939_TP_FUTURE
-                next_event_ += timeouts::T1;
+                next_event_ = ctx.current + timeouts::T1;
 #endif
             }
-            else
+            // No out-of-sequence flow control when in BAM mode
+            else if(!responder().bam())
             {
                 state_ = RESPONDER_SENDING_CTS;
             }
@@ -241,7 +248,8 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             {
                 state_ = ORIGINATOR_SENDING_DT;
                 // DEBT: Fallthrough would be more elegant
-                process_outgoing(t, ctx);
+                //process_outgoing(t, ctx);
+                return true;
             }
             // else, underflow error
             break;
@@ -278,7 +286,7 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             last_event_ = ctx.current;
 #if FEATURE_EMBR_J1939_TP_FUTURE
             // DEBT: 25 is arbitrary lower limit below timeout::Tr - needs improvement
-            next_event_ += bam ? timeouts::bam : timeouts::mst{25};
+            next_event_ = ctx.current + (bam ? timeouts::bam : timeouts::mst{25});
 #endif
             return true;
         }
@@ -289,7 +297,12 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             if(originator().sent_everything())
                 state_ = ORIGINATOR_SENT_ALL_DT;
             else if(originator().current_packet_per_cts_ == originator().max_packets_per_cts_)
+            {
                 state_ = ORIGINATOR_WAITING_CTS;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                next_event_ = ctx.current + timeouts::T3;
+#endif
+            }
 #if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
             else if(originator().auto_payload_)
             {
@@ -297,6 +310,8 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
                 state_ = ORIGINATOR_SENDING_DT;
             }
 #endif
+
+            // DEBT: This is likely an underflow, reaching here by Tr.  Should we abort?
 
             return true;
 
@@ -335,6 +350,11 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
                 state_ = ORIGINATOR_TIMEOUT;
 
                 traits::send(t, originator().build_abort(ctx, abort_reasons::timeout));
+
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                // No further event processing expected
+                next_event_ = time_point{};
+#endif
             }
             break;
 
@@ -374,6 +394,9 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
 
             traits::send(t, p);
             state_ = RESPONDER_SENT_CTS;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            next_event_ = ctx.current + timeouts::T2;
+#endif
             return true;
         }
 
@@ -387,6 +410,9 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
 
             traits::send(t, p);
             state_ = RESPONDER_SENT_CTS_HOLD;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            next_event_ = ctx.current + timeouts::Th;
+#endif
             return true;
         }
 

@@ -128,12 +128,12 @@ public:
         storage_{estd::in_place_index_t<0>{}}
     {}
 
-    const responder_state& responder() const
+    ATTR_NODISCARD const responder_state& responder() const
     {
         return *storage_.template get<responder_state>();
     }
 
-    const originator_state& originator() const
+    ATTR_NODISCARD const originator_state& originator() const
     {
         return *storage_.template get<originator_state>();
     }
