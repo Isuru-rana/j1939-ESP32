@@ -17,6 +17,7 @@ set(INCLUDES
     ca/ccvs.h
     ca/lighting_command.h
     ca/oel.h
+    can_id.h
     cs/base.h
     cs/generic.h
     cs/generic.hpp

@@ -10,6 +10,7 @@
 #include <embr/bits/word.hpp>
 
 #include "addresses.h"
+#include "pgn/enum.h"
 
 namespace embr { namespace j1939 {
 
@@ -80,13 +81,28 @@ public:
 
     void priority(uint8_t v) { value.set(d::priority(), v); }
 
+    // DEBT: Document where in spec this is really decided
     constexpr bool is_pdu1() const { return pdu_format() < 240; }
 
     constexpr operator uint32_t() const { return value.value(); }
 
     // DEBT: Probably could use a better name
     constexpr uint32_t raw() const { return value.value(); }
+
+    constexpr uint16_t range_pdu1() const { return value.get(d::range_pdu1()); }
+    constexpr uint32_t range_pdu2() const { return value.get(d::range_pdu2()); }
 };
 
+
+namespace internal {
+
+constexpr pgns get_pgn(const can_id& id)
+{
+    return id.is_pdu1() ?
+        pgns(id.range_pdu1()) :
+        pgns(id.range_pdu2());
+}
+
+}
 
 }}

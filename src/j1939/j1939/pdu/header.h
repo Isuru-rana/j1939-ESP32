@@ -41,7 +41,7 @@ struct pdu1_header : can_id
     void destination_address(uint8_t v) { pdu_specific(v); }
 
     // Limited 10-bit pdu1 command range
-    constexpr uint16_t range() const { return value.get(d::range_pdu1()); }
+    constexpr uint16_t range() const { return range_pdu1(); }
 
     void range(uint16_t v) { value.set(d::range_pdu1(), v); }
 };
@@ -65,7 +65,7 @@ struct pdu2_header : can_id
     }
 
     // Full 18-bit PGN range
-    constexpr uint32_t range() const { return value.get(d::range_pdu2()); }
+    constexpr uint32_t range() const { return range_pdu2(); }
 
     void range(uint32_t v) { value.set(d::range_pdu2(), v); }
 };

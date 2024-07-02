@@ -38,4 +38,23 @@ QString API::to_string(pgns p, bool abbrev)
         return j1939::to_string(p);
 }
 
+QString API::to_string_canid(can_id id)
+{
+    QString s = "pri=";
+    const bool pdu1 = id.is_pdu1();
+
+    s += QString::number(id.priority().value());
+    s += " pgn=";
+    if(pdu1)
+    {
+        s += QString::number(id.range_pdu1(), 16).toUpper();
+    }
+    else
+    {
+        s += QString::number(id.range_pdu2(), 16).toUpper();
+    }
+
+    return s;
+}
+
 }}

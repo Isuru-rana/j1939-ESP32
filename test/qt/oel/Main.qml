@@ -25,7 +25,7 @@ Window {
         target: Session.tp
 
         function onPacketReceived(id, payload) {
-            console.log("tp recv: ", payload)
+            console.log("tp recv:", to_string_canid(id), payload)
         }
     }
 

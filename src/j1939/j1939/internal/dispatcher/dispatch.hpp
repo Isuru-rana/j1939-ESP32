@@ -157,11 +157,10 @@ auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}, args...))
 
 #undef J1939_DISPATCH_TARGET
 
-constexpr pgns get_pgn(const can_id& id)
+// DEBT: the whole pdu1 = 0x??00 range probably is gonna change this
+constexpr bool is_pdu1(pgns pgn)
 {
-    return id.is_pdu1() ?
-        pgns(pdu1_header(id).range()) :
-        pgns(pdu2_header(id).range());
+    return pgn < pgns::pdu2_boundary;
 }
 
 template <class F, class ...Args>
