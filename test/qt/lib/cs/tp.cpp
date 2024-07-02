@@ -54,6 +54,8 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
 
 void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
 {
+    const unsigned offline_threshold = 4;
+    unsigned offline_count = 0;
     unsigned idle_count = 0;
     Session* new_sess = nullptr;
     decltype(sessions_)::iterator it;
@@ -64,17 +66,36 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
 
     for(it = sessions_.begin(); it != sessions_.end(); )
     {
-        std::unique_ptr<Session>& _sess = *it;
-        Session& sess = *_sess.get();
+        Session* _sess = *it;
+        Session& sess = *_sess;
+
+        sess.mutex_.lock();
 
         if(sess.tp_.state() == states::IDLE)
         {
+            // DEBT: psuedo-race condition
             if(++idle_count > 1)
             {
-                it = sessions_.erase(it);
+                sess.tp_.take_offline();
+                sess.mutex_.unlock();
                 continue;
             }
         }
+        else if(sess.tp_.state() == states::OFFLINE)
+        {
+            if(++offline_count > offline_threshold)
+            {
+                it = sessions_.erase(it);
+                sess.mutex_.unlock();
+                delete _sess;
+            }
+            else
+                sess.mutex_.unlock();
+
+            continue;
+        }
+
+        sess.mutex_.unlock();
 
         ++it;
 
@@ -139,7 +160,7 @@ auto TransportProtocol::reserve() -> Session&
 {
     qDebug() << "TransportProtocol::reserve: current count:" << sessions_.size();
 
-    return *sessions_.emplace_back(new Session).get();
+    return *sessions_.emplace_back(new Session);
 }
 
 
@@ -174,7 +195,12 @@ void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, const co
 {
     transport_type t{device};
 
-    if(tp_.state() == states::IDLE) return;
+    {
+        QMutexLocker ml(&mutex_);
+
+        if(tp_.state() == states::IDLE ||
+            tp_.state() == states::OFFLINE) return;
+    }
 
     // DEBT: Upgrade to_string to handle different bases
     auto str = estd::to_string((int)tp_.state());
@@ -222,9 +248,11 @@ void TransportProtocol::processOutgoing(QCanBusDevice* device)
     time_point now = clock::now();
     time_point next_event = time_point::max();
 
-    for(std::unique_ptr<Session>& _sess : sessions_)
+    std::vector<Session*> sessions(sessions_);
+
+    for(Session* _sess : sessions)
     {
-        Session& sess = *_sess.get();
+        Session& sess = *_sess;
         // FIX: semi-race condition with sess and friends here vs frameReceived
         // because outgoing traffic immediately triggers frameReceived
         context_type ctx(now, sess.sa_);

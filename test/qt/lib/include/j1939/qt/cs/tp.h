@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QMutex>
 #include <QTimer>
 
 #include <j1939/cas/internal/prng_address_manager.h>
@@ -35,6 +36,8 @@ class TransportProtocol : public Base
         // If originating, we track sa here (since we're a pool & state machine doesn't track this)
         uint8_t sa_;
 
+        QMutex mutex_;
+
         // NOTE: Consider storing QCanBusDevice* here for multiple transport outs
 
         // DEBT: returns whether entire buffer is received.  Would prefer to interrogate
@@ -47,9 +50,10 @@ class TransportProtocol : public Base
     // DEBT: Consider this might be just a formality now since 'schedule' does the heavy lifting
     time_point next_event_;
 
+    QMutex mutex_;
     // DEBT: Using pointers instead of values because surreptitiously ::send cascades out to
     // frameReceived which in turn MT-changes vector and sometimes modifies Session values
-    std::vector<std::unique_ptr<Session>> sessions_;
+    std::vector<Session*> sessions_;
 
     QCanBusDevice* device_ = nullptr;
 

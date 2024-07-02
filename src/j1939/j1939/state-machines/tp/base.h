@@ -74,6 +74,7 @@ public:
 
     enum states
     {
+        // At the ready
         IDLE = ROLE_UNINITIALIZED << role_shift,
         // Invalid state observed, but occurred at a time which doesn't hurt us
         WARN,
@@ -82,6 +83,8 @@ public:
         RECEIVING,
         SENDING_ABORT,
         SENT_ABORT,
+
+        // Won't respond to anything
         OFFLINE,
 
         // Originator node states
@@ -133,6 +136,9 @@ public:
 
 public:
     constexpr states state() const { return state_; }
+
+    // DEBT: Do state transitions if necessary
+    void take_offline() { state_ = OFFLINE; }
 
     roles role() const;
 
