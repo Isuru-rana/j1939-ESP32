@@ -16,7 +16,7 @@ TransportProtocol::TransportProtocol(QObject *parent) :
     connect(&timer_, &QTimer::timeout, this, &TransportProtocol::processOutgoing2);
 }
 
-void TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
+bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
 {
     // DEBT: process_incoming needs an lvalue
     transport_type t{device};
@@ -31,10 +31,23 @@ void TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
         {
             const estd::span<const uint8_t> p(tp_.payload());
             buffer_.append((const char*)p.data(), p.size());
-            break;
+
+            // DEBT: Somehow it's necessary to force const here for
+            // overloaded const accessor below to get picked up
+            const auto& tp = tp_;
+
+            const bool last_one = tp.responder().last_one();
+
+            // DEBT:
+            // Scheduled timeout is for listening to originator,
+            // But we need to process now to evaluate things like:
+            // - last packet eval
+            // - send cts to orig for batched mode
+            tp_.process_outgoing(t, ctx);
+            return last_one;
         }
 
-        default:    break;
+        default:    return false;
     }
 }
 
@@ -52,7 +65,14 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
     for(std::unique_ptr<Session>& _sess : sessions_)
     {
         Session& sess = *_sess.get();
-        sess.frameReceived(device, f);
+        bool last_one = sess.frameReceived(device, f);
+
+        if(last_one)
+        {
+            qDebug() << "TransportProtocol::frameReceived" << sess.buffer_;
+            // DEBT: Send proper can_id
+            emit packetReceived(0, sess.buffer_);
+        }
 
         switch(sess.tp_.state())
         {
@@ -60,6 +80,7 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
                 new_sess = &sess;
                 break;
 
+                /*
             case states::RESPONDER_SENT_EOM_ACK:
             {
                 qDebug() << "TransportProtocol::frameReceived" << sess.buffer_;
@@ -67,7 +88,7 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
                 emit packetReceived(0, sess.buffer_);
                 // DEBT: Remove session
                 break;
-            }
+            } */
 
             case states::ORIGINATOR_RECEIVED_EOM_ACK:
                 // DEBT: Remove session

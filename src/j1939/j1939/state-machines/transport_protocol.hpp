@@ -202,6 +202,8 @@ bool transport_protocol<TimePoint>::process_incoming(
                 ++responder().current_packet_per_cts_;
 
 #if FEATURE_EMBR_J1939_TP_FUTURE
+                // If we hit this timeout with RECEIVING_DT, that's a kind of overflow on our side
+                // since we didn't empty out payload
                 next_event_ = ctx.current + timeouts::T1;
 #endif
             }
@@ -452,9 +454,6 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
                 if(responder().bam())
                 {
                     state_ = IDLE;
-#if FEATURE_EMBR_J1939_TP_FUTURE
-                    next_event_ = {};
-#endif
                 }
                 else
                 {

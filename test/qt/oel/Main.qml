@@ -50,7 +50,8 @@ Window {
                 text: "software_id"
                 onClicked: {
                     // software id
-                    Session.tp.broadcast(0, 0xFEDA, "1234");
+                    //Session.tp.broadcast(0, 0xFEDA, "1234");
+                    Session.tp.broadcast(0, 0xFEDA, "0123456789ABCDEF");
                 }
             }
         }

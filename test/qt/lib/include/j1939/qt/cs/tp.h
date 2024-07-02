@@ -37,7 +37,9 @@ class TransportProtocol : public Base
 
         // NOTE: Consider storing QCanBusDevice* here for multiple transport outs
 
-        void frameReceived(QCanBusDevice *, const QCanBusFrame &);
+        // DEBT: returns whether entire buffer is received.  Would prefer to interrogate
+        // responder().last_one() once we work out forced process_outgoing DEBT seen in frameReceived
+        bool frameReceived(QCanBusDevice *, const QCanBusFrame &);
         void processOutgoing(QCanBusDevice *, context_type&);
         void send(addr_type sa, addr_type da, pgns pgn, const QByteArray& v);
     };
