@@ -169,13 +169,21 @@ auto TransportProtocol::reserve() -> Session&
 {
     qDebug() << "TransportProtocol::reserve: current count:" << sessions_.size();
 
+    session_type* session;
+
     mutex_.lock();
     // TODO: Grab an offline one if it's already present.  find_if not perfect since
     // it unlocks session before completing
-    session_type& session = sessions_.emplace_back(new Session);
+    /*
+    if(offline_candidate_)
+    {
+        session = offline_candidate_.get();
+    }
+    else    */
+        session = &sessions_.emplace_back(new Session);
     mutex_.unlock();
 
-    return *session;
+    return *session->get();
 }
 
 
