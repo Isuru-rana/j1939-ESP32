@@ -51,6 +51,8 @@ public:
     using typename ts_base_type::time_point;
     using typename ts_base_type::duration;
     using ts_base_type::next_event_;
+
+    using ts_base_type::elapsed;
 #else
     using time_point = TimePoint;
     using duration = typename time_point::duration;
@@ -60,6 +62,13 @@ public:
 private:
 #if FEATURE_EMBR_J1939_TP_FUTURE
     constexpr bool elapsed(const context& ctx, duration) const
+    {
+        return ctx.current >= next_event_;
+    }
+
+    // DEBT: make an estd::chrono overload for >= with std on lhs and estd on rhs
+    template <class Rep, class Period>
+    constexpr bool elapsed(const context& ctx, const estd::chrono::duration<Rep, Period>&) const
     {
         return ctx.current >= next_event_;
     }

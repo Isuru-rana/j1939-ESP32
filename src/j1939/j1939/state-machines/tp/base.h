@@ -186,7 +186,8 @@ public:
     // explicit duration on it
     ATTR_NODISCARD constexpr bool elapsed(const sm::v0::context<TimePoint>& ctx) const
     {
-        return ctx.current >= next_event_;
+        constexpr time_point zero{};
+        return ctx.current >= next_event_ && next_event_ != zero;
     }
 };
 

@@ -55,7 +55,9 @@ void Base::schedule(time_point next_event)
         std::chrono::duration_cast<milliseconds>(
             next_event - now));
 
-    qDebug() << "Base::schedule interval:" << interval;
+    qDebug()
+        << "Base::schedule interval:"
+        << interval;
 
     timer_.start(interval);
 }

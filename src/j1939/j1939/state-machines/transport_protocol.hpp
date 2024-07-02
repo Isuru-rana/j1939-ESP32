@@ -59,6 +59,9 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
                 {
                     state_ = RESPONDER_RECEIVED_BAM;
                     storage_.template emplace<responder_state>(p);
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = ctx.current + timeouts::T1;
+#endif
                     return true;
                 }
 
@@ -116,10 +119,16 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
                 case modes::ack:
                     // We could check here if we truly sent out everything we wanted to
                     state_ = ORIGINATOR_RECEIVED_EOM_ACK;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = {};
+#endif
                     return true;
 
                 case modes::abort:
                     state_ = ORIGINATOR_RECEIVED_ABORT;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = {};
+#endif
                     return true;
 
                 default:    break;
@@ -321,7 +330,12 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
 
         case ORIGINATOR_SENT_ALL_DT:
             if(originator().bam())
+            {
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                next_event_ = {};
+#endif
                 state_ = IDLE;
+            }
             return true;
 
         case ORIGINATOR_SENDING_RTS:
@@ -387,6 +401,14 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             break;
 #endif
 #if FEATURE_EMBR_J1939_TP_RESPONDER
+        case RESPONDER_RECEIVED_BAM:
+            if(elapsed(ctx, timeouts::T1))
+            {
+                state_ = RESPONDER_SENDING_ABORT;
+                return true;
+            }
+            break;
+
         // Got RTS, send CTS
         case RESPONDER_RECEIVED_RTS:
         case RESPONDER_SENDING_CTS:

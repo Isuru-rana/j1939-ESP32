@@ -149,7 +149,6 @@ void TransportProtocol::send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&
 void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, context_type& ctx)
 {
     transport_type t{device};
-    const time_point next_event = tp_.next_event();
 
     if(tp_.state() == states::IDLE) return;
 
@@ -158,7 +157,15 @@ void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, context_
 
     qDebug() << "TransportProtocol::Session::processOutgoing phase 1:" << this << j1939::to_string(tp_.state(), str.data());
 
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    unsigned guard = 0;
+
+    while(tp_.elapsed(ctx) && ++guard < 5)
+#else
+    const time_point next_event = tp_.next_event();
+
     if(ctx.current >= next_event)
+#endif
     {
         // DEBT: state machine itself doesn't filter process_outgoing by next_event, but maybe
         // it should.  Decision is because some consumers themselves are schedulers and only call
@@ -167,7 +174,11 @@ void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, context_
 
         auto str = estd::to_string((int)tp_.state());
 
-        qDebug() << "TransportProtocol::Session::processOutgoing phase 2:" << this << j1939::to_string(tp_.state());
+        qDebug()
+            << "TransportProtocol::Session::processOutgoing phase 2:"
+            << this
+            << j1939::to_string(tp_.state());
+            //<< ctx.current.time_since_epoch();
     }
 }
 
