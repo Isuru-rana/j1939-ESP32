@@ -55,16 +55,29 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
 void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
 {
     unsigned idle_count = 0;
-    Session* first_idle = nullptr;
     Session* new_sess = nullptr;
+    decltype(sessions_)::iterator it;
     time_point next_event = time_point::max();
 
     // DEBT: process_incoming needs an lvalue
     transport_type t{device};
 
-    for(std::unique_ptr<Session>& _sess : sessions_)
+    for(it = sessions_.begin(); it != sessions_.end(); )
     {
+        std::unique_ptr<Session>& _sess = *it;
         Session& sess = *_sess.get();
+
+        if(sess.tp_.state() == states::IDLE)
+        {
+            if(++idle_count > 1)
+            {
+                it = sessions_.erase(it);
+                continue;
+            }
+        }
+
+        ++it;
+
         bool last_one = sess.frameReceived(device, f);
 
         if(last_one)
@@ -72,34 +85,19 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
             qDebug() << "TransportProtocol::frameReceived" << sess.buffer_;
             // DEBT: Send proper can_id
             emit packetReceived(0, sess.buffer_);
+            // DEBT: Wait for this to go idle again
+            sess.buffer_.clear();
         }
 
         switch(sess.tp_.state())
         {
+            case states::RESPONDER_RECEIVED_RTS:
             case states::RESPONDER_RECEIVED_BAM:
                 new_sess = &sess;
                 break;
 
-                /*
-            case states::RESPONDER_SENT_EOM_ACK:
-            {
-                qDebug() << "TransportProtocol::frameReceived" << sess.buffer_;
-                // DEBT: Send proper can_id
-                emit packetReceived(0, sess.buffer_);
-                // DEBT: Remove session
+            default:
                 break;
-            } */
-
-            case states::ORIGINATOR_RECEIVED_EOM_ACK:
-                // DEBT: Remove session
-                break;
-
-            case states::IDLE:
-                if(first_idle == nullptr)   first_idle = &sess;
-                ++idle_count;
-                break;
-
-            default: break;
         }
 
         // TODO: IIRC we can and do have our own std lhs estd rhs + and - operators.
@@ -129,11 +127,6 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
 
         // FIX: At the moment, duplicates new sessions
         //sess.frameReceived(device, f);
-    }
-    else if(idle_count > 1)
-    {
-        // works to keep it at one idle, otherwise we get duplicate incoming sessions
-        //sessions_.erase(first_idle);
     }
 
     next_event_ = next_event == time_point::max() ? time_point{} : next_event;  // DEBT
@@ -177,7 +170,7 @@ void TransportProtocol::send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&
 }
 
 
-void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, context_type& ctx)
+void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, const context_type& ctx)
 {
     transport_type t{device};
 
@@ -232,6 +225,8 @@ void TransportProtocol::processOutgoing(QCanBusDevice* device)
     for(std::unique_ptr<Session>& _sess : sessions_)
     {
         Session& sess = *_sess.get();
+        // FIX: semi-race condition with sess and friends here vs frameReceived
+        // because outgoing traffic immediately triggers frameReceived
         context_type ctx(now, sess.sa_);
         sess.processOutgoing(device, ctx);
 

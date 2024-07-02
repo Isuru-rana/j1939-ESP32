@@ -40,11 +40,11 @@ class TransportProtocol : public Base
         // DEBT: returns whether entire buffer is received.  Would prefer to interrogate
         // responder().last_one() once we work out forced process_outgoing DEBT seen in frameReceived
         bool frameReceived(QCanBusDevice *, const QCanBusFrame &);
-        void processOutgoing(QCanBusDevice *, context_type&);
+        void processOutgoing(QCanBusDevice *, const context_type&);
         void send(addr_type sa, addr_type da, pgns pgn, const QByteArray& v);
     };
 
-    // DEBT: Use a priority queue here
+    // DEBT: Consider this might be just a formality now since 'schedule' does the heavy lifting
     time_point next_event_;
 
     // DEBT: Using pointers instead of values because surreptitiously ::send cascades out to

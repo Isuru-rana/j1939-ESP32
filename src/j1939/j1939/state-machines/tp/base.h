@@ -110,7 +110,9 @@ public:
         RESPONDER_SENT_CTS_HOLD,
         RESPONDER_RECEIVING_DT,
         RESPONDER_RECEIVED_DT,
-        RESPONDER_RECEIVED_ALL_DT,      // Need this because BAM doesn't do EOM
+        // Need this because BAM doesn't do EOM - though if we're clever we can use
+        // responder().last_one()
+        RESPONDER_RECEIVED_ALL_DT,
         RESPONDER_SENDING_EOM_ACK,
         RESPONDER_SENT_EOM_ACK,
         RESPONDER_SENDING_ABORT,
