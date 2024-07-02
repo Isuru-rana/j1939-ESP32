@@ -45,13 +45,15 @@ protected:
 #endif
 
 public:
-    constexpr can_id(uint32_t v) : value{v} {}
+    constexpr explicit can_id(uint32_t v) : value{v} {}
 
     constexpr address_type source_address() const
     {
         return address_type(value.get(d::source_address()));
     }
 
+    // pdu1 this is dest address
+    // pdu2 this is part of pgn#
     constexpr uint8_t pdu_specific() const { return value.get(d::pdu_specific()); }
 
     constexpr uint8_t pdu_format() const { return value.get(d::pdu_format()); }
@@ -91,9 +93,12 @@ public:
 
     constexpr uint16_t range_pdu1() const { return value.get(d::range_pdu1()); }
     constexpr uint32_t range_pdu2() const { return value.get(d::range_pdu2()); }
+    void range_pdu1(uint16_t v) { value.set(d::range_pdu1(), v); }
+    void range_pdu2(uint32_t v) { value.set(d::range_pdu2(), v); }
 };
 
 
+// DEBT: Move this out to pdu header area, just to avoid pgns enum inclusion
 namespace internal {
 
 constexpr pgns get_pgn(const can_id& id)
@@ -102,6 +107,14 @@ constexpr pgns get_pgn(const can_id& id)
         pgns(id.range_pdu1()) :
         pgns(id.range_pdu2());
 }
+
+
+// DEBT: the whole pdu1 = 0x??00 range probably is gonna change this
+constexpr bool is_pdu1(pgns pgn)
+{
+    return pgn < pgns::pdu2_boundary;
+}
+
 
 }
 

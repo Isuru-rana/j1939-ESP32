@@ -58,7 +58,7 @@ public:
     ///
     /// @param _id - undefined if 'range' does not match template pgn
     /// @param data
-    constexpr explicit pdu1(can_id _id, const uint8_t* data) :
+    constexpr explicit pdu1(const can_id& _id, const uint8_t* data) :
         id{_id},
         data_field_type{data}
     {}

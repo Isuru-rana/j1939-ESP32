@@ -21,7 +21,7 @@ public:
         using traits = can::frame_traits<Frame>;
 
         return f(
-            pdu<pgn>(traits::id(frame), traits::payload(frame)),
+            pdu<pgn>(can_id(traits::id(frame)), traits::payload(frame)),
             std::forward<Args>(args)...);
     }
 
@@ -48,8 +48,9 @@ public:
 
         // DEBT: Ensure payload size is correct
 
-        return impl.process_incoming(t,
-            pdu_type(traits::id(f), traits::payload(f)),
+        return impl.process_incoming(
+            t,
+            pdu_type(can_id(traits::id(f)), traits::payload(f)),
             std::forward<Args>(args)...);
     }
 
@@ -95,7 +96,7 @@ constexpr bool process_incoming(Impl& impl,
     return internal::dispatch<policy_type>(
         process_incoming_functor<transport_type>{},
         //id,
-        get_pgn(traits::id(f)),
+        get_pgn(can_id(traits::id(f))),
         impl,
         transport,
         f,

@@ -38,20 +38,20 @@ QString API::to_string(pgns p, bool abbrev)
         return j1939::to_string(p);
 }
 
-QString API::to_string_canid(can_id id)
+QString API::to_string_canid(CanId id)
 {
     QString s = "pri=";
-    const bool pdu1 = id.is_pdu1();
+    const bool pdu1 = id.raw().is_pdu1();
 
-    s += QString::number(id.priority().value());
+    s += QString::number(id.priority());
     s += " pgn=";
-    if(pdu1)
+    s += QString::number((unsigned)id.pgn(), 16).toUpper();
+    s += " sa=";
+    s += QString::number(id.source_address(), 16).toUpper();
+    if(id.is_pdu1())
     {
-        s += QString::number(id.range_pdu1(), 16).toUpper();
-    }
-    else
-    {
-        s += QString::number(id.range_pdu2(), 16).toUpper();
+        s += " da=";
+        s += QString::number(id.pdu_specific(), 16).toUpper();
     }
 
     return s;

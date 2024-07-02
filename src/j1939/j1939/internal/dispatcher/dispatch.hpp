@@ -157,14 +157,8 @@ auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}, args...))
 
 #undef J1939_DISPATCH_TARGET
 
-// DEBT: the whole pdu1 = 0x??00 range probably is gonna change this
-constexpr bool is_pdu1(pgns pgn)
-{
-    return pgn < pgns::pdu2_boundary;
-}
-
 template <class F, class ...Args>
-auto dispatch(F&& f, can_id id, Args&&...args) -> decltype(f(pgns{}, args...))
+auto dispatch(F&& f, const can_id& id, Args&&...args) -> decltype(f(pgns{}, args...))
 {
     return dispatch<dispatch_default_policy>(
         std::forward<F>(f),

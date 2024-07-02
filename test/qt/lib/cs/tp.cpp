@@ -117,21 +117,22 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
             qDebug() << "TransportProtocol::frameReceived" << sess.buffer_;
             pgns pgn = csess.tp_.responder().pgn();
             uint32_t id;
+            uint8_t sa = csess.tp_.responder().originator().source_address();
+            uint8_t priority = csess.tp_.responder().originator().priority().value();
             if(internal::is_pdu1(pgn))
             {
-                pdu1_header p(0, pgn);
-                p.source_address(sess.sa_);
+                pdu1_header p(priority, pgn);
+                p.source_address(sa);
                 id = p;
             }
             else
             {
-                pdu2_header p(0, pgn);
-                p.source_address(sess.sa_);
+                pdu2_header p(priority, pgn);
+                p.source_address(sa);
                 id = p;
             }
 
-            // DEBT: Send proper can_id
-            emit packetReceived(id, sess.buffer_);
+            emit packetReceived(CanId(id), sess.buffer_);
             // DEBT: Wait for this to go idle again
             sess.buffer_.clear();
         }

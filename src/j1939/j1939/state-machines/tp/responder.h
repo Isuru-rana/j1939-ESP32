@@ -21,6 +21,11 @@ struct responder_state : enum_base
 
     explicit responder_state(const pdu<pgns::tp_cm>&);
 
+    ATTR_NODISCARD constexpr const pdu<pgns::tp_cm>& originator() const
+    {
+        return originator_;
+    }
+
     // Always represents last received sequence number
     ATTR_NODISCARD constexpr uint8_t seq() const
     {

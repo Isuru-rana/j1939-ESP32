@@ -6,6 +6,7 @@
 #include <j1939/cas/internal/prng_address_manager.h>
 #include <j1939/state-machines/transport_protocol.h>
 
+#include "../can_id.h"
 #include "../transport.h"
 #include "base.h"
 
@@ -107,7 +108,7 @@ public:
     }
 
 signals:
-    void packetReceived(can_id, QByteArray);
+    void packetReceived(CanId, QByteArray);
 };
 
 }}
