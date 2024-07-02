@@ -449,15 +449,27 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
         case RESPONDER_RECEIVED_DT:
             if(responder().last_one())
             {
-                pdu<pgns::tp_cm> p = responder().originator_;
+                if(responder().bam())
+                {
+                    state_ = IDLE;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = {};
+#endif
+                }
+                else
+                {
+                    pdu<pgns::tp_cm> p = responder().originator_;
 
-                p.control(modes::ack);
-                p.destination_address(responder().originator_.source_address());
-                p.source_address(ctx.self_address);
+                    p.control(modes::ack);
+                    p.destination_address(responder().originator_.source_address());
+                    p.source_address(ctx.self_address);
 
-                traits::send(t, p);
+                    traits::send(t, p);
 
-                state_ = RESPONDER_SENT_EOM_ACK;
+                    // DEBT: Should we do a true SENDING_EOM_ACK?
+                    state_ = RESPONDER_SENT_EOM_ACK;
+                }
+
                 return true;
             }
             else if(responder().last_one_per_batch())
@@ -478,8 +490,12 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             // ---
             break;
 
-        //case RESPONDER_SENDING_EOM_ACK:
-        //    break;
+        case RESPONDER_SENT_EOM_ACK:
+            state_ = IDLE;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            next_event_ = {};
+#endif
+            break;
 
         // +++ Timeouts & other time-based activity
 

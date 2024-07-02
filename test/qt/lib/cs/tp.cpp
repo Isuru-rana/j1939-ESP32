@@ -44,6 +44,7 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
     unsigned idle_count = 0;
     Session* first_idle = nullptr;
     Session* new_sess = nullptr;
+    time_point next_event = time_point::max();
 
     // DEBT: process_incoming needs an lvalue
     transport_type t{device};
@@ -84,10 +85,16 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
         // They either aren't quite right, or not existing as I recall them.  They definitely weren't build out
         // much
         //next_event_ = std::min(next_event_, sess.tp_.next_event());
+        /*
         time_point next_event = std::min(next_event_, sess.tp_.next_event());
 
         if(next_event != time_point::min())
-            next_event_ = next_event;
+            next_event_ = next_event;   */
+
+        constexpr const time_point none;
+        const time_point tp_next_event = sess.tp_.next_event();
+        if(tp_next_event != none)
+            next_event = std::min(next_event, tp_next_event);
     }
 
     // NOTE: Beware, all this gets activated even when it's not tp traffic!
@@ -107,6 +114,8 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
         // works to keep it at one idle, otherwise we get duplicate incoming sessions
         //sessions_.erase(first_idle);
     }
+
+    next_event_ = next_event == time_point::max() ? time_point{} : next_event;  // DEBT
 
     schedule(next_event_);
 }
@@ -197,6 +206,7 @@ void TransportProtocol::processOutgoing(QCanBusDevice* device)
     // DEBT: Slight debt, it really would be better to do 'now' as close as possible
     // to process_outgoing, but debugging is easier if we capture a 'now' point in time
     time_point now = clock::now();
+    time_point next_event = time_point::max();
 
     for(std::unique_ptr<Session>& _sess : sessions_)
     {
@@ -207,14 +217,20 @@ void TransportProtocol::processOutgoing(QCanBusDevice* device)
         // DEBT: 'none' value may be better served as 'max()'
         constexpr time_point none;
 
-        time_point next_event = sess.tp_.next_event();
+        time_point tp_next_event = sess.tp_.next_event();
 
+        if(tp_next_event != none)
+            next_event = std::min(tp_next_event, next_event);
+
+        /*
         if(next_event_ != none)
-            next_event = std::min(next_event_, sess.tp_.next_event());
+            next_event = std::min(next_event_, next_event);
 
         if(next_event != none)
-            next_event_ = next_event;
+            next_event_ = next_event;   */
     }
+
+    next_event_ = next_event == time_point::max() ? time_point{} : next_event;  // DEBT
 
     schedule(next_event_);
 }
