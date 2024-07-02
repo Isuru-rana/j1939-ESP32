@@ -23,10 +23,16 @@ protected:
     Q_OBJECT
 
 public:
+    // DEBT: Clumsy, but it will do
+    static time_point startup;
+
     Base(QObject* parent) :
         timer_{parent},
         QObject(parent)
     {
+        // DEBT: Would be nice to use coarse timer to save cycles.  However, it frequently wakes up a little early
+        // which causes a small loop when we try to reschedule, it wakes up early again, etc.
+        timer_.setTimerType(Qt::PreciseTimer);
         timer_.setSingleShot(true);
     }
 

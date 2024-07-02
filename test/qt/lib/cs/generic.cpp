@@ -41,23 +41,28 @@ void Generic::send(const Pdu*)
 }
 
 
+Base::time_point Base::startup = Base::clock::now();
+
 void Base::schedule(time_point next_event)
 {
     constexpr time_point none;
 
     if(next_event == none) return;
 
+    next_event += std::chrono::microseconds(500);   // DEBT: Kludge
+
     const time_point now = clock::now();
 
-    if(next_event < now)  return;
+    if(next_event <= now)  return;
 
     milliseconds interval(
         std::chrono::duration_cast<milliseconds>(
             next_event - now));
 
     qDebug()
-        << "Base::schedule interval:"
-        << interval;
+        << "Base::schedule interval:" << interval
+        << " now:" << std::chrono::duration_cast<milliseconds>(now - startup)
+        << " next:" << std::chrono::duration_cast<milliseconds>(next_event - startup);
 
     timer_.start(interval);
 }

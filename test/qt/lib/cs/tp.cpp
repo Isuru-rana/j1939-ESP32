@@ -61,6 +61,7 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
 
             case states::RESPONDER_SENT_EOM_ACK:
             {
+                qDebug() << "TransportProtocol::frameReceived" << sess.buffer_;
                 // DEBT: Send proper can_id
                 emit packetReceived(0, sess.buffer_);
                 // DEBT: Remove session
@@ -155,7 +156,11 @@ void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, context_
     // DEBT: Upgrade to_string to handle different bases
     auto str = estd::to_string((int)tp_.state());
 
-    qDebug() << "TransportProtocol::Session::processOutgoing phase 1:" << this << j1939::to_string(tp_.state(), str.data());
+    qDebug()
+        << "TransportProtocol::Session::processOutgoing phase 1:"
+        << this
+        << j1939::to_string(tp_.state(), str.data())
+        << " next:" << std::chrono::duration_cast<milliseconds>(tp_.next_event() - Base::startup);
 
 #if FEATURE_EMBR_J1939_TP_FUTURE
     unsigned guard = 0;
@@ -172,14 +177,16 @@ void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, context_
         // SM when it's time.  Smells of premature optimization
         tp_.process_outgoing(t, ctx);
 
-        auto str = estd::to_string((int)tp_.state());
-
         qDebug()
             << "TransportProtocol::Session::processOutgoing phase 2:"
             << this
             << j1939::to_string(tp_.state());
             //<< ctx.current.time_since_epoch();
     }
+
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    if(guard == 5)  qDebug() << "GUARD HIT";
+#endif
 }
 
 
