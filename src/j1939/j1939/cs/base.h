@@ -34,11 +34,14 @@ public:
     struct result
     {
         // indicates an internal state change or transport interaction
+        // in other words, a rough measurement of whether an action was taken
         const bool processed : 1;
         // indicates an immediate additional call is requested
+        // (often used to give caller chance to notice interesting states)
         const bool immediate : 1;
         // indicates state machine has reached the end of its cycle and will
-        // return to IDLE (or equivelant)
+        // return to IDLE (or equivelant).  Note that multiples of these may
+        // appear if 'immediate' is set, signaling a potentially elongated shutdown
         const bool end : 1;
 
         constexpr result(bool processed) :
