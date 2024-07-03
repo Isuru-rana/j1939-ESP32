@@ -1,16 +1,10 @@
 # J1939 C++ Library
 
-Welcome to `embr::j1939` library!
-
 ![j1939 logo](doc/img/j1939.jpg "J1939")
 
-Features include:
+Welcome to `embr::j1939` library!
 
-* J939-21 Network support:
-    * Network address negotiation
-    * Transport Protocol (1785b data field size)
-* Compile-time optimized units such as percentages, volts, kilometers, etc. by way of `embr` lib
-* Lean and highly portable.  No dynamic allocation.
+## Why?
 
 What makes this particular library interesting compared to some others?  In a word: specialization.
 
@@ -27,6 +21,15 @@ transport_traits::send(t, p);
 DBC files are useful, but hardly translate well to highly constrained devices.  With `embr::j1939`,
 compile-time traits are available for you to fold expression over, interrogate on a case by case
 basis, or ignore completely - "only pay for what you use"
+
+### Features include:
+
+* J939-21 Network support:
+    * Network address negotiation
+    * Transport Protocol (1785b data field size)
+* Compile-time optimized units such as percentages, volts, kilometers, etc. by way of `embr` lib
+* Compile-time metadata for SPNs, PGNs including name, type, ownership, more
+* Lean and highly portable.  No dynamic allocation.
 
 ## Quick Start
 
@@ -64,10 +67,10 @@ Supported:
 
 ### Secondary Targets
 
-Although this library is tuned for embedded use, it compiles under most GCC and Clang environments.  Secondary targets include:
+Although this library is tuned for embedded use, it compiles under GCC and Clang environments.  Secondary targets include:
 
 * Linux (see catch unit testing area)
-* Qt
+* Qt/QML
 
 ## Extras
 
