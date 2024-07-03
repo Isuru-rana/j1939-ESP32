@@ -138,7 +138,7 @@ struct network : network_base
         bool* do_schedule);
 
     template <class Transport>
-    bool process_incoming(Transport& t, const pdu<pgns::address_claimed>& p,
+    result  process_incoming(Transport& t, const pdu<pgns::address_claimed>& p,
         const context<TimePoint>& c)
     {
         bool do_schedule = false;
@@ -162,7 +162,7 @@ struct network : network_base
 
 
     template <class Transport>
-    bool process_outgoing(Transport& t, const context<TimePoint>& c)
+    result process_outgoing(Transport& t, const context<TimePoint>& c)
     {
         //if(substate_ != substates::sending) return false;
 

@@ -31,7 +31,8 @@ inline namespace v0 {
 
 template <class TimePoint>
 template <class Transport>
-bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns::tp_cm>& p, const context& ctx)
+auto transport_protocol<TimePoint>::process_incoming(
+    Transport&, const pdu<pgns::tp_cm>& p, const context& ctx) -> result
 {
     const uint8_t da = p.destination_address();
     if(da != ctx.self_address &&
@@ -158,10 +159,10 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
 #if FEATURE_EMBR_J1939_TP_RESPONDER
 template <class TimePoint>
 template <class Transport>
-bool transport_protocol<TimePoint>::process_incoming(
+auto transport_protocol<TimePoint>::process_incoming(
     Transport&,
     const pdu<pgns::tp_dt>& p,
-    const context& ctx)
+    const context& ctx) -> result
 {
     bool bam = responder().bam() && role() == ROLE_RESPONDER;
 
@@ -225,7 +226,7 @@ bool transport_protocol<TimePoint>::process_incoming(
 
 template <class TimePoint>
 template <class Transport>
-bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context& ctx)
+auto transport_protocol<TimePoint>::process_outgoing(Transport& t, const context& ctx) -> result
 {
     using traits = transport_traits<Transport>;
 

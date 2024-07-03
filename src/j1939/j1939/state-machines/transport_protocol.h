@@ -183,17 +183,17 @@ public:
 
     // Using dispatcher methodology
     template <class Transport>
-    bool process_incoming(Transport&, const pdu<pgns::tp_cm>&, const context&);
+    result process_incoming(Transport&, const pdu<pgns::tp_cm>&, const context&);
 
 #if FEATURE_EMBR_J1939_TP_RESPONDER
     // Using dispatcher methodology
     template <class Transport>
-    bool process_incoming(Transport&, const pdu<pgns::tp_dt>&, const context&);
+    result process_incoming(Transport&, const pdu<pgns::tp_dt>&, const context&);
 #endif
 
     // Combining time-bound operations since they are likely send related anyway
     template <class Transport>
-    bool process_outgoing(Transport&, const context&);
+    result process_outgoing(Transport&, const context&);
 
     //bool process_time(time_point);
 

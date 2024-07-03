@@ -7,6 +7,8 @@
 #include "../internal/dispatcher/policy.h"
 #include "../data_field/fwd.h"
 
+// Experimenting with more robust state machine/process return value (ala embr::coap)
+#define FEATURE_EMBR_J1939_CS_ADV_RESULT 1
 
 namespace embr { namespace j1939 { namespace cs { inline namespace v1 {
 
@@ -27,24 +29,52 @@ public:
     template <pgns pgn>
     using data_field = const embr::j1939::layer1::data_field<pgn>;
 
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT
+    // EXPERIMENTAL
+    struct result
+    {
+        // indicates an internal state change or transport interaction
+        const bool processed : 1;
+        // indicates an immediate additional call is requested
+        const bool immediate : 1;
+        // indicates state machine has reached the end of its cycle and will
+        // return to IDLE (or equivelant)
+        const bool end : 1;
+
+        constexpr result(bool processed) :
+            processed{processed},
+            immediate{false},
+            end{false}
+        {
+
+        }
+
+        // DEBT: Only for legacy compatibility, eliminate or rework this once we fully
+        // transition to 'result' awareness
+        constexpr operator bool() const { return processed; }
+    };
+#else
+    using result = bool;
+#endif
+
     using policy_type = j1939::internal::dispatch_default_policy;
 
     // Undefined/unhandled CAN frame
     template <class Transport, class Frame, class ...Args>
-    static constexpr bool process_incoming_default(const Transport&, const Frame&, Args&&...)
+    static constexpr result process_incoming_default(const Transport&, const Frame&, Args&&...)
     {
         return false;
     }
 
     // DEBT: Would like ...Args treatment, but compiler gets ornery about overload ambiguities
     template <class Transport, pgns pgn>
-    constexpr bool process_incoming(const Transport&, pdu<pgn>) const { return false; }
+    constexpr result process_incoming(const Transport&, pdu<pgn>) const { return false; }
 
     template <class Transport, pgns pgn, class Context>
-    constexpr bool process_incoming(Transport&, pdu<pgn>, Context) const { return false; }
+    constexpr result process_incoming(Transport&, pdu<pgn>, Context) const { return false; }
 
     template <class Transport, class Context>
-    constexpr bool process_outgoing(Transport&, Context = {}) const { return false; }
+    constexpr result process_outgoing(Transport&, Context = {}) const { return false; }
 };
 
 }}}}
