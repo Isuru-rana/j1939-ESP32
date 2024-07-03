@@ -103,6 +103,9 @@ TBD
 
 ### External Links & Special Thanks
 
-[Rejsacan]
+[RejsaCAN](https://github.com/MagnusThome/RejsaCAN-ESP32/tree/main)
 [Jetbrains]
 [Seeed Xiao]
+
+---
+*Document v0.1*
