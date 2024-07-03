@@ -1,14 +1,14 @@
-# J1939 C++ Library
+# embr::J1939 C++ Library
 
 ![j1939 logo](doc/img/j1939.jpg "J1939")
 
-Welcome to `embr::j1939` library!
+Welcome!
 
-If you're new to CAN bus or J1939, check out TBD for some background
+If you're new to CAN bus or J1939, [check this out](https://www.csselectronics.com/pages/j1939-explained-simple-intro-tutorial) for some background
 
 ## Why?
 
-What makes this particular library interesting compared to some others?  In a word: specialization.
+What makes this particular library interesting?  In a word: specialization.
 
 We've gone all-in with C++ specialization to bring you a robust, intuitive & lean implementation.  For example, setting up and sending a `cab message 1` PDU is as easy as:
 
@@ -32,6 +32,7 @@ basis, or ignore completely - "only pay for what you use"
 * Compile-time optimized units such as percentages, volts, kilometers, etc. by way of `embr` lib
 * Compile-time metadata for SPNs, PGNs including name, type, ownership, more
 * Lean and highly portable.  No dynamic allocation.
+* c++11 compliance (TBD don't like mentioning here)
 
 ## Quick Start
 
@@ -54,6 +55,10 @@ I have yet to crack the nut to make platformio work smoothly with local librarie
 usage in this context is complicated.  See `test/arduino/lcmd_sink`
 
 TBD create instructions for making a new project from scratch
+
+### Other Quick Snippets
+
+[Find more code snippets here](doc/Snippets.md)
 
 ## Infrastructure
 
