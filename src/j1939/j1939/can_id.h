@@ -2,6 +2,7 @@
  * References:
  *
  * 1. https://www.kvaser.com/about-can/higher-layer-protocols/j1939-introduction/
+ * 2. J1939-21 (2006)
  */
 #pragma once
 
@@ -53,9 +54,10 @@ public:
     }
 
     // pdu1 this is dest address
-    // pdu2 this is part of pgn#
+    // pdu2 this is group extension (part of pgn#)
     constexpr uint8_t pdu_specific() const { return value.get(d::pdu_specific()); }
 
+    // [2] 5.2.4
     constexpr uint8_t pdu_format() const { return value.get(d::pdu_format()); }
 
     constexpr bool data_page() const
@@ -66,6 +68,11 @@ public:
     constexpr bool reserved() const
     {
         return (value & ((uint32_t)1 << 25)) != 0U;
+    }
+
+    constexpr bool extended_data_page() const
+    {
+        return reserved();
     }
 
     constexpr traits::priority::word_type priority() const { return value.get(d::priority()); }
@@ -83,7 +90,7 @@ public:
 
     void priority(uint8_t v) { value.set(d::priority(), v); }
 
-    // DEBT: Document where in spec this is really decided
+    // [2] Section 5.2.5
     constexpr bool is_pdu1() const { return pdu_format() < 240; }
 
     constexpr operator uint32_t() const { return value.value(); }

@@ -210,7 +210,7 @@ enum class spns
     pgn_of_packeted_message = 2563,                 // [14] Table D1
     total_message_size = 2564,                      // [14] Table D1
     tp_pgn_rqst2 = 2574,                            // [14] Table D1
-    use_transfer_mode = 2575,                       // [14] Section D.1
+    use_transfer_mode = 2575,                       // [14] Table D1
     net_battery_current_highres = 2579,             // [13]
     power_relay = 2634,                             // [13]
     joystick1_x_axis_position = 2660,               // [13]
