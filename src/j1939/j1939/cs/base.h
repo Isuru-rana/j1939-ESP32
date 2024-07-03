@@ -38,15 +38,16 @@ public:
         const bool processed : 1;
         // indicates an immediate additional call is requested
         // (often used to give caller chance to notice interesting states)
+        // when used with process_incoming, indicates a process_outgoing is requested
         const bool immediate : 1;
         // indicates state machine has reached the end of its cycle and will
         // return to IDLE (or equivelant).  Note that multiples of these may
         // appear if 'immediate' is set, signaling a potentially elongated shutdown
         const bool end : 1;
 
-        constexpr result(bool processed) :
+        constexpr result(bool processed, bool immediate = false) :
             processed{processed},
-            immediate{false},
+            immediate{immediate},
             end{false}
         {
 
@@ -55,6 +56,10 @@ public:
         // DEBT: Only for legacy compatibility, eliminate or rework this once we fully
         // transition to 'result' awareness
         constexpr operator bool() const { return processed; }
+
+        static constexpr result more() { return result{true, true}; }
+        static constexpr result ok() { return result{true, false}; }
+        static constexpr result ignore() { return result{false, false}; }
     };
 #else
     using result = bool;
