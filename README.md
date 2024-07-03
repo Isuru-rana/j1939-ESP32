@@ -36,7 +36,7 @@ basis, or ignore completely - "only pay for what you use"
 ## Quick Start
 
 * Initialize `estd` and `embr` via `git submodule update --init --recursive`
-* Naturally you'll need a [Can Transciever](doc/Transciever.md)
+* Naturally you'll need a [Can Transceiver](doc/Transceiver.md)
 
 ### Quick Start: ESP-IDF
 
