@@ -20,9 +20,8 @@ p.requested_percent_fan_speed(speed);
 transport_traits::send(t, p);
 ```
 
-DBC files are useful, but hardly translate well to highly constrained devices.  With `embr::j1939`,
-compile-time traits are available for you to fold expression over, interrogate on a case by case
-basis, or ignore completely - "only pay for what you use"
+DBC files are useful, but don't directly play well in constrained devices.  With `embr::j1939`,
+compile-time traits are available for you to interrogate, or ignore completely - "only pay for what you use"
 
 ### Features include:
 
@@ -32,7 +31,7 @@ basis, or ignore completely - "only pay for what you use"
 * Compile-time optimized units such as percentages, volts, kilometers, etc. by way of `embr` lib
 * Compile-time metadata for SPNs, PGNs including name, type, ownership, more
 * Lean and highly portable.  No dynamic allocation.
-* c++11 compliance (TBD don't like mentioning here)
+* c++11 compliant
 
 ## Quick Start
 
