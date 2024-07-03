@@ -4,11 +4,13 @@
 
 Welcome to `embr::j1939` library!
 
+If you're new to CAN bus or J1939, check out TBD for some background
+
 ## Why?
 
 What makes this particular library interesting compared to some others?  In a word: specialization.
 
-We've gone all-in with C++ specialization to bring you a robust, intuitive yet lean implementation.  For example, setting up and sending a `cab message 1` PDU is as easy as:
+We've gone all-in with C++ specialization to bring you a robust, intuitive & lean implementation.  For example, setting up and sending a `cab message 1` PDU is as easy as:
 
 ```c++
 pdu<pgns::cm1> p(sa, da, null_t{});
@@ -34,7 +36,7 @@ basis, or ignore completely - "only pay for what you use"
 ## Quick Start
 
 * Initialize `estd` and `embr` via `git submodule update --init --recursive`
-* Naturally you'll need a (Can Transiever)[doc/Transciever.md]
+* Naturally you'll need a [Can Transciever](doc/Transciever.md)
 
 ### Quick Start: ESP-IDF
 
