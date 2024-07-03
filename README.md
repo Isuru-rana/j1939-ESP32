@@ -1,12 +1,14 @@
 # J1939 C++ Library
 
-Welcome to `embr::j1939` library!  
+Welcome to `embr::j1939` library!
+
+![j1939 logo](doc/img/j1939.jpg "J1939")
 
 Features include:
 
 * J939-21 Network support:
     * Network address negotiation
-    * Transport Protocol (~1.7k packets)
+    * Transport Protocol (1785b data field size)
 * Compile-time optimized units such as percentages, volts, kilometers, etc. by way of `embr` lib
 * Lean and highly portable.  No dynamic allocation.
 
