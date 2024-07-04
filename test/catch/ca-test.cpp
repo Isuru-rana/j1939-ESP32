@@ -159,7 +159,7 @@ TEST_CASE("Controller Applications")
 
             frame f = frame_traits::create(p);
 
-            j1939::internal::v2::process_incoming(dca, t, f);
+            j1939::v2::process_incoming(dca, t, f);
 
             REQUIRE(out_s == "PDU: FDCC SA:0 FF FF FF FF FF FF FF FF\n");
         }

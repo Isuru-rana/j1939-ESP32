@@ -273,7 +273,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
         current += ms_type{50};
 
-        internal::v2::
+        embr::j1939::v2::
             process_incoming(
                 h.tp_orig,
                 t, frame,
@@ -324,7 +324,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             REQUIRE(t.receive(&frame));
 
-            embr::j1939::internal::v2::process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
+            embr::j1939::v2::process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
 
             // Remember, no auto-payload on receive, just on send
             estd::span<const uint8_t> payload(h.tp_recv.payload());

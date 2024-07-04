@@ -97,7 +97,7 @@ TEST_CASE("dispatcher")
 
         id.range((uint32_t)pgns::oel);
 
-        int specialized = j1939::internal::dispatch(dispatch_functor{}, id);
+        int specialized = j1939::v1::dispatch(dispatch_functor{}, id);
 
         REQUIRE(specialized == 1);
     }
@@ -117,11 +117,11 @@ TEST_CASE("dispatcher")
 
         frame_type f = frame_traits::create(p);
 
-        j1939::internal::v2::process_incoming(ca, t, f);
+        j1939::v2::process_incoming(ca, t, f);
 
         REQUIRE(ca.oel_counter == 1);
 
-        j1939::internal::dispatch<j1939::internal::dispatch_default_policy>(
+        j1939::v1::dispatch<j1939::internal::dispatch_default_policy>(
             j1939::internal::v2::specialize_frame_functor{},
             pgns::oel,
             j1939::internal::v2::test_rcv_specialized_functor{},

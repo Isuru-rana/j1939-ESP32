@@ -28,7 +28,7 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
 
     context_type ctx(clock::now(), sa_);
 
-    result r = internal::v2::process_incoming(tp_, t, f, ctx);
+    result r = j1939::v2::process_incoming(tp_, t, f, ctx);
 
     switch(tp_.state())
     {

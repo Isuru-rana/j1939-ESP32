@@ -38,7 +38,7 @@ struct pgn_to_string_functor
 inline
     const char* to_string(pgns pgn)
 {
-    return internal::dispatch<internal::dispatch_default_policy>(pgn_to_string_functor<false>{}, pgn);
+    return j1939::v1::dispatch<internal::dispatch_default_policy>(pgn_to_string_functor<false>{}, pgn);
 }
 
 }

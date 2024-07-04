@@ -83,11 +83,15 @@ public:
     }
 };
 
+}}
+
+inline namespace v2 {
+
 template <class Transport, class Impl, class ...Args>
 constexpr cs::v1::base::result process_incoming(Impl& impl,
     Transport& transport,
     const typename estd::remove_cvref_t<Transport>::frame& f,
-    Args&&...args)
+    Args&& ...args)
 {
     using transport_type = typename estd::remove_cvref_t<Transport>;
     using frame = typename transport_type::frame;
@@ -96,16 +100,14 @@ constexpr cs::v1::base::result process_incoming(Impl& impl,
     using traits = embr::can::frame_traits<frame>;
     using policy_type = typename Impl::policy_type;
 
-    return internal::dispatch<policy_type>(
-        process_incoming_functor<transport_type>{},
+    return j1939::v1::dispatch<policy_type>(
+        internal::v2::process_incoming_functor<transport_type>{},
         //id,
-        get_pgn(can_id(traits::id(f))),
+        internal::get_pgn(can_id(traits::id(f))),
         impl,
         transport,
         f,
         std::forward<Args>(args)...);
-}
-
 }
 
 }
