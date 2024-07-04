@@ -48,6 +48,7 @@ else()
         pgn-test.cpp
         ostream-test.cpp
         slots-test.cpp
+        sm-test.cpp
         spn-test.cpp
         transport-test.cpp
         transport-protocol-test.cpp

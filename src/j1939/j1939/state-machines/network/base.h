@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include "../../cas/internal/fwd.h"     // for c++20 concepts
 #include "../../pdu.h"
 #include "../tp/context.h"
 #include "../../cs/base.h"
@@ -170,7 +171,7 @@ public:
     using cs::v1::base::process_incoming;
 
     template <class Transport>
-    bool process_incoming(Transport& t, const pdu<pgns::request>& p);
+    result process_incoming(Transport& t, const pdu<pgns::request>& p);
 
     template <class Transport, class TimePoint>
     bool process_outgoing_internal(Transport&, const context<TimePoint>&);

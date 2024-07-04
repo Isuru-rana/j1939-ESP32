@@ -1,5 +1,8 @@
 #pragma once
 
+#if UNIT_TESTING
+#include <estd/chrono.h>
+#endif
 #include <estd/cstdint.h>
 
 #include "../../addresses.h"

@@ -6,11 +6,12 @@
 
 #include "../internal/dispatcher/policy.h"
 #include "../data_field/fwd.h"
+#include "../state-machines/base.h"
+
+namespace embr { namespace j1939 { namespace cs { inline namespace v1 {
 
 // Experimenting with more robust state machine/process return value (ala embr::coap)
 #define FEATURE_EMBR_J1939_CS_ADV_RESULT 1
-
-namespace embr { namespace j1939 { namespace cs { inline namespace v1 {
 
 // Adapted from old controller_application_base
 class base
@@ -31,38 +32,7 @@ public:
 
 #if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
     // EXPERIMENTAL
-    struct result
-    {
-        // indicates an internal state change or transport interaction
-        // in other words, a rough measurement of whether an action was taken
-        bool processed : 1;
-        // indicates an immediate additional call is requested
-        // (often used to give caller chance to notice interesting states)
-        // when used with process_incoming, indicates a process_outgoing is requested
-        bool immediate : 1;
-        // indicates state machine has reached the end of its cycle and will
-        // return to IDLE (or equivelant).  Note that multiples of these may
-        // appear if 'immediate' is set, signaling a potentially elongated shutdown
-        bool end : 1;
-
-        result(const result&) = default;
-
-        constexpr result(bool processed, bool immediate = false) :
-            processed{processed},
-            immediate{immediate},
-            end{false}
-        {
-
-        }
-
-        // DEBT: Only for legacy compatibility, eliminate or rework this once we fully
-        // transition to 'result' awareness
-        constexpr operator bool() const { return processed; }
-
-        static constexpr result more() { return result{true, true}; }
-        static constexpr result ok() { return result{true, false}; }
-        static constexpr result ignore() { return result{false, false}; }
-    };
+    using result = sm::v0::result;
 #else
     using result = bool;
 #endif

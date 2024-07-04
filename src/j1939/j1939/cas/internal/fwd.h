@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/cstdint.h>
+
 #if __cpp_lib_concepts
 #include <concepts>
 #endif
