@@ -29,15 +29,18 @@ inline responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
 
 inline namespace v0 {
 
-template <class TimePoint>
+template <class TimePoint, class Policy>
 template <class Transport>
-auto transport_protocol<TimePoint>::process_incoming(
+auto transport_protocol<TimePoint, Policy>::process_incoming(
     Transport&, const pdu<pgns::tp_cm>& p, const context& ctx) -> result
 {
     const uint8_t da = p.destination_address();
-    if(da != ctx.self_address &&
-        p.control() != modes::bam)
+    if(da != ctx.self_address && p.control() != modes::bam)
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+        return result::ignore();
+#else
         return false;
+#endif
 
     switch(state_)
     {
@@ -115,7 +118,11 @@ auto transport_protocol<TimePoint>::process_incoming(
                     originator().current_packet_per_cts_ = 0;
                     originator().max_packets_per_cts_ = p.max_packets();
                     state_ = ORIGINATOR_RECEIVED_CTS;
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+                    return result::ok();
+#else
                     return true;
+#endif
 
                 case modes::ack:
                     // We could check here if we truly sent out everything we wanted to
@@ -123,14 +130,22 @@ auto transport_protocol<TimePoint>::process_incoming(
 #if FEATURE_EMBR_J1939_TP_FUTURE
                     next_event_ = {};
 #endif
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+                    return result::ok();
+#else
                     return true;
+#endif
 
                 case modes::abort:
                     state_ = ORIGINATOR_RECEIVED_ABORT;
 #if FEATURE_EMBR_J1939_TP_FUTURE
                     next_event_ = {};
 #endif
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+                    return result::ok();
+#else
                     return true;
+#endif
 
                 default:    break;
             }
@@ -143,7 +158,11 @@ auto transport_protocol<TimePoint>::process_incoming(
                     // DEBT: Probably want to handle timeouts here in addition to
                     // 'outgoing' section
                     state_ = ORIGINATOR_RECEIVED_CTS;
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+                    return result::ok();
+#else
                     return true;
+#endif
 
                 default:    break;
             }
@@ -153,13 +172,17 @@ auto transport_protocol<TimePoint>::process_incoming(
         default: break;
     }
 
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+    return result::ignore();
+#else
     return false;
+#endif
 }
 
 #if FEATURE_EMBR_J1939_TP_RESPONDER
-template <class TimePoint>
+template <class TimePoint, class Policy>
 template <class Transport>
-auto transport_protocol<TimePoint>::process_incoming(
+auto transport_protocol<TimePoint, Policy>::process_incoming(
     Transport&,
     const pdu<pgns::tp_dt>& p,
     const context& ctx) -> result
@@ -207,6 +230,9 @@ auto transport_protocol<TimePoint>::process_incoming(
                 // since we didn't empty out payload
                 next_event_ = ctx.current + timeouts::T1;
 #endif
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+                return result::more();
+#endif
             }
             // No out-of-sequence flow control when in BAM mode
             else if(!responder().bam())
@@ -214,19 +240,27 @@ auto transport_protocol<TimePoint>::process_incoming(
                 state_ = RESPONDER_SENDING_CTS;
             }
 
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+            return result::ok();
+#else
             return true;
+#endif
         }
 
         default: break;
     }
 
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+    return result::ignore();
+#else
     return false;
+#endif
 }
 #endif
 
-template <class TimePoint>
+template <class TimePoint, class Policy>
 template <class Transport>
-auto transport_protocol<TimePoint>::process_outgoing(Transport& t, const context& ctx) -> result
+auto transport_protocol<TimePoint, Policy>::process_outgoing(Transport& t, const context& ctx) -> result
 {
     using traits = transport_traits<Transport>;
 
@@ -525,7 +559,11 @@ auto transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
                 else
                     state_ = RESPONDER_SENDING_CTS;
 
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+                return result::ok();
+#else
                 return true;
+#endif
             }
             break;
 #endif
@@ -545,8 +583,8 @@ inline bool transport_protocol::process_time(time_point)
 }
  */
 
-template <class TimePoint>
-inline void transport_protocol<TimePoint>::initiate_originator(
+template <class TimePoint, class Policy>
+inline void transport_protocol<TimePoint, Policy>::initiate_originator(
     uint16_t sz,
     const context&,
     uint8_t dest_address,
@@ -569,8 +607,8 @@ inline void transport_protocol<TimePoint>::initiate_originator(
 }
 
 #if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
-template <class TimePoint>
-inline void transport_protocol<TimePoint>::initiate_originator(
+template <class TimePoint, class Policy>
+inline void transport_protocol<TimePoint, Policy>::initiate_originator(
     uint8_t dest_address,
     uint32_t pgn,
     const void* payload,
@@ -583,8 +621,8 @@ inline void transport_protocol<TimePoint>::initiate_originator(
 }
 #endif
 
-template <class TimePoint>
-inline auto transport_protocol<TimePoint>::next_event() const -> time_point
+template <class TimePoint, class Policy>
+inline auto transport_protocol<TimePoint, Policy>::next_event() const -> time_point
 {
 #if FEATURE_EMBR_J1939_TP_FUTURE
     // DEBT: In this case, parent class will do.  Only doing this during transition
@@ -616,8 +654,8 @@ inline auto transport_protocol<TimePoint>::next_event() const -> time_point
 #endif
 }
 
-template <class TimePoint>
-inline void transport_protocol<TimePoint>::initiate_responder(uint8_t originator_address)
+template <class TimePoint, class Policy>
+inline void transport_protocol<TimePoint, Policy>::initiate_responder(uint8_t originator_address)
 {
 #if FEATURE_EMBR_J1939_STRICT_STATES
     assert(state_ == IDLE);

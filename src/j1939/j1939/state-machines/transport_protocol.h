@@ -31,7 +31,7 @@ namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 // DEBT: Probably we want a separate responder & originator state machine
 // "SENDING" states are a signal for external party to pick up a message from
 // state machine and send it
-template <class TimePoint>
+template <class TimePoint, class Policy = sm::tp::v0::policy>
 class transport_protocol :
 #if FEATURE_EMBR_J1939_TP_FUTURE
     // DEBT: Prefer this after base once feature is fully active

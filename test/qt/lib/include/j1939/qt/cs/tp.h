@@ -23,6 +23,7 @@ class TransportProtocol : public Base
     // DEBT: Heavy debt, need context to fully support time_point
     using context_type = sm_type::context; //<clock::time_point>;
     using states = sm_type::states;
+    using result = j1939::cs::v1::base::result;
 
     // Tracked according to:
     // - source address when responder

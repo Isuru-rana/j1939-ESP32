@@ -29,21 +29,23 @@ public:
     template <pgns pgn>
     using data_field = const embr::j1939::layer1::data_field<pgn>;
 
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
     // EXPERIMENTAL
     struct result
     {
         // indicates an internal state change or transport interaction
         // in other words, a rough measurement of whether an action was taken
-        const bool processed : 1;
+        bool processed : 1;
         // indicates an immediate additional call is requested
         // (often used to give caller chance to notice interesting states)
         // when used with process_incoming, indicates a process_outgoing is requested
-        const bool immediate : 1;
+        bool immediate : 1;
         // indicates state machine has reached the end of its cycle and will
         // return to IDLE (or equivelant).  Note that multiples of these may
         // appear if 'immediate' is set, signaling a potentially elongated shutdown
-        const bool end : 1;
+        bool end : 1;
+
+        result(const result&) = default;
 
         constexpr result(bool processed, bool immediate = false) :
             processed{processed},

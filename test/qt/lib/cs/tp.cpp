@@ -22,22 +22,23 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
 {
     // DEBT: process_incoming needs an lvalue
     transport_type t{device};
+    // DEBT: Somehow it's necessary to force const here for
+    // overloaded const accessor below to get picked up
+    const auto& tp = tp_;
 
     context_type ctx(clock::now(), sa_);
 
-    internal::v2::process_incoming(tp_, t, f, ctx);
+    result r = internal::v2::process_incoming(tp_, t, f, ctx);
 
     switch(tp_.state())
     {
         case states::RESPONDER_RECEIVING_DT:
         {
+            // NOTE: tp_.payload() side-effect moves us to RESPONDER_RECEIVED_DT
             const estd::span<const uint8_t> p(tp_.payload());
             buffer_.append((const char*)p.data(), p.size());
 
-            // DEBT: Somehow it's necessary to force const here for
-            // overloaded const accessor below to get picked up
-            const auto& tp = tp_;
-
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 0
             const bool last_one = tp.responder().last_one();
 
             // DEBT:
@@ -47,10 +48,35 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
             // - send cts to orig for batched mode
             tp_.process_outgoing(t, ctx);
             return last_one;
+#else
+            break;
+#endif
         }
 
         default:    return false;
     }
+
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+    bool last_one = false;
+    unsigned guard = 0;
+
+    while(r.immediate && ++guard < 5)
+    {
+        switch(tp_.state())
+        {
+            case states::RESPONDER_RECEIVED_DT:
+                last_one = tp.responder().last_one();
+                break;
+
+            default:
+                break;
+        }
+
+        r = tp_.process_outgoing(t, ctx);
+    }
+
+    return last_one;
+#endif
 }
 
 
@@ -252,6 +278,7 @@ void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, const co
 
 #if FEATURE_EMBR_J1939_TP_FUTURE
     unsigned guard = 0;
+    //result r = result::ignore(); // prep, don't need this yet though
 
     while(tp_.elapsed(ctx) && ++guard < 5)
 #else

@@ -29,6 +29,12 @@ inline void prep_abort(
 }
 
 
+struct policy
+{
+    static constexpr bool time_check = true;
+};
+
+
 class base :
     public tp::v0::enum_base,
     public cs::v1::base

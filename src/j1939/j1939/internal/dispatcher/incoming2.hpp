@@ -3,6 +3,7 @@
 #include <can/fwd.h>
 
 #include "dispatch.hpp"
+#include "../../cs/base.h"      // for cs::base::result
 
 namespace embr { namespace j1939 {
 
@@ -38,9 +39,11 @@ template <class Transport>
 class process_incoming_functor
 {
     using frame = typename Transport::frame;
+    using result = cs::v1::base::result;
+
 public:
     template <pgns pgn, class Impl, class ...Args>
-    constexpr bool operator()(j1939::internal::in_place_pgn<pgn>, Impl& impl, Transport& t, const frame& f, Args&&...args) const
+    constexpr result operator()(j1939::internal::in_place_pgn<pgn>, Impl& impl, Transport& t, const frame& f, Args&&...args) const
     {
         //using traits = j1939::frame_traits<frame>;
         using traits = can::frame_traits<frame>;
@@ -55,7 +58,7 @@ public:
     }
 
     template <class Impl, class ...Args>
-    constexpr bool operator()(pgns p, Impl& impl, Transport& t, const frame& frame,
+    constexpr result operator()(pgns p, Impl& impl, Transport& t, const frame& frame,
         Args&&...args) const
     {
         return impl.process_incoming_default(t,
@@ -81,7 +84,7 @@ public:
 };
 
 template <class Transport, class Impl, class ...Args>
-constexpr bool process_incoming(Impl& impl,
+constexpr cs::v1::base::result process_incoming(Impl& impl,
     Transport& transport,
     const typename estd::remove_cvref_t<Transport>::frame& f,
     Args&&...args)
