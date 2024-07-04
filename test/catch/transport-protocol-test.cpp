@@ -29,6 +29,7 @@ struct helper
     using time_point = TimePoint;
     transport_protocol<time_point> tp_orig, tp_recv;
     using states = sm::tp::v0::base::states;
+    using result = cs::v1::base::result;
 
     // Theory being CA/state machine should not get confused by its own traffic,
     // plus we auto aggregate to both for convenience
@@ -54,9 +55,26 @@ struct helper
         time_point c{ms_type(current_ms)};
 
         unsigned processed = 0;
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT
+        result r = result::more();
 
+        while(r.immediate)
+        {
+            r = tp_orig.process_outgoing(t, ctx{c, orig_sa});
+            processed += r.processed;
+        }
+
+        r = result::more();
+
+        while(r.immediate)
+        {
+            r = tp_recv.process_outgoing(t, ctx{c, orig_sa});
+            processed += r.processed;
+        }
+#else
         processed += tp_orig.process_outgoing(t, ctx{c, orig_sa});
         processed += tp_recv.process_outgoing(t, ctx{c, recv_sa});
+#endif
 
         return processed;
     }
