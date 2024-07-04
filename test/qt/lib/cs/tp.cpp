@@ -18,6 +18,8 @@ TransportProtocol::TransportProtocol(QObject *parent) :
     connect(&timer_, &QTimer::timeout, this, &TransportProtocol::processOutgoing2);
 }
 
+// DEBT: We're too greedy and design intends to answer the call of ANY RTS.  That will
+// interrupt regular multi node tp flow.  Time is ticking before this is a FIX
 bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
 {
     // DEBT: process_incoming needs an lvalue

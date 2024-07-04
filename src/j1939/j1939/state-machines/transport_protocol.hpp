@@ -76,13 +76,21 @@ auto transport_protocol<TimePoint, Policy>::process_incoming(
 #if FEATURE_EMBR_J1939_TP_FUTURE
                     next_event_ = ctx.current + timeouts::T1;
 #endif
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+                    return result::more();
+#else
                     return true;
+#endif
                 }
 #endif
 
                 // "If a CTS is received while a connection is not established, it shall be ignored."
                 case modes::cts:
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+                    return result::ignore();
+#else
                     return false;
+#endif
 
                 // RTS & BAM and sorta CTS are the only valid message for this to receive when idle
                 default:
@@ -260,7 +268,9 @@ auto transport_protocol<TimePoint, Policy>::process_incoming(
 
 template <class TimePoint, class Policy>
 template <class Transport>
-auto transport_protocol<TimePoint, Policy>::process_outgoing(Transport& t, const context& ctx) -> result
+auto transport_protocol<TimePoint, Policy>::process_outgoing(
+    Transport& t,
+    const context& ctx) -> result
 {
     using traits = transport_traits<Transport>;
 
@@ -461,7 +471,11 @@ auto transport_protocol<TimePoint, Policy>::process_outgoing(Transport& t, const
 #if FEATURE_EMBR_J1939_TP_FUTURE
             next_event_ = ctx.current + timeouts::T2;
 #endif
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+            return result::ok();
+#else
             return true;
+#endif
         }
 
         case RESPONDER_SENDING_CTS_HOLD:
