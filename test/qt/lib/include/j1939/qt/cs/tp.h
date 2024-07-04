@@ -45,7 +45,7 @@ class TransportProtocol : public Base
         // DEBT: returns whether entire buffer is received.  Would prefer to interrogate
         // responder().last_one() once we work out forced process_outgoing DEBT seen in frameReceived
         bool frameReceived(QCanBusDevice *, const QCanBusFrame &);
-        void processOutgoing(QCanBusDevice *, const context_type&);
+        void processOutgoing(QCanBusDevice *, const context_type&, result = result::ignore());
         void send(addr_type sa, addr_type da, pgns pgn, const QByteArray& v);
     };
 

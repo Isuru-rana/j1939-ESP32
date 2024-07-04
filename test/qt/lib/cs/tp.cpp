@@ -64,8 +64,13 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
     }
 
 #if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
-    bool last_one = false;
+    /*
+    processOutgoing(device, ctx, r);
+    bool last_one =
+        tp.role() == decltype(tp_)::ROLE_ORIGINATOR && tp.responder().last_one();
+    */
     unsigned guard = 0;
+    bool last_one = false;
 
     while(r.immediate && ++guard < 5)
     {
@@ -275,7 +280,10 @@ void TransportProtocol::send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&
 }
 
 
-void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, const context_type& ctx)
+void TransportProtocol::Session::processOutgoing(
+    QCanBusDevice* device,
+    const context_type& ctx,
+    result r)
 {
     transport_type t{device};
 
@@ -297,9 +305,8 @@ void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, const co
 
 #if FEATURE_EMBR_J1939_TP_FUTURE
     unsigned guard = 0;
-    //result r = result::ignore(); // prep, don't need this yet though
 
-    while(tp_.elapsed(ctx) && ++guard < 5)
+    while((r.immediate || tp_.elapsed(ctx)) && ++guard < 5)
 #else
     const time_point next_event = tp_.next_event();
 
@@ -309,7 +316,7 @@ void TransportProtocol::Session::processOutgoing(QCanBusDevice* device, const co
         // DEBT: state machine itself doesn't filter process_outgoing by next_event, but maybe
         // it should.  Decision is because some consumers themselves are schedulers and only call
         // SM when it's time.  Smells of premature optimization
-        tp_.process_outgoing(t, ctx);
+        r = tp_.process_outgoing(t, ctx);
 
         qDebug()
             << "TransportProtocol::Session::processOutgoing phase 2:"
