@@ -52,6 +52,7 @@ qt_add_qml_module(${PROJECT_NAME}
         cs/generic.cpp
         cs/network.cpp
         cs/tp.cpp
+        cs/tp-session.cpp
         plugin.cpp
         session.cpp
         j1939lib.cpp j1939lib.h

@@ -248,7 +248,8 @@ auto transport_protocol<TimePoint, Policy>::process_incoming(
                 next_event_ = ctx.current + timeouts::T1;
 #endif
 #if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
-                return result::more();
+                // Not 'more' since we expect a pause for consumer to pick up payload
+                return result::ok();
 #endif
             }
             // No out-of-sequence flow control when in BAM mode
@@ -317,7 +318,11 @@ auto transport_protocol<TimePoint, Policy>::process_outgoing(
                 state_ = ORIGINATOR_SENDING_DT;
                 // DEBT: Fallthrough would be more elegant
                 //process_outgoing(t, ctx);
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT
+                return result::more();
+#else
                 return true;
+#endif
             }
             // else, underflow error
             break;
@@ -351,13 +356,18 @@ auto transport_protocol<TimePoint, Policy>::process_outgoing(
             traits::send(t, dt);
 
             state_ = ORIGINATOR_SENT_DT;
+
 #if FEATURE_EMBR_J1939_TP_FUTURE
             // DEBT: 25 is arbitrary lower limit below timeout::Tr - needs improvement
             next_event_ = ctx.current + (bam ? timeouts::bam : timeouts::mst{25});
 #else
             last_event_ = ctx.current;
 #endif
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT
+            return result::ok();
+#else
             return true;
+#endif
         }
 
         case ORIGINATOR_SENT_DT:
@@ -377,6 +387,11 @@ auto transport_protocol<TimePoint, Policy>::process_outgoing(
             {
                 originator().payload_ += 7;
                 state_ = ORIGINATOR_SENDING_DT;
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT
+                return result::more();
+#else
+                return true;
+#endif
             }
 #endif
 
@@ -527,7 +542,14 @@ auto transport_protocol<TimePoint, Policy>::process_outgoing(
                     state_ = RESPONDER_SENT_EOM_ACK;
                 }
 
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                next_event_ = {};
+#endif
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+                return result::ok();
+#else
                 return true;
+#endif
             }
             else if(responder().last_one_per_batch())
             {
@@ -543,6 +565,9 @@ auto transport_protocol<TimePoint, Policy>::process_outgoing(
                 state_ = RESPONDER_TIMEOUT;
 
                 traits::send(t, responder().build_abort(ctx, abort_reasons::timeout));
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                next_event_ = {};
+#endif
             }
             // ---
             break;
@@ -578,6 +603,9 @@ auto transport_protocol<TimePoint, Policy>::process_outgoing(
                     state_ = ORIGINATOR_TIMEOUT;
 
                     traits::send(t, responder().build_abort(ctx, abort_reasons::timeout));
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = {};
+#endif
                 }
                 else
                     state_ = RESPONDER_SENDING_CTS;

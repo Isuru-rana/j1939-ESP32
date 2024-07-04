@@ -40,6 +40,8 @@ class TransportProtocol : public Base
 
         QMutex mutex_;
 
+        bool processing_ = false;
+
         // NOTE: Consider storing QCanBusDevice* here for multiple transport outs
 
         // DEBT: returns whether entire buffer is received.  Would prefer to interrogate

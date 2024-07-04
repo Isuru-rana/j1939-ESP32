@@ -18,80 +18,6 @@ TransportProtocol::TransportProtocol(QObject *parent) :
     connect(&timer_, &QTimer::timeout, this, &TransportProtocol::processOutgoing2);
 }
 
-// DEBT: We're too greedy and design intends to answer the call of ANY RTS.  That will
-// interrupt regular multi node tp flow.  Time is ticking before this is a FIX
-bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
-{
-    // DEBT: process_incoming needs an lvalue
-    transport_type t{device};
-    // DEBT: Somehow it's necessary to force const here for
-    // overloaded const accessor below to get picked up
-    const auto& tp = tp_;
-
-    context_type ctx(clock::now(), sa_);
-
-    result r = j1939::v2::process_incoming(tp_, t, f, ctx);
-
-    switch(tp_.state())
-    {
-        case states::RESPONDER_RECEIVING_DT:
-        {
-            // NOTE: tp_.payload() side-effect moves us to RESPONDER_RECEIVED_DT
-            const estd::span<const uint8_t> p(tp_.payload());
-            buffer_.append((const char*)p.data(), p.size());
-
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 0
-            const bool last_one = tp.responder().last_one();
-
-            // DEBT:
-            // Scheduled timeout is for listening to originator,
-            // But we need to process now to evaluate things like:
-            // - last packet eval
-            // - send cts to orig for batched mode
-            tp_.process_outgoing(t, ctx);
-            return last_one;
-#else
-            break;
-#endif
-        }
-
-        default:
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 0
-            return false;
-#else
-            break;
-#endif
-    }
-
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
-    /*
-    processOutgoing(device, ctx, r);
-    bool last_one =
-        tp.role() == decltype(tp_)::ROLE_ORIGINATOR && tp.responder().last_one();
-    */
-    unsigned guard = 0;
-    bool last_one = false;
-
-    while(r.immediate && ++guard < 5)
-    {
-        switch(tp_.state())
-        {
-            case states::RESPONDER_RECEIVED_DT:
-                last_one = tp.responder().last_one();
-                break;
-
-            default:
-                break;
-        }
-
-        r = tp_.process_outgoing(t, ctx);
-    }
-
-    return last_one;
-#endif
-}
-
-
 void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
 {
     // DEBT: Not ideal that we do pool management in here, but pools being somewhat
@@ -277,57 +203,6 @@ void TransportProtocol::send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&
     context_type ctx(clock::now(), sess.sa_);
     sess.tp_.process_outgoing(t, ctx);
     schedule(sess.tp_.next_event());
-}
-
-
-void TransportProtocol::Session::processOutgoing(
-    QCanBusDevice* device,
-    const context_type& ctx,
-    result r)
-{
-    transport_type t{device};
-
-    {
-        QMutexLocker ml(&mutex_);
-
-        if(tp_.state() == states::IDLE ||
-            tp_.state() == states::OFFLINE) return;
-    }
-
-    // DEBT: Upgrade to_string to handle different bases
-    auto str = estd::to_string((int)tp_.state());
-
-    qDebug()
-        << "TransportProtocol::Session::processOutgoing phase 1:"
-        << this
-        << j1939::to_string(tp_.state(), str.data())
-        << " next:" << std::chrono::duration_cast<milliseconds>(tp_.next_event() - Base::startup);
-
-#if FEATURE_EMBR_J1939_TP_FUTURE
-    unsigned guard = 0;
-
-    while((r.immediate || tp_.elapsed(ctx)) && ++guard < 5)
-#else
-    const time_point next_event = tp_.next_event();
-
-    if(ctx.current >= next_event)
-#endif
-    {
-        // DEBT: state machine itself doesn't filter process_outgoing by next_event, but maybe
-        // it should.  Decision is because some consumers themselves are schedulers and only call
-        // SM when it's time.  Smells of premature optimization
-        r = tp_.process_outgoing(t, ctx);
-
-        qDebug()
-            << "TransportProtocol::Session::processOutgoing phase 2:"
-            << this
-            << j1939::to_string(tp_.state());
-            //<< ctx.current.time_since_epoch();
-    }
-
-#if FEATURE_EMBR_J1939_TP_FUTURE
-    if(guard == 5)  qDebug() << "GUARD HIT";
-#endif
 }
 
 
