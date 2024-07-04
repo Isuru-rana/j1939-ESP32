@@ -116,6 +116,7 @@ auto transport_protocol<TimePoint, Policy>::process_incoming(
                 // Handshake stuff, kind of an intermediate ack and occasionally re-requesting
                 // already-sent packets
                 case modes::cts:
+                {
                     if(p.to_send() != originator().last_sequence_ + 1)
                     {
                         // resend/retransmit time
@@ -127,10 +128,15 @@ auto transport_protocol<TimePoint, Policy>::process_incoming(
                     originator().max_packets_per_cts_ = p.max_packets();
                     state_ = ORIGINATOR_RECEIVED_CTS;
 #if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
-                    return result::ok();
+                    // Auto payload can immediately send out a DT
+                    // Otherwise, external party must load payload to what amounts to SENDING_DT phase
+                    // which ORIGINATOR_RECEIVED_CTS currently sorta counts as
+                    const bool auto_payload = originator().auto_payload_;
+                    return auto_payload ? result::more() : result::ok();
 #else
                     return true;
 #endif
+                }
 
                 case modes::ack:
                     // We could check here if we truly sent out everything we wanted to
@@ -163,14 +169,17 @@ auto transport_protocol<TimePoint, Policy>::process_incoming(
             switch(p.control())
             {
                 case modes::cts:
+                {
                     // DEBT: Probably want to handle timeouts here in addition to
                     // 'outgoing' section
                     state_ = ORIGINATOR_RECEIVED_CTS;
 #if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
-                    return result::ok();
+                    const bool auto_payload = originator().auto_payload_;
+                    return auto_payload ? result::more() : result::ok();
 #else
                     return true;
 #endif
+                }
 
                 default:    break;
             }

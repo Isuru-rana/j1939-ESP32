@@ -55,7 +55,12 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
 #endif
         }
 
-        default:    return false;
+        default:
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 0
+            return false;
+#else
+            break;
+#endif
     }
 
 #if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
@@ -94,14 +99,16 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
     decltype(sessions_)::iterator it;
     time_point next_event = time_point::max();
 
-    // DEBT: process_incoming needs an lvalue
-    transport_type t{device};
-
     // Only place in which this mutex_ can lock for a long time.
     mutex_.lock();
 
-    for(it = sessions_.begin(); it != sessions_.end(); )
+    std::vector<session_type> sessions(sessions_);
+
+    mutex_.unlock();
+
+    for(it = sessions.begin(); it != sessions.end(); )
     {
+        session_type __sess = *it;
         Session* _sess = it->get();
         Session& sess = *_sess;
         const Session& csess = sess;
@@ -110,7 +117,13 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
 
         if(sess.tp_.state() == states::IDLE)
         {
-            if(++idle_count > 1)
+            ++idle_count;
+
+            if(idle_count == 1)
+            {
+                idle_ = __sess;
+            }
+            else if(idle_count > 1)
             {
                 // We always want one and only one IDLE.  Flip others into
                 // offline mode to pool them
@@ -124,7 +137,7 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
         {
             if(++offline_count > offline_threshold)
             {
-                it = sessions_.erase(it);
+                it = sessions.erase(it);
             }
             else
                 offline_candidate_ = *it;
@@ -191,6 +204,10 @@ void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame&
         if(tp_next_event != none)
             next_event = std::min(next_event, tp_next_event);
     }
+
+    mutex_.lock();
+
+    sessions_ = sessions;
 
     // NOTE: Beware, all this gets activated even when it's not tp traffic!  Therefore,
     // may want to skip scheduling when next_event_ is already scheduled
@@ -345,6 +362,16 @@ void TransportProtocol::processOutgoing(QCanBusDevice* device)
     next_event_ = next_event == time_point::max() ? time_point{} : next_event;  // DEBT
 
     schedule(next_event_);
+}
+
+void TransportProtocol::listen(addr_type address)
+{
+    // DEBT: Can only listen for one address at this time
+
+    if(idle_)
+    {
+        idle_->sa_ = address;
+    }
 }
 
 

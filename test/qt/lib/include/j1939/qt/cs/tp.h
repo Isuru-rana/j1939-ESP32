@@ -36,7 +36,7 @@ class TransportProtocol : public Base
         QByteArray buffer_;
 
         // If originating, we track sa here (since we're a pool & state machine doesn't track this)
-        uint8_t sa_;
+        uint8_t sa_ = addresses::null;
 
         QMutex mutex_;
 
@@ -60,6 +60,7 @@ class TransportProtocol : public Base
     // frameReceived which in turn MT-changes vector and sometimes modifies Session values
     std::vector<session_type> sessions_;
     session_type offline_candidate_;
+    session_type idle_;
 
     using iterator = std::vector<session_type>::iterator;
 
@@ -103,6 +104,9 @@ public:
     {
         broadcast(sa, pgn, v.toUtf8());
     }
+
+    // Listen for incoming tp:cm's on a particular address (think socket bind)
+    Q_INVOKABLE void listen(addr_type address);
 
 
     // TODO: This is only for the rare case of request whose payload is > 8 bytes

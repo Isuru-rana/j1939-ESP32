@@ -50,10 +50,13 @@ Window {
                 text: "software_id"
                 onClicked: {
                     // software id
-                    //Session.tp.broadcast(0, 0xFEDA, "0123456789ABCDEF");
+                    var software_id = 0xFEDA;
+                    var payload = "0123456789ABCDEF";
+                    Session.tp.broadcast(0, software_id, payload);
 
-                    // Wants to work, but nobody is listending yet to send a CTS
-                    Session.tp.send(0x77, 0x78, 0xFEDA, "0123456789ABCDEF");
+                    // Coming along
+                    //Session.tp.listen(0x78);
+                    //Session.tp.send(0x77, 0x78, software_id, payload);
                 }
             }
         }
