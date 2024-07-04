@@ -44,6 +44,12 @@ public:
     }
 
     const can_id& raw() const { return *this; }
+
+    // TODO: See if QML duck-type finds this guy like it does with a QObject
+    Q_INVOKABLE QString toString() const
+    {
+        return {};
+    }
 };
 
 }}

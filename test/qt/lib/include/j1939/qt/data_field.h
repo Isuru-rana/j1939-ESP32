@@ -10,13 +10,15 @@
 
 namespace embr::j1939::qt { inline namespace v0 {
 
-// EXPERIMENTAL
 // Auto population of PGN data field
 // TODO: setProperty & friends aren't visible from QML (wow)
 // See https://stackoverflow.com/questions/34379524/how-to-dynamically-add-remove-qml-properties-inside-c
 // Need https://doc.qt.io/qt-6.5/qqmlpropertymap.html
 class DataField : public QObject
 {
+    // EXPERIMENTAL Not relied upon
+    QByteArray raw_;
+
     QQmlPropertyMap map_;
     QQmlPropertyMap name_to_short_name_;
     QQmlPropertyMap unit_name_;
@@ -58,6 +60,7 @@ class DataField : public QObject
     using unit = estd::internal::units::unit_base<Rep, Period, Tag, F>;
 
     Q_PROPERTY(QQmlPropertyMap* map READ map CONSTANT)
+    Q_PROPERTY(QByteArray raw READ raw)
 
 public:
     DataField(QObject* parent = nullptr) :
@@ -65,6 +68,8 @@ public:
     {}
 
     QQmlPropertyMap* map() { return &map_; }
+
+    const QByteArray& raw() const { return raw_; }
 
     QString short_name(const QString& s) const
     {
@@ -143,6 +148,7 @@ public:
     template <pgns pgn, class Container>
     void populate(const embr::j1939::data_field<pgn, Container>& v)
     {
+        raw_.assign(v.begin(), v.end());
 #if __cpp_fold_expressions
 
 #if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER

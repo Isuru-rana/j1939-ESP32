@@ -94,6 +94,11 @@ public:
     }
 
 
+    Q_INVOKABLE void send(addr_type sa, addr_type da, pgns pgn, const QString& v)
+    {
+        send(sa, da, pgn, v.toUtf8());
+    }
+
     Q_INVOKABLE void broadcast(uint8_t sa, pgns pgn, const QString& v)
     {
         broadcast(sa, pgn, v.toUtf8());
