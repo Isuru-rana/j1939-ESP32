@@ -117,8 +117,11 @@ public:
         RESPONDER_SENT_CTS,
         RESPONDER_SENDING_CTS_HOLD,
         RESPONDER_SENT_CTS_HOLD,
+
+        // Indicates DT appeared and now we're waiting for state machine consumer to pick it up
         RESPONDER_RECEIVING_DT,
         RESPONDER_RECEIVED_DT,
+
         // Need this because BAM doesn't do EOM - though if we're clever we can use
         // responder().last_one()
         RESPONDER_RECEIVED_ALL_DT,

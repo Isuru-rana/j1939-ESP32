@@ -10,6 +10,44 @@
 
 namespace embr::j1939::qt::cs { inline namespace v1 {
 
+static void debugOut(const sm::tp::v0::originator_state& originator)
+{
+    qDebug()
+        << "originator"
+        << "bam:" << originator.bam()
+        << "last_seq:" << originator.last_sequence()
+        << "sent_all:" << originator.sent_everything();
+}
+
+
+static void debugOut(const sm::tp::v0::responder_state& responder)
+{
+    qDebug()
+        << "responder"
+        << "bam:" << responder.bam()
+        << "last_seq:" << responder.seq()
+        << "last_one:" << responder.last_one()
+        << "max_pkt:" << responder.max_packets();
+}
+
+template <class TimePoint, class Policy>
+static void debugOut(const sm::transport_protocol<TimePoint, Policy>& tp)
+{
+    switch(tp.role())
+    {
+        case sm::tp::base::ROLE_ORIGINATOR:
+            debugOut(tp.originator());
+            break;
+
+        case sm::tp::base::ROLE_RESPONDER:
+            debugOut(tp.responder());
+            break;
+
+        default: break;
+    }
+}
+
+
 // DEBT: We're too greedy and design intends to answer the call of ANY RTS.  That will
 // interrupt regular multi node tp flow.  Time is ticking before this is a FIX
 bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
@@ -23,6 +61,10 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
     context_type ctx(clock::now(), sa_);
 
     result r = j1939::v2::process_incoming(tp_, t, f, ctx);
+
+    //debugOut(tp_);
+
+    bool last_one = false;
 
     switch(tp_.state())
     {
@@ -43,6 +85,7 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
             tp_.process_outgoing(t, ctx);
             return last_one;
 #else
+            last_one = tp.responder().last_one();
             break;
 #endif
         }
@@ -57,29 +100,6 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
 
 #if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
     processOutgoing(device, ctx, r);
-    bool last_one =
-        tp.role() == sm_type::ROLE_RESPONDER && tp.responder().last_one();
-
-    /*
-    unsigned guard = 0;
-    bool last_one = false;
-
-    while(r.immediate && ++guard < 5)
-    {
-        switch(tp_.state())
-        {
-            case states::RESPONDER_RECEIVED_DT:
-                last_one = tp.responder().last_one();
-                break;
-
-            default:
-                break;
-        }
-
-        r = tp_.process_outgoing(t, ctx);
-    }
-
-    */
     return last_one;
 #endif
 }
@@ -120,19 +140,25 @@ void TransportProtocol::Session::processOutgoing(
     if(ctx.current >= next_event)
 #endif
     {
+        mutex_.lock();
         processing_ = true;
+        mutex_.unlock();
+
         // DEBT: state machine itself doesn't filter process_outgoing by next_event, but maybe
         // it should.  Decision is because some consumers themselves are schedulers and only call
         // SM when it's time.  Smells of premature optimization
         r = tp_.process_outgoing(t, ctx);
 
+        mutex_.lock();
         processing_ = false;
+        mutex_.unlock();
 
         qDebug()
             << "TransportProtocol::Session::processOutgoing phase 2:"
             << this
             << j1939::to_string(tp_.state());
         //<< ctx.current.time_since_epoch();
+        //debugOut(tp_);
     }
 
 #if FEATURE_EMBR_J1939_TP_FUTURE

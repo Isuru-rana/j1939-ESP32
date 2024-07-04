@@ -168,6 +168,12 @@ public:
 
         state_ = RESPONDER_RECEIVED_DT;
 
+#if FEATURE_EMBR_J1939_TP_FUTURE
+        if(responder().last_one())
+            // DEBT: Need std <----> estd -= operator from estd
+            next_event_ += -timeouts::T1;
+#endif
+
         return responder().payload();
     }
 
