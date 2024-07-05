@@ -4,6 +4,15 @@
 
 #include <can/loopback.h>
 
+#include <j1939/cs/base.h>
+
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT
+constexpr bool operator ==(embr::j1939::cs::v1::base::result lhs, bool rhs)
+{
+    return lhs.processed == rhs;
+}
+#endif
+
 #include <j1939/ca.hpp>
 
 #include <j1939/cas/lighting_command.hpp>
@@ -64,6 +73,7 @@ TEST_CASE("Controller Applications")
     using frame = can::loopback_transport::frame;
     using frame_type = frame;
     using frame_traits = j1939::frame_traits<frame>;
+    using result = cs::v1::base::result;
 
     ostringstream out;
     const auto& out_s = out.rdbuf()->str();
@@ -89,7 +99,9 @@ TEST_CASE("Controller Applications")
 
         REQUIRE(ca.switch_bank_control_counter == 0);
 
-        REQUIRE(ca.process_incoming(t, f));
+        result r = ca.process_incoming(t, f);
+
+        REQUIRE(r == true);
 
         REQUIRE(ca.switch_bank_control_counter == 1);
     }
@@ -103,7 +115,7 @@ TEST_CASE("Controller Applications")
         r.payload().control(controls::rts);
         r.payload().pgn((uint32_t)pgns::NAME_management_message);
 
-        process_incoming(impl_, t, frame_traits::create(r));
+        v2::process_incoming(impl_, t, frame_traits::create(r));
     }
     SECTION("lighting command (ca)")
     {

@@ -4,6 +4,17 @@
 
 #include <can/loopback.h>
 
+#include <j1939/cs/base.h>
+
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT
+constexpr bool operator ==(embr::j1939::cs::v1::base::result lhs, bool rhs)
+{
+    return lhs.processed == rhs;
+}
+#endif
+
+
+
 #include <j1939/ca.hpp>
 
 #include <j1939/addresses.h>
@@ -71,6 +82,7 @@ inline bool process_incoming(Impl& impl, Transport& t, const j1939::pdu<pgn> pdu
 
     return process_incoming(state, f);
 }
+
 
 TEST_CASE("Controller Applications (network)")
 {
@@ -344,7 +356,7 @@ TEST_CASE("Controller Applications (network)")
                 addresses::axle_steering,
                 addresses::global);
 
-            r = process_incoming(n, t, p_claim, context(now));
+            r = n.process_incoming(t, p_claim, context(now));
 
             REQUIRE(r == false);
             REQUIRE(n.state() == sm::network_base::states::claiming);
@@ -367,7 +379,7 @@ TEST_CASE("Controller Applications (network)")
 
             now += milliseconds(50);
 
-            r = process_incoming(n, t, p_claim, context(now));
+            r = n.process_incoming(t, p_claim, context(now));
 
             // DEBT: Probably want to switch this to 'true' to indicate messages was noticed
             // and something was done about it
