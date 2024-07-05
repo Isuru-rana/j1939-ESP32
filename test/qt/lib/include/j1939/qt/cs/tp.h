@@ -30,6 +30,8 @@ class TransportProtocol : public Base
     // - dest address when originator
     struct Session
     {
+        states last_state_ = states::IDLE;
+
         sm_type tp_;
         // Theoretically some kind of stream/pipe would be interesting here.
         // Practically, ~1.7k is the maximum size, so lots of in memory buffers are appropriate

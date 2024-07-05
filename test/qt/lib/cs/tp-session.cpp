@@ -10,20 +10,20 @@
 
 namespace embr::j1939::qt::cs { inline namespace v1 {
 
-static void debugOut(const sm::tp::v0::originator_state& originator)
+static void debugOut(const sm::tp::v0::originator_state& originator, j1939::sm::tp::base::states s)
 {
     qDebug()
-        << "originator"
+        << "Orig" << j1939::to_string(s)
         << "bam:" << originator.bam()
         << "last_seq:" << originator.last_sequence()
         << "sent_all:" << originator.sent_everything();
 }
 
 
-static void debugOut(const sm::tp::v0::responder_state& responder)
+static void debugOut(const sm::tp::v0::responder_state& responder, j1939::sm::tp::base::states s)
 {
     qDebug()
-        << "responder"
+        << "Resp" << j1939::to_string(s)
         << "bam:" << responder.bam()
         << "last_seq:" << responder.seq()
         << "last_one:" << responder.last_one()
@@ -36,11 +36,11 @@ static void debugOut(const sm::transport_protocol<TimePoint, Policy>& tp)
     switch(tp.role())
     {
         case sm::tp::base::ROLE_ORIGINATOR:
-            debugOut(tp.originator());
+            debugOut(tp.originator(), tp.state());
             break;
 
         case sm::tp::base::ROLE_RESPONDER:
-            debugOut(tp.responder());
+            debugOut(tp.responder(), tp.state());
             break;
 
         default: break;
@@ -60,8 +60,16 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
 
     context_type ctx(clock::now(), sa_);
 
+    // FIX: Really need a way to mutex this guy, I think our RTS/CTS is dying because of a semi-data-race/
+    // reentrancy issue
+
     result r = j1939::v2::process_incoming(tp_, t, f, ctx);
 
+    if(last_state_ != tp_.state())
+    {
+        debugOut(tp_);
+        last_state_ = tp_.state();
+    }
     //debugOut(tp_);
 
     bool last_one = false;
@@ -121,6 +129,7 @@ void TransportProtocol::Session::processOutgoing(
         if(processing_ == true) return;
     }
 
+    /*
     // DEBT: Upgrade to_string to handle different bases
     auto str = estd::to_string((int)tp_.state());
     QString _next =
@@ -132,7 +141,7 @@ void TransportProtocol::Session::processOutgoing(
         << "TransportProtocol::Session::processOutgoing phase 1:"
         << this
         << j1939::to_string(tp_.state(), str.data())
-        << " next:" << _next;
+        << " next:" << _next; */
 
 #if FEATURE_EMBR_J1939_TP_FUTURE
     unsigned guard = 0;
@@ -153,16 +162,22 @@ void TransportProtocol::Session::processOutgoing(
         // SM when it's time.  Smells of premature optimization
         r = tp_.process_outgoing(t, ctx);
 
+        if(last_state_ != tp_.state())
+        {
+            debugOut(tp_);
+            last_state_ = tp_.state();
+        }
+
         mutex_.lock();
         processing_ = false;
         mutex_.unlock();
 
+        /*
         qDebug()
             << "TransportProtocol::Session::processOutgoing phase 2:"
             << this
             << j1939::to_string(tp_.state());
-        //<< ctx.current.time_since_epoch();
-        //debugOut(tp_);
+        //<< ctx.current.time_since_epoch();    */
     }
 
 #if FEATURE_EMBR_J1939_TP_FUTURE
