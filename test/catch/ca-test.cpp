@@ -6,12 +6,10 @@
 
 #include <j1939/cs/base.h>
 
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT
-constexpr bool operator ==(embr::j1939::cs::v1::base::result lhs, bool rhs)
+constexpr bool operator ==(embr::j1939::sm::v1::result lhs, bool rhs)
 {
     return lhs.processed == rhs;
 }
-#endif
 
 #include <j1939/ca.hpp>
 
@@ -73,7 +71,7 @@ TEST_CASE("Controller Applications")
     using frame = can::loopback_transport::frame;
     using frame_type = frame;
     using frame_traits = j1939::frame_traits<frame>;
-    using result = cs::v1::base::result;
+    using result = sm::v1::result;
 
     ostringstream out;
     const auto& out_s = out.rdbuf()->str();

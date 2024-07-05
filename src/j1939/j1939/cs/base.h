@@ -32,7 +32,7 @@ public:
 
 #if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
     // EXPERIMENTAL
-    using result = sm::v0::result;
+    using result = sm::v1::result;
 #else
     using result = bool;
 #endif

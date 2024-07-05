@@ -6,12 +6,10 @@
 
 #include <j1939/cs/base.h>
 
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT
 constexpr bool operator ==(embr::j1939::cs::v1::base::result lhs, bool rhs)
 {
     return lhs.processed == rhs;
 }
-#endif
 
 
 
