@@ -41,9 +41,26 @@ struct helper
     {
         time_point c{ms_type{current_ms}};
         unsigned processed = 0;
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT
+        result r = result::ignore();
 
-        processed += process_incoming(tp_orig, t, f, ctx{c, orig_sa});
-        processed += process_incoming(tp_recv, t, f, ctx{c, recv_sa});
+        do
+        {
+            r = v2::process_incoming(tp_orig, t, f, ctx{c, orig_sa});
+            processed += r.processed;
+        }
+        while(r.immediate);
+
+        do
+        {
+            r = v2::process_incoming(tp_recv, t, f, ctx{c, recv_sa});
+            processed += r.processed;
+        }
+        while(r.immediate);
+#else
+        processed += v2::process_incoming(tp_orig, t, f, ctx{c, orig_sa});
+        processed += v2::process_incoming(tp_recv, t, f, ctx{c, recv_sa});
+#endif
 
         return processed;
     }
@@ -319,7 +336,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             REQUIRE(t.receive(&frame));
 
-            process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
+            v2::process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
         }
         SECTION("auto-payload")
         {

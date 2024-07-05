@@ -16,14 +16,15 @@
 #include "data_field/all.hpp"
 #include "internal/dispatcher/incoming.hpp"
 #include "internal/dispatcher/incoming.h"
+#include "internal/dispatcher/incoming2.hpp"
 #include "ca.h"
 
 namespace embr { namespace j1939 {
 
 template <class Transport, class Impl>
-bool controller_application<Transport, Impl>::process_incoming(transport_type& t, const frame_type& f)
+auto controller_application<Transport, Impl>::process_incoming(transport_type& t, const frame_type& f) -> result
 {
-    return j1939::process_incoming(impl(), t, f);
+    return j1939::v2::process_incoming(impl(), t, f);
 }
 
 }}

@@ -11,6 +11,8 @@
 #include <j1939/cas/internal/prng_address_manager.h>
 #include <j1939/cas/internal/address_tracker.h>
 
+#include <j1939/internal/dispatcher/incoming2.hpp>
+
 #include "test-data.h"
 
 using namespace estd::chrono_literals;
@@ -168,11 +170,11 @@ TEST_CASE("Controller Applications (network)")
         {
             p_claim.source_address(addr);
 
-            process_incoming(impl, t, frame_traits::create(p_claim));
+            v2::process_incoming(impl, t, frame_traits::create(p_claim));
 
             REQUIRE(t.queue.empty());
 
-            process_incoming(impl, t, frame_traits::create(r));
+            v2::process_incoming(impl, t, frame_traits::create(r));
 
             REQUIRE(t.queue.empty());
         }
@@ -199,7 +201,7 @@ TEST_CASE("Controller Applications (network)")
             // This CA will have a look at that request.  Address Claimed only
             // gets responded to if there's a collision, which in this case there
             // isn't
-            process_incoming(impl, t, frame_traits::create(p_claim));
+            v2::process_incoming(impl, t, frame_traits::create(p_claim));
 
             REQUIRE(t.queue.empty());
         }
@@ -229,7 +231,7 @@ TEST_CASE("Controller Applications (network)")
 
             p_claim.source_address(*impl.address());
 
-            process_incoming(impl, t, frame_traits::create(p_claim));
+            v2::process_incoming(impl, t, frame_traits::create(p_claim));
 
             // Contains contender claim
             REQUIRE(t.queue.size() == 1);
@@ -264,7 +266,7 @@ TEST_CASE("Controller Applications (network)")
             // to really simulate all this, but for now we'll fudge it
 
             // Evaluate contender first
-            process_incoming(contender, t, f);
+            v2::process_incoming(contender, t, f);
 
             REQUIRE(t.queue.size() == 2);
 
@@ -291,7 +293,7 @@ TEST_CASE("Controller Applications (network)")
 
             REQUIRE(!t.receive(&f));
 
-            process_incoming(impl, t, f);
+            v2::process_incoming(impl, t, f);
 
             // TODO: Not quite sure whether we should be emitting something or not here
             // [AddressResolution.md] 1.1.3
@@ -317,7 +319,7 @@ TEST_CASE("Controller Applications (network)")
 
             t.receive(&f);
 
-            process_incoming(impl, t, f);
+            v2::process_incoming(impl, t, f);
         }
     }
     SECTION("state machine only")
@@ -332,7 +334,7 @@ TEST_CASE("Controller Applications (network)")
                 SyntheticAddressManager{},
                 test::names::trailer_brake<true>::sparse{j1939::null_t{}});
         time_point now;
-        bool r;
+        cs::v1::base::result r{false};
 
         SECTION("external incoming non-contending claim")
         {

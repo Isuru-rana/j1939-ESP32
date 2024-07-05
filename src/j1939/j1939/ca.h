@@ -137,8 +137,9 @@ public:
     using frame_type = typename transport_type::frame;
 
     using frame_traits = can::frame_traits<frame_type>;
+    using result = cs::v1::base::result;
 
-    bool process_incoming(transport_type& t, const frame_type& f);
+    result process_incoming(transport_type& t, const frame_type& f);
 
     template <class ...TArgs>
     controller_application(TArgs&&...args) : TImpl(std::forward<TArgs>(args)...)
