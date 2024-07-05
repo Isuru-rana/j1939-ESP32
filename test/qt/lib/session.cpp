@@ -46,7 +46,11 @@ void Session::setDevice(QCanBusDevice* device)
                 cs->frameReceived(can_, frame);
             }
         }
-    });
+    },
+    // Queud Connection is needed otherwise reentrancy issues emerge i.e.
+    // 1. tp1 sends out rts, tp2 responds with cts
+    // 2. tp1 is still in the middle of rts sending and can't process received cts
+    Qt::QueuedConnection);
 
     QObject::connect(device, &QCanBusDevice::stateChanged, [&]
         (QCanBusDevice::CanBusDeviceState state)

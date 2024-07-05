@@ -16,7 +16,8 @@ static void debugOut(const sm::tp::v0::originator_state& originator, j1939::sm::
         << "Orig" << j1939::to_string(s)
         << "bam:" << originator.bam()
         << "last_seq:" << originator.last_sequence()
-        << "sent_all:" << originator.sent_everything();
+        << "sent_all:" << originator.sent_everything()
+        << "auto_pld:" << originator.auto_payload_;
 }
 
 

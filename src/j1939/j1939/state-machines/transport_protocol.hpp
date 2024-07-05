@@ -358,6 +358,7 @@ auto transport_protocol<TimePoint, Policy>::process_outgoing(
             state_ = ORIGINATOR_SENT_DT;
 
 #if FEATURE_EMBR_J1939_TP_FUTURE
+            // There's a minimum time between DT transmissions
             // DEBT: 25 is arbitrary lower limit below timeout::Tr - needs improvement
             next_event_ = ctx.current + (bam ? timeouts::bam : timeouts::mst{25});
 #else
@@ -466,7 +467,15 @@ auto transport_protocol<TimePoint, Policy>::process_outgoing(
             else if(originator().auto_payload_)
             {
                 state_ = ORIGINATOR_SENDING_DT;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                // DEBT: 25 is arbitrary lower limit below timeout::Tr - needs improvement
+                next_event_ = ctx.current;
+#endif
+#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
+                return result::ok();
+#else
                 return true;
+#endif
             }
 #endif
 
