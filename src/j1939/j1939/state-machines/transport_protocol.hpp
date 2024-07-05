@@ -433,6 +433,7 @@ auto transport_protocol<TimePoint, Policy>::process_outgoing(
             return true;
         }
 
+        // FIX: Need to combine this with ORIGINATOR_WAITING_CTS
         case ORIGINATOR_SENT_RTS:
             // [1] Section 5.12.3
             if(elapsed(ctx, timeouts::T3))

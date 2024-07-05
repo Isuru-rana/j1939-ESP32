@@ -52,11 +52,11 @@ Window {
                     // software id
                     var software_id = 0xFEDA;
                     var payload = "0123456789ABCDEF";
-                    Session.tp.broadcast(0, software_id, payload);
+                    //Session.tp.broadcast(0, software_id, payload);
 
                     // Coming along
-                    //Session.tp.listen(0x78);
-                    //Session.tp.send(0x77, 0x78, software_id, payload);
+                    Session.tp.listen(0x78);
+                    Session.tp.send(0x77, 0x78, software_id, payload);
                 }
             }
         }

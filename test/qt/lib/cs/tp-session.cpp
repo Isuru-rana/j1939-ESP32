@@ -123,12 +123,16 @@ void TransportProtocol::Session::processOutgoing(
 
     // DEBT: Upgrade to_string to handle different bases
     auto str = estd::to_string((int)tp_.state());
+    QString _next =
+        tp_.next_event() != time_point{} ?
+        (QString::number(std::chrono::duration_cast<milliseconds>(tp_.next_event() - Base::startup).count()) + "ms") :
+        "null";
 
-    qDebug()
+    qDebug().noquote()
         << "TransportProtocol::Session::processOutgoing phase 1:"
         << this
         << j1939::to_string(tp_.state(), str.data())
-        << " next:" << std::chrono::duration_cast<milliseconds>(tp_.next_event() - Base::startup);
+        << " next:" << _next;
 
 #if FEATURE_EMBR_J1939_TP_FUTURE
     unsigned guard = 0;
