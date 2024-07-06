@@ -106,6 +106,7 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
             {
                 // got to timeout/next_event_ without contention means successful claim
                 state(states::claimed, substates::elapsed);
+                //next_event_ = {};
             }
             else
             {

@@ -30,7 +30,12 @@ void Network::updateState()
 
 void Network::handler()
 {
-    sm_.process_outgoing(transport_, clock::now());
+    time_point now = clock::now();
+    //while(sm_.next_event() <= now)
+    {
+        //sm::v1::result r =
+        sm_.process_outgoing(transport_, now);
+    }
     schedule();
     updateState();
 }

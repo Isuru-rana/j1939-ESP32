@@ -35,13 +35,13 @@ template <class TimePoint, class Policy = sm::tp::v0::policy>
 class transport_protocol :
 #if FEATURE_EMBR_J1939_TP_FUTURE
     // DEBT: Prefer this after base once feature is fully active
-    public tp::v0::to_schedule<TimePoint>,
+    public sm::v0::to_schedule<TimePoint>,
 #endif
     public tp::v0::base
 {
     using base_type = tp::v0::base;
 #if FEATURE_EMBR_J1939_TP_FUTURE
-    using ts_base_type = tp::v0::to_schedule<TimePoint>;
+    using ts_base_type = sm::v0::to_schedule<TimePoint>;
 #endif
 
 public:

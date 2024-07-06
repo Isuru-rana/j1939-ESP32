@@ -3,6 +3,9 @@
 
 namespace embr { namespace j1939 { namespace sm { inline namespace v1 {
 
+// DEBT: Consider putting this into embr proper.  Look into embr::coap state machine support for consolidation
+// ideas
+
 struct result
 {
     // indicates an internal state change or transport interaction

@@ -174,7 +174,7 @@ struct network : network_base
         // expected.  scheduled_claiming returns a bool indicating whether a future event should be
         // scheduled.  At present, it NEVER requires further immediate processing
 
-        return false;
+        return result::ok();
     }
 
 };

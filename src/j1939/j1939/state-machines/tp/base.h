@@ -9,6 +9,7 @@
 
 #include "../../cs/base.h"
 
+#include "../base.h"
 #include "enum.h"
 #include "feature.h"
 #include "context.h"
@@ -184,31 +185,5 @@ public:
     }
 
 };
-
-// DEBT: Move this into sm::v1 once FEATURE_EMBR_J1939_TP_FUTURE is fully settled down
-// (we're close)
-template <class TimePoint>
-class to_schedule
-{
-public:
-    using time_point = TimePoint;
-    using duration = typename time_point::duration;
-
-protected:
-    time_point next_event_;
-
-public:
-    time_point next_event() const { return next_event_; }
-
-    // DEBT: Experimenting, may want to change name.  May prefer old one with
-    // explicit duration on it
-    ATTR_NODISCARD constexpr bool elapsed(const sm::v0::context<TimePoint>& ctx) const
-    {
-        // time_point{} = zero, effectively
-
-        return ctx.current >= next_event_ && next_event_ != time_point{};
-    }
-};
-
 
 }}}}}
