@@ -344,7 +344,7 @@ TEST_CASE("Controller Applications (network)")
                 SyntheticAddressManager{},
                 test::names::trailer_brake<true>::sparse{j1939::null_t{}});
         time_point now;
-        cs::v1::base::result r{false};
+        sm::v1::result r = sm::v1::result::ignore();
 
         SECTION("external incoming non-contending claim")
         {

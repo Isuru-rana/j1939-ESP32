@@ -49,7 +49,7 @@ struct result
     static constexpr result more() { return result{true, true}; }
     static constexpr result ok() { return result{true, false}; }
     static constexpr result ignore() { return result{false, false}; }
-    static constexpr result underflow() { return {false, false, CODE_UNDERFLOW}; }
+    static constexpr result underflow() { return result{false, false, CODE_UNDERFLOW}; }
 };
 
 

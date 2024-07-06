@@ -35,18 +35,27 @@ public:
     template <class Transport, class Frame, class ...Args>
     static constexpr result process_incoming_default(const Transport&, const Frame&, Args&&...)
     {
-        return false;
+        return result::ignore();
     }
 
     // DEBT: Would like ...Args treatment, but compiler gets ornery about overload ambiguities
     template <class Transport, pgns pgn>
-    constexpr result process_incoming(const Transport&, pdu<pgn>) const { return false; }
+    constexpr result process_incoming(const Transport&, pdu<pgn>) const
+    {
+        return result::ignore();
+    }
 
     template <class Transport, pgns pgn, class Context>
-    constexpr result process_incoming(Transport&, pdu<pgn>, Context) const { return false; }
+    constexpr result process_incoming(Transport&, pdu<pgn>, Context) const
+    {
+        return result::ignore();
+    }
 
     template <class Transport, class Context>
-    constexpr result process_outgoing(Transport&, Context = {}) const { return false; }
+    constexpr result process_outgoing(Transport&, Context = {}) const
+    {
+        return result::ignore();
+    }
 };
 
 }}}}

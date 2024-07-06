@@ -74,6 +74,7 @@ struct network_ca :
     using typename nca_base_type::address_type;
     using typename nca_base_type::states;
     using typename nca_base_type::substates;
+    using typename nca_base_type::result;
 
     using nca_base_type::process_incoming_default;
 
@@ -204,7 +205,7 @@ struct network_ca :
     // to do a manual start call
     void start(transport_type& t);
 
-    bool process_incoming(transport_type& t, const pdu<pgns::address_claimed>& p);  // NOLINT
+    result process_incoming(transport_type& t, const pdu<pgns::address_claimed>& p);  // NOLINT
 };
 
 

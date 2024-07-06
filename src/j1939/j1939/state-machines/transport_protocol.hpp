@@ -41,7 +41,7 @@ auto transport_protocol<TimePoint, Policy>::process_incoming(
     switch(state_)
     {
         case ANTICIPATING_RTS:
-            if(idle().anticipated_address_ != p.source_address())   return false;
+            if(idle().anticipated_address_ != p.source_address())   return result::ignore();
             // "Fallthrough" attribute is only allowed on empty statements. Really...
             //ATTR_FALLTHROUGH
 
@@ -62,7 +62,7 @@ auto transport_protocol<TimePoint, Policy>::process_incoming(
 #if FEATURE_EMBR_J1939_TP_FUTURE
                     next_event_ = ctx.current + timeouts::T1;
 #endif
-                    return true;
+                    return result::ok();
                 }
 
                 case modes::rts:

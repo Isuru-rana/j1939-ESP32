@@ -132,7 +132,7 @@ struct network : network_base
     /// @param do_schedule
     /// @return
     template <class Transport>
-    bool process_incoming_internal(Transport&, const pdu<pgns::address_claimed>&,
+    result process_incoming_internal(Transport&, const pdu<pgns::address_claimed>&,
         time_point* wake,
         time_point current,
         bool* do_schedule);
@@ -149,7 +149,7 @@ struct network : network_base
         time_point* wake = &dummy;
 #endif
 
-        bool r = process_incoming_internal(t, p, wake, c.current, &do_schedule);
+        result r = process_incoming_internal(t, p, wake, c.current, &do_schedule);
 
         // EXPERIMENTAL
 #if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
