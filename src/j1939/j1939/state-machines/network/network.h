@@ -15,29 +15,30 @@ namespace embr { namespace j1939 { namespace sm { inline namespace v1 {
 
 template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager,
     class TimePoint>
-struct network : network_base
+struct network : network_base, v0::to_schedule<TimePoint>
 {
+protected:
 #ifdef ESP_PLATFORM
     static constexpr const char* TAG = "sm::network";
 #endif
 
     using base_type = network_base;
+    using tp_base_type = v0::to_schedule<TimePoint>;
     using address_manager_type = AddressManager;
-    using time_point = TimePoint;
 
-    using network_base::process_incoming;
+    using typename tp_base_type::time_point;
+    // Depending on whether we're claiming or request for claim we'll
+    // next_event_ 250ms or 1250ms.  Also expected but not yet implemented
+    // is a pre-send next_event_ with bus_collision_delay
+    // NOTE: We miss old 'last_claim' but this is more efficient
+    using tp_base_type::next_event_;
 
     // DEBT: Do some data hiding
 
     address_manager_type address_manager_;
 
-    // Depending on whether we're claiming or request for claim we'll
-    // next_event_ 250ms or 1250ms.  Also expected but not yet implemented
-    // is a pre-send next_event_ with bus_collision_delay
-    // NOTE: We miss old 'last_claim' but this is more efficient
-    time_point next_event_;
-
-    constexpr time_point next_event() const { return next_event_; }
+public:
+    using network_base::process_incoming;
 
     address_type find_new_address()
     {

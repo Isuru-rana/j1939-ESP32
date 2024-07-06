@@ -16,6 +16,8 @@ LightingCommand::LightingCommand(QObject* parent) :
     network_.name().function(int(function_fields::body_controller));
     network_.name().industry_group(int(industry_groups::on_highway));
 
+    network_.setTag("LCMD");
+
     connect(&timer_, &QTimer::timeout, this, &LightingCommand::handler);
     timer_.setSingleShot(true);
 }

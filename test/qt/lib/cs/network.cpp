@@ -1,9 +1,40 @@
 #include "j1939/qt/cs/network.h"
 
-#include <j1939/internal/dispatcher/incoming.hpp>
-#include <j1939/internal/dispatcher/incoming2.hpp>
+#include <j1939/dispatcher.hpp>
 
 namespace embr::j1939::qt::cs { inline namespace v1 {
+
+
+const char* to_string(j1939::sm::network_base::states v)
+{
+    using s = j1939::sm::network_base::states;
+
+    switch(v)
+    {
+        case s::unstarted:      return "Unstarted";
+        case s::requesting:     return "Requesting";
+        case s::claiming:       return "Claiming";
+        case s::claimed:        return "Claimed";
+        case s::claim_failed:   return "Claim Failed";
+        default:                return "N/A";
+    }
+}
+
+
+const char* to_string(j1939::sm::network_base::substates v)
+{
+    using s = j1939::sm::network_base::substates;
+
+    switch(v)
+    {
+        case s::claim_waiting:      return "claim_waiting";
+        case s::contending:     return "contending";
+        case s::expired:       return "expired";
+        case s::waiting:        return "waiting";
+        case s::cannot_claim_waiting:   return "Claim cannot_claim_waiting";
+        default:                return "N/A";
+    }
+}
 
 
 void Network::updateState()
@@ -11,7 +42,7 @@ void Network::updateState()
     const state_type state = sm_.state();
     if(state != last_state_)
     {
-        qDebug() << this << "state=" << int(state);
+        qDebug() << this << "state" << to_string(state);
 
         emit stateChanged(state);
 
@@ -22,7 +53,7 @@ void Network::updateState()
     }
     else if(sm_.substate() != last_substate_)
     {
-        //qDebug() << this << "substate=" << int(sm_.substate());
+        qDebug() << this << "substate" << to_string(sm_.substate());
         emit sm_.substate();
         last_substate_ = sm_.substate();
     }

@@ -48,15 +48,18 @@ class Network : public Base
     using state_type = sm::v1::network_enum::states;
     using substates = sm::v1::network_enum::substates;
     using addrmgr_type = internal::prng_address_manager;
-    using sm_type = sm::v1::network<addrmgr_type, clock::time_point>;
-    using context_type = sm_type::context<clock::time_point>;
+    using sm_type = sm::v1::network<addrmgr_type, time_point>;
+    using context_type = sm_type::context<time_point>;
 
     //layer1::NAME name_;
     sm_type sm_;
-    can::qt_transport transport_;
+    transport_type transport_;
 
     state_type last_state_ = state_type::unstarted;
     substates last_substate_ = substates::unstarted;
+
+    // Just for debugging, let us know which address requestor is which
+    QString tag_;
 
     void updateState();
 
@@ -73,6 +76,7 @@ class Network : public Base
     Q_PROPERTY(state_type state READ state NOTIFY stateChanged)
     Q_PROPERTY(substates substate READ substate NOTIFY substateChanged)
     Q_PROPERTY(bool isClaimed READ isClaimed NOTIFY stateChanged)
+    Q_PROPERTY(QString tag READ tag)
 
 public:
     // DEBT: Dedup these two constructors
@@ -98,6 +102,13 @@ public:
     bool isClaimed() const { return sm_.state() == state_type::claimed; }
     layer1::NAME& name() { return sm_.name(); }
     can::qt_transport& transport() { return transport_; }
+
+    void setTag(const QString& v)
+    {
+        tag_ = v;
+        qDebug() << this << "tag" << v;
+    }
+    QString tag() const { return tag_; }
 
     void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
 

@@ -59,7 +59,7 @@ void Base::schedule(time_point next_event)
     auto interval = std::chrono::duration_cast<milliseconds>(next_event - now);
 
     qDebug()
-        << "Base::schedule" << metaObject()->className()
+        << "Base::schedule" << this
         << "interval:" << interval
         << "now:" << std::chrono::duration_cast<milliseconds>(now - startup)
         << "next:" << std::chrono::duration_cast<milliseconds>(next_event - startup);

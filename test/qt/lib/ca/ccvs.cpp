@@ -10,6 +10,8 @@ CCVS::CCVS(QObject* parent) :
     network_.name().arbitrary_address_capable(true);
     network_.name().function_instance(0);
     network_.name().function((int)function_fields::cab_controller);
+
+    network_.setTag("CCVS");
 }
 
 void CCVS::frameReceived(QCanBusDevice*, const QCanBusFrame&)

@@ -20,6 +20,8 @@ OEL::OEL(QObject* parent) :
     network_.name().arbitrary_address_capable(true);
     network_.name().function_instance(0);
     network_.name().function((int)function_fields::lighting_operator_controls);
+
+    network_.setTag("OEL");
 }
 
 bool OEL::process_incoming(can::qt_transport&, const pdu<pgns::lcmd>& p)
