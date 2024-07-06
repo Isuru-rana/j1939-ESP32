@@ -1,4 +1,5 @@
 #include <j1939/internal/dispatcher/incoming.hpp>
+#include <j1939/internal/dispatcher/incoming2.hpp>
 #include <j1939/state-machines/lcmd.hpp>
 
 #include <j1939/NAME/vehicle_systems.h>
@@ -45,7 +46,7 @@ void OEL::frameReceived(QCanBusDevice* device, const QCanBusFrame& frame)
 {
     transport_type t{device};
     network_.frameReceived(device, frame);
-    j1939::process_incoming(*this, t, frame);
+    j1939::v2::process_incoming(*this, t, frame);
 }
 
 void OEL::hazardPressed()

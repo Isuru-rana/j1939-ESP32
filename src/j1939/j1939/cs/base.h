@@ -10,9 +10,6 @@
 
 namespace embr { namespace j1939 { namespace cs { inline namespace v1 {
 
-// Experimenting with more robust state machine/process return value (ala embr::coap)
-#define FEATURE_EMBR_J1939_CS_ADV_RESULT 1
-
 // Adapted from old controller_application_base
 class base
 {
@@ -30,12 +27,7 @@ public:
     template <pgns pgn>
     using data_field = const embr::j1939::layer1::data_field<pgn>;
 
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
-    // EXPERIMENTAL
     using result = sm::v1::result;
-#else
-    using result = bool;
-#endif
 
     using policy_type = j1939::internal::dispatch_default_policy;
 

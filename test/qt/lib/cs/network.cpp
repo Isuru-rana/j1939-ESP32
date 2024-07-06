@@ -1,6 +1,7 @@
 #include "j1939/qt/cs/network.h"
 
 #include <j1939/internal/dispatcher/incoming.hpp>
+#include <j1939/internal/dispatcher/incoming2.hpp>
 
 namespace embr::j1939::qt::cs { inline namespace v1 {
 
@@ -41,7 +42,7 @@ void Network::frameReceived(QCanBusDevice* device, const QCanBusFrame& frame)
     context_type c(clock::now());
 
     can::qt_transport t{device};
-    process_incoming(sm_, t, frame, c);
+    v2::process_incoming(sm_, t, frame, c);
     updateState();
 
     // DEBT: Consider if next_event_ gets accellerated
@@ -74,7 +75,7 @@ void ExternalAddressObserver::frameReceived(QCanBusDevice*, const QCanBusFrame& 
 {
     embr::can::qt_transport t;
 
-    j1939::process_incoming(*this, t, frame);
+    j1939::v2::process_incoming(*this, t, frame);
 
     NAME test;
 

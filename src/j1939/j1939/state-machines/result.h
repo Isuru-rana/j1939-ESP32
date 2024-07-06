@@ -50,9 +50,6 @@ struct result
     static constexpr result ok() { return result{true, false}; }
     static constexpr result ignore() { return result{false, false}; }
     static constexpr result underflow() { return {false, false, CODE_UNDERFLOW}; }
-
-    // DEBT: Bringing this guy back because Qt code isn't quite there yet
-    constexpr operator bool() const { return processed; }
 };
 
 

@@ -9,6 +9,7 @@
 #include <j1939/data_field/vep1.hpp>
 
 #include <j1939/internal/dispatcher/incoming.hpp>
+#include <j1939/internal/dispatcher/incoming2.hpp>
 
 #include "j1939/qt/cs/generic.hpp"
 
@@ -18,8 +19,8 @@ void Generic::frameReceived(QCanBusDevice*, const QCanBusFrame& frame)
 {
     embr::can::qt_transport t;
 
-    bool processed = j1939::process_incoming(*this, t, frame);
-    if(!processed)
+    sm::v1::result r = j1939::v2::process_incoming(*this, t, frame);
+    if(!r.processed)
     {
         // unrecognized PGN
         j1939::can_id can_id(frame.frameId());

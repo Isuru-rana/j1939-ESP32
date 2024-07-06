@@ -41,26 +41,13 @@ struct helper
     {
         time_point c{ms_type{current_ms}};
         unsigned processed = 0;
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT
         result r = result::ignore();
 
-        do
-        {
-            r = v2::process_incoming(tp_orig, t, f, ctx{c, orig_sa});
-            processed += r.processed;
-        }
-        while(r.immediate);
+        r = v2::process_incoming(tp_orig, t, f, ctx{c, orig_sa});
+        processed += r.processed;
 
-        do
-        {
-            r = v2::process_incoming(tp_recv, t, f, ctx{c, recv_sa});
-            processed += r.processed;
-        }
-        while(r.immediate);
-#else
-        processed += v2::process_incoming(tp_orig, t, f, ctx{c, orig_sa});
-        processed += v2::process_incoming(tp_recv, t, f, ctx{c, recv_sa});
-#endif
+        r = v2::process_incoming(tp_recv, t, f, ctx{c, recv_sa});
+        processed += r.processed;
 
         return processed;
     }
@@ -72,7 +59,6 @@ struct helper
         time_point c{ms_type(current_ms)};
 
         unsigned processed = 0;
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT
         result r = result::more();
 
         while(r.immediate)
@@ -88,10 +74,6 @@ struct helper
             r = tp_recv.process_outgoing(t, ctx{c, orig_sa});
             processed += r.processed;
         }
-#else
-        processed += tp_orig.process_outgoing(t, ctx{c, orig_sa});
-        processed += tp_recv.process_outgoing(t, ctx{c, recv_sa});
-#endif
 
         return processed;
     }

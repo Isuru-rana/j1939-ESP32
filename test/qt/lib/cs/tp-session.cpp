@@ -83,34 +83,16 @@ bool TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCan
             const estd::span<const uint8_t> p(tp_.payload());
             buffer_.append((const char*)p.data(), p.size());
 
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 0
-            const bool last_one = tp.responder().last_one();
-
-            // DEBT:
-            // Scheduled timeout is for listening to originator,
-            // But we need to process now to evaluate things like:
-            // - last packet eval
-            // - send cts to orig for batched mode
-            tp_.process_outgoing(t, ctx);
-            return last_one;
-#else
             last_one = tp.responder().last_one();
             break;
-#endif
         }
 
         default:
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 0
-            return false;
-#else
             break;
-#endif
     }
 
-#if FEATURE_EMBR_J1939_CS_ADV_RESULT == 1
     processOutgoing(device, ctx, r);
     return last_one;
-#endif
 }
 
 
