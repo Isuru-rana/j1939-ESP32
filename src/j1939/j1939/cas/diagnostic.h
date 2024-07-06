@@ -39,10 +39,10 @@ public:
 #if EXP_DIAGNOSTIC_OPT1
     constexpr
 #endif
-    bool process_incoming_default(transport_type& t, const frame_type& f) const;    // NOLINT
+    result process_incoming_default(transport_type& t, const frame_type& f) const;    // NOLINT
 
     template <pgns pgn>
-    bool process_incoming(transport_type& t, const pdu<pgn>& p);
+    result process_incoming(transport_type& t, const pdu<pgn>& p);
 };
 
 }}

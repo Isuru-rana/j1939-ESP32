@@ -22,6 +22,7 @@
 
 #include <j1939/data_field/all.hpp>
 #include <j1939/state-machines/transport_protocol.hpp>
+#include <j1939/dispatcher.hpp>
 
 #include <j1939/ostream.h>
 
@@ -32,11 +33,6 @@
 
 #define FEATURE_AGGREGATED_CA 0
 #define FEATURE_V2_DISPATCH 1
-
-#if FEATURE_V2_DISPATCH
-#include <j1939/internal/dispatcher/incoming2.hpp>
-#endif
-
 
 uint32_t start_ms;
 
@@ -600,18 +596,17 @@ void nca_report()
     }
 }
 
-embr::j1939::sm::v0::transport_protocol tp;
+embr::j1939::sm::v0::transport_protocol<time_point> tp;
 
-bool on_frame_received(transport::frame& frame)
+sm::v1::result on_frame_received(transport::frame& frame)
 {
-    bool r;
 #if FEATURE_AGGREGATED_CA
-    r = process_incoming(app_ca, t, frame);
+    sm::v1::result r = process_incoming(app_ca, t, frame);
 #elif FEATURE_V2_DISPATCH
-    r = embr::j1939::internal::v2::process_incoming(dca, t, frame);
-    embr::j1939::internal::v2::process_incoming(nca, t, frame);
+    sm::v1::result r = v2::process_incoming(dca, t, frame);
+    embr::j1939::v2::process_incoming(nca, t, frame);
 #else
-    r = process_incoming(dca, t, frame);
+    bool r = process_incoming(dca, t, frame);
     process_incoming(nca, t, frame);
     // Won't fit.  Bummer
     // Even with FEATURE_EMBR_J1939_OSTREAM_FULL_PAYLOAD=0.  Might be aggravated by all
@@ -625,7 +620,7 @@ bool on_frame_received(transport::frame& frame)
 
 void loop() 
 {
-    bool r = false;
+    sm::v1::result r = sm::v1::result::ignore();
     transport::frame frame;
 
 #ifdef AUTOWP_LIB

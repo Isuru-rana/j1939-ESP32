@@ -25,19 +25,19 @@ struct is_type_complete<T, estd::enable_if_t<(sizeof(T) > 0)> > : estd::true_typ
 
 template <class TTransport, class TOStream, class Policy>
 template <embr::j1939::pgns pgn>
-bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming(transport_type& t, const pdu<pgn>& p)
+auto diagnostic_ca<TTransport, TOStream, Policy>::process_incoming(transport_type& t, const pdu<pgn>& p) -> result
 {
     out << p << estd::endl;
 
-    return true;
+    return result::ok();
 }
 
 template <class TTransport, class TOStream, class Policy>
 #if EXP_DIAGNOSTIC_OPT1
 constexpr
 #endif
-bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
-    transport_type& t, const frame_type& f) const
+auto diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
+    transport_type& t, const frame_type& f) const -> result
 {
 #if EXP_DIAGNOSTIC_OPT1
     return false;
@@ -64,7 +64,7 @@ bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
 
     out << estd::endl;
 
-    return false;
+    return result::ignore();
 #endif
 }
 

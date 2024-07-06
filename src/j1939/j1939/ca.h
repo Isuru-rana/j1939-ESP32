@@ -66,6 +66,7 @@ template <class ...TCAs>
 class controller_application_aggregator
 {
     using tuple = estd::tuple<TCAs...>;
+    using result = cs::v1::base::result;
 
 // DEBT
 //#if UNIT_TESTING
@@ -77,7 +78,7 @@ public:
     using visitor = cs::internal::v1::incoming_visitor<Transport>;
 
     template <class TTransport, class ...TArgs>
-    bool apply(TTransport& transport, TArgs&&...args)
+    result apply(TTransport& transport, TArgs&&...args)
     {
         // DEBT: Pretty sure there's a tuple specific overload of all this
         // and if there isn't, make one.  Specifically, (e)std::apply
@@ -92,19 +93,19 @@ public:
 
         // DEBT: Need to |= results together, though not 100% sure
         // I like that overall paradigm either
-        return false;
+        return result::ignore();
     }
 
 public:
     template <class TTransport, pgns pgn>
-    bool process_incoming(TTransport& transport, const pdu<pgn>& p)
+    result process_incoming(TTransport& transport, const pdu<pgn>& p)
     {
         return apply(transport, p);
     }
 
     // Effectively undefined/unhandled CAN frame.  Otherwise, you'll want to add to the switch/data_field mapper
     template <class TTransport>
-    bool process_incoming_default(TTransport& transport,
+    result process_incoming_default(TTransport& transport,
         const typename TTransport::frame& frame)
     {
         return apply(transport, frame);

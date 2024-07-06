@@ -17,7 +17,7 @@ inline namespace v1 {
 // TODO: Utilize new 'dispatch.hpp' here
 
 template <class Transport, class Impl, class Context>
-bool process_incoming(internal::app_state<Transport, Impl, Context> state, const typename Transport::frame& f)
+sm::v1::result process_incoming(internal::app_state<Transport, Impl, Context> state, const typename Transport::frame& f)
 {
     typedef typename Transport::frame frame_type;
     typedef can::frame_traits<frame_type> frame_traits;

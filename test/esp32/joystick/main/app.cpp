@@ -38,8 +38,8 @@ void App::on_notify(TWAI::event::autorx e)
     out.rdbuf()->clear();
     const auto& out_s = out.rdbuf()->str();
 
-    embr::j1939::process_incoming(dca, transport(), frame);
-    embr::j1939::process_incoming(nca, transport(), frame);
+    j1939::v2::process_incoming(dca, transport(), frame);
+    j1939::v2::process_incoming(nca, transport(), frame);
 
     // diagnostic_ca emits eol into 'out'
     esp_log_write(ESP_LOG_INFO, TAG, out_s.data());

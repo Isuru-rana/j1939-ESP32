@@ -10,12 +10,13 @@
 // NOTE: Likely ESP is happy with arduino_clock too, but I just like using
 // the freertos clock in this circumstance
 
-
+using time_point = estd::chrono::freertos_clock::time_point;
 using scheduler_impl_type =
     embr::internal::scheduler::impl::Function<estd::chrono::freertos_clock::time_point>;
 
 #else
 
+using time_point = estd::chrono::arduino_clock::time_point;
 using scheduler_impl_type =
     embr::internal::scheduler::impl::Function<estd::chrono::arduino_clock::time_point>;
 

@@ -28,7 +28,7 @@ struct ExternalAddressObserver :
     pdu<pgns::address_claimed> pdu_;
     bool observed_ = false;
 
-    bool process_incoming(can::qt_transport&, const pdu<pgns::address_claimed>&);
+    result process_incoming(can::qt_transport&, const pdu<pgns::address_claimed>&);
 
     Q_OBJECT
 

@@ -28,7 +28,7 @@ public:
     void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
 
     template <pgns pgn>
-    bool process_incoming(can::qt_transport&, const pdu<pgn>& p);
+    result process_incoming(can::qt_transport&, const pdu<pgn>& p);
 
     // DEBT: Prefer to emit this way, but we can send directly via cached transport if needed
     void process_outgoing(can::qt_transport&);

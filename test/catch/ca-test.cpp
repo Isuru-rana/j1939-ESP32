@@ -149,7 +149,7 @@ TEST_CASE("Controller Applications")
 
             frame f = frame_traits::create(p);
 
-            process_incoming(dca, t, f);
+            j1939::v2::process_incoming(dca, t, f);
 
             //REQUIRE(out_s == "OEL SA:0 ff ff ff ff ff ff ff ff \n");
             REQUIRE(out_s == "OEL SA:0 high beam=no change, turn signal=noop\n");

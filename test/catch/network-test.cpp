@@ -69,7 +69,7 @@ constexpr unsigned saddresses[] = { 197, 181, 133, 221 };
 // NOTE: Only used for diagnostics, since in real life we wouldn't call dispatcher if
 // we actually knew the pgn# already
 template <class Transport, class Impl, class Context, pgns pgn>
-inline bool process_incoming(Impl& impl, Transport& t, const j1939::pdu<pgn> pdu, Context&& context)
+inline sm::v1::result process_incoming(Impl& impl, Transport& t, const j1939::pdu<pgn> pdu, Context&& context)
 {
     using frame = typename Transport::frame;
     using frame_traits = j1939::frame_traits<frame>;
