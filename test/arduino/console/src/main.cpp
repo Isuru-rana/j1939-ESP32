@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+#define FEATURE_EMBR_J1939_TP_ORIGINATOR 0
+
 #undef _abs     // ESP32 specifically has this additional annoying macro set
 
 // 24MAY24 DEBT: Now that chrono uses underlying units, an Arduino regression crept in.
@@ -33,6 +35,7 @@
 
 #define FEATURE_AGGREGATED_CA 0
 #define FEATURE_V2_DISPATCH 1
+#define FEATURE_TP 1
 
 uint32_t start_ms;
 
@@ -603,8 +606,13 @@ sm::v1::result on_frame_received(transport::frame& frame)
 #if FEATURE_AGGREGATED_CA
     sm::v1::result r = process_incoming(app_ca, t, frame);
 #elif FEATURE_V2_DISPATCH
+    time_point now = time_point::clock::now();
+
     sm::v1::result r = v2::process_incoming(dca, t, frame);
-    embr::j1939::v2::process_incoming(nca, t, frame);
+    v2::process_incoming(nca, t, frame);
+#if FEATURE_TP
+    v2::process_incoming(tp, t, frame, decltype(tp)::context{now, 0});
+#endif
 #else
     bool r = process_incoming(dca, t, frame);
     process_incoming(nca, t, frame);
@@ -671,6 +679,10 @@ void loop()
     menu1(&nav, ios{cin, cout});
 
     scheduler.process();
+
+#if FEATURE_TP
+    tp.process_outgoing(t, decltype(tp)::context{time_point::clock::now(), 0});
+#endif
 
     nca_report();
 }
