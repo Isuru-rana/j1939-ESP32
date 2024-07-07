@@ -102,7 +102,25 @@ struct shared
 
     static constexpr unsigned bitrates_[] =
         { 10, 20, 50, 100, 125, 250, 500, 800, 1000 };
+
+
+    // DEBT: Not right, this is a bitfield
+    static const char* to_string(alerts_type v)
+    {
+        switch(v)
+        {
+            case ALERT_NONE:            return "None";
+            case ALERT_RX_FIFO_FULL:    return "RX Overrun";
+            case ALERT_TX_FIFO_FULL:    return "TX Overrun";
+            case ALERT_BUS_ERROR:       return "Bus Error";
+            case ALERT_BUS_PASSIVE:     return "Bus Passive";
+
+            default:    return "N/A";
+        }
+    }
 };
+
+
 
 class base : public shared
 {
@@ -395,3 +413,8 @@ public:
 };
 
 }}}}
+
+inline const char* to_string(embr::can::slcan::v0::impl::shared::alerts_type a)
+{
+    return embr::can::slcan::v0::impl::shared::to_string(a);
+}

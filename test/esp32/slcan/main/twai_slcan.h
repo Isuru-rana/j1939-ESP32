@@ -19,15 +19,34 @@ struct twai_impl : embr::can::slcan::v0::impl::base
 
     alerts_type alerts() const
     {
-        uint32_t v;
+        uint32_t v = 0;
+        uint8_t alerts = 0;
 
-        twai_read_alerts(&v, 0);
+        esp_err_t ret = twai_read_alerts(&v, 0);
+
+        // DEBT: Kind of a lie, bus is fully offline in fact
+        if(ret != ESP_OK)   return ALERT_BUS_ERROR;
+
+        if(v & TWAI_ALERT_BUS_ERROR)
+        {
+            alerts |= ALERT_BUS_ERROR;
+        }
+        if(v & TWAI_ALERT_ERR_PASS)
+        {
+            alerts |= ALERT_BUS_PASSIVE;
+        }
+        if(v & TWAI_ALERT_RX_FIFO_OVERRUN)
+        {
+            alerts |= ALERT_RX_FIFO_FULL;
+        }
 
         return {};
     }
 
     static bool config_bitrate(bitrates_enum v, twai_timing_config_t* config)
     {
+        ESP_LOGD(TAG, "config_bitrate: %u", bitrates_[v]);
+
         switch(v)
         {
             case BITRATE_125K:

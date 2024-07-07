@@ -54,6 +54,10 @@ extern "C" void app_main(void)
     parser.autopoll(true);
     parser.init();
 
+    ESP_ERROR_CHECK(twai_reconfigure_alerts(
+        TWAI_ALERT_ALL,     // | TWAI_ALERT_AND_LOG,
+        nullptr));
+
     for(;;)
     {
         twai_message_t frame;
@@ -73,6 +77,13 @@ extern "C" void app_main(void)
 
             }   while(ret == ESP_OK);
         }
+
+        // FIX: Eating app all alerts right away as we diagnose hardware
+        // issues
+        auto a = parser.cimpl().alerts();
+
+        if(a != 0)
+            ESP_LOGW(TAG, "alert: %s", to_string(a));
 
         if(++counter % 20 == 0)
             ESP_LOGI(TAG, "counter: %u frames: %u autopoll: %u",
