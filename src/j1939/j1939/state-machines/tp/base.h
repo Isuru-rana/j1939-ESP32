@@ -10,6 +10,7 @@
 #include "../../cs/base.h"
 
 #include "../base.h"
+#include "fwd.h"
 #include "enum.h"
 #include "feature.h"
 #include "context.h"

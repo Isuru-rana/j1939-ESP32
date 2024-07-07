@@ -3,7 +3,6 @@
 #include <chrono>
 
 #include <j1939/state-machines/transport_protocol.hpp>
-#include <j1939/ca.hpp>
 
 #include <j1939/internal/dispatcher/incoming2.hpp>
 

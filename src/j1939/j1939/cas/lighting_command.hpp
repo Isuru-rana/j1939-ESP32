@@ -10,6 +10,8 @@
 
 #include "lighting.h"
 
+#include <j1939/data_field/ccvs.hpp>
+
 namespace embr { namespace j1939 {
 
 namespace impl {

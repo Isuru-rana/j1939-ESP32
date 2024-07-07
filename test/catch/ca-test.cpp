@@ -6,11 +6,6 @@
 
 #include <j1939/cs/base.h>
 
-constexpr bool operator ==(embr::j1939::sm::v1::result lhs, bool rhs)
-{
-    return lhs.processed == rhs;
-}
-
 #include <j1939/ca.hpp>
 
 #include <j1939/cas/lighting_command.hpp>
@@ -99,7 +94,7 @@ TEST_CASE("Controller Applications")
 
         result r = ca.process_incoming(t, f);
 
-        REQUIRE(r == true);
+        REQUIRE(r.processed == true);
 
         REQUIRE(ca.switch_bank_control_counter == 1);
     }

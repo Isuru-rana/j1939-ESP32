@@ -5,6 +5,7 @@
 
 #include <can/loopback.h>
 
+#include <j1939/cs/aggregate.h>
 #include <j1939/cs/base.h>
 #include <j1939/state-machines/lcmd.hpp>
 #include <j1939/internal/dispatcher/dispatch.hpp>

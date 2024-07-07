@@ -4,19 +4,17 @@
 
 #include <embr/observer.h>
 
-// FIX: This guy *must* appear beforce 'dispatch.hpp' otherwise test-cs flips out
-#include <j1939/data_field/oel.hpp>
-
 // 11JUN24 New flavor
-#include <j1939/internal/dispatcher/dispatch.hpp>
+#include <j1939/internal/dispatcher/incoming2.hpp>
+
+#include <j1939/data_field/oel.hpp>
 
 
 // 11JUN24 Such an early take on this, I forgot all about this guy
+// NOTE: including this guy fully activates specializations, so watch out for that
 #include <j1939/internal/dispatcher/subject.h>
 
 #include <can/loopback.h>
-
-#include <j1939/internal/dispatcher/incoming2.hpp>
 
 
 #include "test-data.h"
