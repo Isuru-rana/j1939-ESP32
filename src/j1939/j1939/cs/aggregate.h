@@ -45,6 +45,30 @@ struct incoming_visitor
 
         return false;
     }
+
+    // v2-ish
+    template <size_t I, class CS, pgns pgn, class ...Args>
+    bool operator()(
+        estd::variadic::instance<I, CS> cs,
+        const pdu<pgn>& p,
+        Args&&...args) const
+    {
+        cs.value.process_incoming(transport, p, std::forward<Args>(args)...);
+
+        return false;
+    }
+
+    // v2-ish
+    template <size_t I, class CS, class ...Args>
+    bool operator()(
+        estd::variadic::instance<I, CS> cs,
+        const typename Transport::frame& frame,
+        Args&&...args) const
+    {
+        cs.value.process_incoming_default(transport, frame, std::forward<Args>(args)...);
+
+        return false;
+    }
 };
 
 template <class Transport>

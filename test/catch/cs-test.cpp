@@ -92,8 +92,8 @@ TEST_CASE("controller subsystems")
         auto f = frame_traits::create(oel);
 
         // DEBT: May be better suited in dispatcher area
-        //using functor = j1939::cs::internal::v1::incoming_visitor<transport_type>;
+        using functor = j1939::cs::internal::v1::incoming_visitor<transport_type>;
 
-        //aggregate.visit(functor{t}, f);
+        aggregate.visit(functor{t}, f);
     }
 }
