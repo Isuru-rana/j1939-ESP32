@@ -24,8 +24,8 @@ struct twai_impl : embr::can::slcan::v0::impl::base
 
         esp_err_t ret = twai_read_alerts(&v, 0);
 
-        // DEBT: Kind of a lie, bus is fully offline in fact
-        if(ret != ESP_OK)   return ALERT_BUS_ERROR;
+        // DEBT: Kind of a lie, likely twai driver isn't even online
+        if(ret != ESP_OK && ret != ESP_ERR_TIMEOUT)   return ALERT_BUS_ERROR;
 
         if(v & TWAI_ALERT_BUS_ERROR)
         {
@@ -39,8 +39,12 @@ struct twai_impl : embr::can::slcan::v0::impl::base
         {
             alerts |= ALERT_RX_FIFO_FULL;
         }
+        if(v & TWAI_ALERT_ARB_LOST)
+        {
+            alerts |= ALERT_ARBITRATION_LOST;
+        }
 
-        return {};
+        return alerts_type(alerts);
     }
 
     static bool config_bitrate(bitrates_enum v, twai_timing_config_t* config)
