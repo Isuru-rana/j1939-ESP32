@@ -223,12 +223,16 @@ const char* parser<Impl>::transmit(view v, bool extended, bool rtr)
 #if ESP_PLATFORM
     static const char* TAG = "parser::transmit";
 
+    // 08JUL24 - suspect side effects/pointer issues with frame payload.  Logging enabled during VERBOSE
+    // raises chance of correct data received at console side.
+    // TODO: Try this in DEBUG mode (VMware USB went offline again during testing)
     const uint8_t* payload = frame_traits::payload(frame);
+    //const uint8_t* payload = frame.data;
 
     ESP_LOG_BUFFER_HEX_LEVEL(TAG,
         payload,
         frame_traits::length(frame),
-        ESP_LOG_VERBOSE);
+        ESP_LOG_DEBUG);
 #endif
 
     if(r == 0)
