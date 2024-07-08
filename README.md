@@ -20,8 +20,8 @@ p.requested_percent_fan_speed(speed);
 transport_traits::send(t, p);
 ```
 
-DBC files are useful, but don't directly play well in constrained devices.  With `embr::j1939`,
-compile-time traits are available for you to interrogate, or ignore completely - "only pay for what you use"
+DBC files are useful, but don't always play well in constrained devices.  With `embr::j1939`,
+compile-time traits are available for interrogation, or to ignore completely - "only pay for what you use"
 
 ### Features include:
 
@@ -79,6 +79,8 @@ Although this library is tuned for embedded use, it compiles under GCC and Clang
 * Qt/QML
 
 ## Extras
+
+[Rough numbers](doc/Metrics.md)
 
 ### SLCAN firmware (USB-CAN bridge)
 
