@@ -40,6 +40,8 @@ class App : transport_type
     using Event = embr::debounce::v1::Event;
 
     using transport_traits = embr::j1939::transport_traits<transport_type>;
+    using frame_type = transport_type::frame;
+    using frame_traits = embr::can::frame_traits<frame_type>;
 
     estd::freertos::layer1::queue<Event, 10> q;
 

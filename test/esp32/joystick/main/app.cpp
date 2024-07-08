@@ -33,7 +33,15 @@ void App::on_notify(TWAI::event::autorx e)
 {
     ESP_LOGV(TAG, "on_notify: TWAI::event::autorx");
 
-    const transport_type::frame& frame = e.message;
+    const frame_type& frame = e.message;
+    // TODO: Do a version directly on frame too just incase
+    // frame_traits is freaking out
+    const uint8_t* payload = frame_traits::payload(frame);
+
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG,
+        payload,
+        frame_traits::length(frame),
+        ESP_LOG_INFO);
 
     out.rdbuf()->clear();
     const auto& out_s = out.rdbuf()->str();
