@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#define FEATURE_EMBR_J1939_TP_RESPONDER 0   // ~1k ROM
+#define FEATURE_EMBR_J1939_TP_RESPONDER 0   // ~1.5k ROM
 
 #include <estd/string.h>
 
@@ -37,10 +37,12 @@ static transport t;
 
 scheduler_type scheduler;
 
-// 25JUN24 - Pre v2 dispatcher numbers
-#define FEATURE_DIAGNOSTIC  1       // ~7k ROM
-#define FEATURE_NETWORK     1       // ~6k ROM
-#define FEATURE_TP          1       // ~7k ROM w/ responder disabled
+#define CONFIG_NCA_SCHEDULED 1  // flag not used yet, always on
+
+// 08JUL24
+#define FEATURE_DIAGNOSTIC  1       // ~8.5k ROM
+#define FEATURE_NETWORK     1       // ~4k ROM
+#define FEATURE_TP          1       // ~3.5k ROM w/ responder disabled
 
 using dca_type = diagnostic_ca<transport, arduino_ostream>;
 
@@ -74,7 +76,7 @@ dca_type dca(cout);
 #endif
 
 #if FEATURE_TP
-sm::transport_protocol tp;
+sm::transport_protocol<time_point> tp;
 
 component_identification_ca cidca;
 #endif
@@ -121,8 +123,8 @@ void loop()
     transport::frame f;
     // DEBT: time_point overall needs more attention
 #if FEATURE_TP
-    sm::transport_protocol::context ctx{
-        unsigned(millis()),
+    sm::transport_protocol<time_point>::context ctx{
+        time_point::clock::now(),
 #if FEATURE_NETWORK
         nca.address().value()};
 #else
@@ -136,11 +138,11 @@ void loop()
         process_incoming(dca, t, f);
 #endif
 #if FEATURE_NETWORK
-        embr::j1939::internal::v2::process_incoming(nca, t, f);
+        embr::j1939::v2::process_incoming(nca, t, f);
 #endif
 #if FEATURE_TP
-        embr::j1939::internal::v2::process_incoming(tp, t, f, ctx);
-        embr::j1939::internal::v2::process_incoming(cidca, t, f);
+        embr::j1939::v2::process_incoming(tp, t, f, ctx);
+        embr::j1939::v2::process_incoming(cidca, t, f);
 #endif
     }
 
