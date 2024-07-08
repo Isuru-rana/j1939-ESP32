@@ -109,11 +109,13 @@ struct shared
     {
         switch(v)
         {
-            case ALERT_NONE:            return "None";
-            case ALERT_RX_FIFO_FULL:    return "RX Overrun";
-            case ALERT_TX_FIFO_FULL:    return "TX Overrun";
-            case ALERT_BUS_ERROR:       return "Bus Error";
-            case ALERT_BUS_PASSIVE:     return "Bus Passive";
+            case ALERT_NONE:                return "None";
+            case ALERT_RX_FIFO_FULL:        return "RX Overrun";
+            case ALERT_TX_FIFO_FULL:        return "TX Overrun";
+            case ALERT_DATA_STREAM:         return "Data Stream";
+            case ALERT_ARBITRATION_LOST:    return "Arbitration Lost";
+            case ALERT_BUS_ERROR:           return "Bus Error";
+            case ALERT_BUS_PASSIVE:         return "Bus Passive";
 
             default:    return "N/A";
         }
@@ -279,29 +281,7 @@ protected:
 
 
     // send out over CAN bus
-    const char* transmit(view v, bool extended, bool rtr)
-    {
-        if(!impl().opened())    return ERROR;
-
-        // Not supported yet, but almost
-        if(rtr) return  ERROR;
-
-        frame_type frame;
-
-        frame_traits::rtr(frame, rtr);
-        frame_traits::extended(frame, extended);
-
-        estd::errc r = deserialize(v.begin(), &frame, extended);
-
-        if(r == 0)
-            return impl().transport().send(frame) ?
-                (autopoll() ? OK_AUTOPOLL : OK) : ERROR;
-        else
-        {
-            alerts_ |= ALERT_DATA_STREAM;
-            return ERROR;
-        }
-    }
+    const char* transmit(view v, bool extended, bool rtr);
 
     const char* bitrate(view s)
     {

@@ -1,5 +1,11 @@
 #pragma once
 
+// DEBT: Potentially prefer subject/observer or deeper impl participation to avoid platform specifity
+// here, even in a diagnostic sense
+#if ESP_PLATFORM
+#include <esp_log.h>
+#endif
+
 #include "parser.h"
 
 namespace embr { namespace can { namespace slcan { inline namespace v0 {
@@ -198,5 +204,42 @@ estd::errc parser<Impl>::deserialize(CharIt in, frame_type* out, bool extended)
 
     return estd::errc{};
 }
+
+template <ESTD_CPP_CONCEPT(concepts::Impl) Impl>
+const char* parser<Impl>::transmit(view v, bool extended, bool rtr)
+{
+    if(!impl().opened())    return ERROR;
+
+    // Not supported yet, but almost
+    if(rtr) return  ERROR;
+
+    frame_type frame;
+
+    frame_traits::rtr(frame, rtr);
+    frame_traits::extended(frame, extended);
+
+    estd::errc r = deserialize(v.begin(), &frame, extended);
+
+#if ESP_PLATFORM
+    static const char* TAG = "parser::transmit";
+
+    const uint8_t* payload = frame_traits::payload(frame);
+
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG,
+        payload,
+        frame_traits::length(frame),
+        ESP_LOG_VERBOSE);
+#endif
+
+    if(r == 0)
+        return impl().transport().send(frame) ?
+            (autopoll() ? OK_AUTOPOLL : OK) : ERROR;
+    else
+    {
+        alerts_ |= ALERT_DATA_STREAM;
+        return ERROR;
+    }
+}
+
 
 }}}}
