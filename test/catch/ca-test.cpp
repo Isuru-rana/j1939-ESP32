@@ -136,6 +136,8 @@ TEST_CASE("Controller Applications")
     }
     SECTION("diagnostic ca")
     {
+        out.setf(estd::ios_base::uppercase);
+
         SECTION("regular")
         {
             diagnostic_ca<can::loopback_transport, ostringstream> dca(out);
@@ -158,8 +160,6 @@ TEST_CASE("Controller Applications")
 
             diagnostic_ca<can::loopback_transport, ostringstream, policy> dca(out);
 
-            out.setf(estd::ios_base::uppercase);
-
             pdu<pgns::oel> p{null_t{}};
 
             frame f = frame_traits::create(p);
@@ -167,6 +167,23 @@ TEST_CASE("Controller Applications")
             j1939::v2::process_incoming(dca, t, f);
 
             REQUIRE(out_s == "PDU: FDCC SA:0 FF FF FF FF FF FF FF FF\n");
+        }
+        SECTION("unhandled")
+        {
+            diagnostic_ca<can::loopback_transport, ostringstream> dca(out);
+
+            // As per https://github.com/malachi-iot/j1939/issues/3 it may be that
+            // truly unhandled PGNs are routed a little different than blacklisted ones.
+            // Issue seen on recipients when using esp32/slcan/test-smit script
+            // Not recreated here, however
+
+            pdu<pgns::heater_information> p{null_t{}};
+
+            frame f = frame_traits::create(p);
+
+            j1939::v2::process_incoming(dca, t, f);
+
+            REQUIRE(out_s == "PDU: FE6D SA:0 FF FF FF FF FF FF FF FF\n");
         }
     }
     SECTION("aggregated")

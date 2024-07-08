@@ -47,6 +47,7 @@ else()
         pdu-test.cpp
         pgn-test.cpp
         ostream-test.cpp
+        slcan-test.cpp
         slots-test.cpp
         sm-test.cpp
         spn-test.cpp
