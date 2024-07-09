@@ -4,7 +4,7 @@
 
 #include "fwd.h"
 
-namespace embr { namespace j1939 {
+namespace embr { namespace j1939 { inline namespace v1 {
 
 // NOTE: Impl::context trick is EXPERIMENTAL to help with initializer-list style trivial init
 template <class Transport, class Impl, class Context = typename Impl::context>
@@ -41,4 +41,4 @@ inline sm::v1::result process_incoming(Impl& impl, Transport&& t, const typename
     return process_incoming(state, f);
 }
 
-}}
+}}}

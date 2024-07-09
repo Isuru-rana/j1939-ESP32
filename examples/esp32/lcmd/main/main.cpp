@@ -38,6 +38,8 @@ extern "C" void app_main(void)
     transport_type primary;
     loopback_type loopback;
 
+    transport_type::init();
+
     using context = decltype(lcmd_source)::context;
 
     transport_type::frame frame;
