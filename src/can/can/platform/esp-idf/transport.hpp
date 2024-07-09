@@ -7,7 +7,8 @@
 #include "../../transport.h"
 
 #include "esp_log.h"
-#include "driver/twai.h"
+
+#include "transport.h"
 
 // NOTE: Keep this simple, because IIRC embr has its own flavor of can transport in a branch
 
@@ -16,7 +17,7 @@ namespace embr { namespace can { namespace esp_idf {
 // NOTE: Non blocking only partially supported,
 // we possibly need to denote a timeout occurred
 template <bool block_rx, bool block_tx = block_rx>
-struct twai_transport
+struct twai_transport : internal::twai_transport
 {
     using frame = twai_message_t;
 
