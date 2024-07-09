@@ -255,7 +255,7 @@ void send(pdu<pgn>& p, our_arduino_ostream* out = nullptr)
 {
     p.source_address(source_address());
 
-    auto frame = ft::create(p.can_id(), p.data(), p.size());
+    auto frame = ft::create(p.can_id(), p.data(), p.size(), embr::can::FRAME_EXT);
 
     if(t.send(frame) == false && out != nullptr)
     {

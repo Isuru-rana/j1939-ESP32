@@ -1,5 +1,7 @@
 #pragma once
 
+#include <estd/iomanip.h>
+
 // DEBT: Potentially prefer subject/observer or deeper impl participation to avoid platform specifity
 // here, even in a diagnostic sense
 #if ESP_PLATFORM
@@ -136,11 +138,9 @@ auto parser<Impl>::serialize(const frame_type& in, ostream<S, B>& out) -> ostrea
 
     out.put('0' + length);
 
-    out.width(2);
-
     const uint8_t* payload = frame_traits::payload(in);
 
-    while(length--) out << *payload++;
+    while(length--) out << estd::setw(2) << *payload++;
 
     if(timestamps_)
     {

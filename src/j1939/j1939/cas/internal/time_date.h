@@ -35,7 +35,8 @@ struct emit_time_date_functor
 
         auto frame = ft::create(message.can_id(),
             message.data(),
-            message.size());
+            message.size(),
+            can::FRAME_EXT);
 
         // DEBT: Need to pay attention to send failures
         transport.send(frame);

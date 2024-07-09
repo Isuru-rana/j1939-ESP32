@@ -40,7 +40,9 @@ struct frame_traits
         return can_frame_traits::create(
             p.can_id(),
             p.data(),
-            p.size());
+            p.size(),
+            can::FRAME_EXT
+            );
     }
 };
 

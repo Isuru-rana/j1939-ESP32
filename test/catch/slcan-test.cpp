@@ -94,13 +94,9 @@ TEST_CASE("slcan")
 
             frame = frame_traits::create(pdu);
 
-            // DEBT: Loopback create doesn't seem to work out extended/normal frame yet
-            frame.extended = true;
-
             p.serialize(frame, ss);
 
-            // FIX: Doesn't emit right amount of characters.  Smells like a padding problem
-            REQUIRE(s == "T18FEE6B580A00FFFFFFFFFF\r");
+            REQUIRE(s == "T18FEE6B580A0000FFFFFFFFFF\r");
         }
     }
 }
