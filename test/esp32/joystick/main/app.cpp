@@ -80,6 +80,7 @@ void App::on_notify(changed<Service::id::substate> e, const TWAI& svc)
             break;
 
         case Service::Offline:
+            ESP_LOGI(TAG, "on_notify: bus-off - initiating recovery in 120s");
             recovery_time_ = clock::now() + estd::chrono::seconds(120);
             break;
 
@@ -164,6 +165,8 @@ void App::poll()
 
     if(recovery_time_ != zero && clock::now() >= recovery_time_)
     {
+        ESP_LOGD(TAG, "poll: initiating recovery");
+        
         recovery_time_ = zero;
         // DEBT: Do soft error check instead of hard one
         ESP_ERROR_CHECK(twai_initiate_recovery());

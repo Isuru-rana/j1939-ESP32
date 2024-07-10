@@ -5,7 +5,13 @@
 			"path": ".."
 		},
 		{
+			"path": "../test/arduino/console"
+		}
+		{
 			"path": "../test/esp32/cm_dt"
+		}
+		{
+			"path": "../test/esp32/joystick"
 		}
 	],
 	"settings": {
