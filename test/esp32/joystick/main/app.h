@@ -18,6 +18,10 @@ class App : transport_type
 {
     static constexpr const char* TAG = "App";
 
+    using clock = estd::chrono::freertos_clock;
+    using time_point = clock::time_point;
+
+    time_point recovery_time_;
     ostream_type out;
     dca_type dca;
     scheduler_type scheduler_;

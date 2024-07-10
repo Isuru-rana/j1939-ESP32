@@ -57,6 +57,12 @@ void App::on_notify(TWAI::event::autorx e)
 void App::on_notify(TWAI::event::alert e)
 {
     ESP_LOGV(TAG, "on_notify: TWAI::event:alert");
+
+    if(e.alerts & TWAI_ALERT_BUS_OFF)
+    {
+        // Done via higher level Online/Offline states
+        //ESP_ERROR_CHECK(twai_initiate_recovery());
+    }
 }
 
 // DEBT: Move nca & associated scheduler to self-contain inside of App
@@ -68,6 +74,13 @@ void App::on_notify(changed<Service::id::substate> e, const TWAI& svc)
     {
         case Service::Running:
             nca.start(transport());
+            break;
+
+        case Service::Online:
+            break;
+
+        case Service::Offline:
+            recovery_time_ = clock::now() + estd::chrono::seconds(120);
             break;
 
         default:
@@ -109,6 +122,8 @@ struct bjm_pgn_provider<4> : pgn_provider<j1939::pgns::basic_joystick_message_4>
 
 void App::poll()
 {
+    static constexpr time_point zero;
+
     Event event;
 
     if(q.receive(&event, 0s))
@@ -145,5 +160,12 @@ void App::poll()
         }
 
         transport_traits::send(transport(), pdu);
+    }
+
+    if(recovery_time_ != zero && clock::now() >= recovery_time_)
+    {
+        recovery_time_ = zero;
+        // DEBT: Do soft error check instead of hard one
+        ESP_ERROR_CHECK(twai_initiate_recovery());
     }
 }
