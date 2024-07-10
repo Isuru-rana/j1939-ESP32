@@ -83,7 +83,11 @@ extern "C" void app_main(void)
         auto a = parser.cimpl().alerts();
 
         if(a != 0)
-            ESP_LOGW(TAG, "alert: %s", to_string(a));
+        {
+            estd::layer1::string<128> s;
+            to_string(a, s.data());
+            ESP_LOGW(TAG, "alert: %s", s.data());
+        }
 
         if(++counter % 20 == 0)
             ESP_LOGI(TAG, "counter: %u frames: %u autopoll: %u",

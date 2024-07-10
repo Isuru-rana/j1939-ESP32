@@ -19,6 +19,15 @@ TEST_CASE("slcan")
     estd::layer1::stringstream<64> ss;
     const auto& s = ss.rdbuf()->str();
 
+    SECTION("alert")
+    {
+        using alerts = embr::can::slcan::impl::base::alerts_type;
+        estd::layer1::string<128> s1;
+
+        to_string(alerts(alerts::ALERT_BUS_ERROR | alerts::ALERT_DATA_STREAM), s1.data());
+
+        REQUIRE(s1 == "Data Stream, Bus Error");
+    }
     SECTION("status")
     {
         p.status(ss);

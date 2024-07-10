@@ -12,8 +12,11 @@ struct twai_impl : embr::can::slcan::v0::impl::base
 {
     using transport_type = embr::can::esp_idf::twai_transport<true>;
 
+    transport_type transport_;
+
     // DEBT: Make this actual instance for TWAI v2 API
-    transport_type transport() { return {}; }
+    transport_type& transport() { return transport_; }
+    const transport_type& transport() const { return transport_; }
 
     static constexpr const char* TAG = "slcan::twai_impl";
 

@@ -104,21 +104,16 @@ struct shared
         { 10, 20, 50, 100, 125, 250, 500, 800, 1000 };
 
 
-    // DEBT: Not right, this is a bitfield
-    static const char* to_string(alerts_type v)
+    template <class F>
+    static void to_strings(alerts_type v, F&& f)
     {
-        switch(v)
-        {
-            case ALERT_NONE:                return "None";
-            case ALERT_RX_FIFO_FULL:        return "RX Overrun";
-            case ALERT_TX_FIFO_FULL:        return "TX Overrun";
-            case ALERT_DATA_STREAM:         return "Data Stream";
-            case ALERT_ARBITRATION_LOST:    return "Arbitration Lost";
-            case ALERT_BUS_ERROR:           return "Bus Error";
-            case ALERT_BUS_PASSIVE:         return "Bus Passive";
-
-            default:    return "N/A";
-        }
+        if(v & ALERT_NONE)                f("None");
+        if(v & ALERT_RX_FIFO_FULL)        f("RX Overrun");
+        if(v & ALERT_TX_FIFO_FULL)        f("TX Overrun");
+        if(v & ALERT_DATA_STREAM)         f("Data Stream");
+        if(v & ALERT_ARBITRATION_LOST)    f("Arbitration Lost");
+        if(v & ALERT_BUS_ERROR)           f("Bus Error");
+        if(v & ALERT_BUS_PASSIVE)         f("Bus Passive");
     }
 };
 
@@ -394,7 +389,25 @@ public:
 
 }}}}
 
-inline const char* to_string(embr::can::slcan::v0::impl::shared::alerts_type a)
+// DEBT: I'd prefer this tucked away in a namespace but that would interrupt its usefulness
+// DEBT: basic_string<Impl> doesn't yet play nice with +=
+//template <class Impl>
+inline void to_string(embr::can::slcan::v0::impl::shared::alerts_type a,
+    char* s, const char* delim = ", ")
+    //estd::detail::basic_string<Impl>& s)
 {
-    return embr::can::slcan::v0::impl::shared::to_string(a);
+    bool started = false;
+
+    embr::can::slcan::v0::impl::shared::to_strings(a, [&](const char* v)
+    {
+
+        if(started)
+            strcat(s, delim);
+            //s += ", ";
+        else
+            started = true;
+
+        strcat(s, v);
+        //s += v;
+    });
 }
