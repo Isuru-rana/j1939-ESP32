@@ -30,6 +30,8 @@ struct pdu_header : bits::material<bits::little_endian, bits::lsb_to_msb>
 
 struct pdu1_header : can_id
 {
+    friend class internal::pdu_header;
+
     constexpr explicit pdu1_header(uint32_t v) : can_id(v) {}
 
     // EXPERIMENTAL
@@ -44,10 +46,17 @@ struct pdu1_header : can_id
     constexpr uint16_t range() const { return range_pdu1(); }
 
     void range(uint16_t v) { value.set(d::range_pdu1(), v); }
+
+#if FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT == 0
+protected:
+    pdu1_header() = default;
+#endif
 };
 
 struct pdu2_header : can_id
 {
+    friend class internal::pdu_header;
+
     constexpr explicit pdu2_header(uint32_t v) : can_id(v) {}
 
     constexpr pdu2_header(uint8_t priority, pgns pgn) :
@@ -68,11 +77,37 @@ struct pdu2_header : can_id
     constexpr uint32_t range() const { return range_pdu2(); }
 
     void range(uint32_t v) { value.set(d::range_pdu2(), v); }
+
+#if FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT == 0
+protected:
+    pdu2_header() = default;
+#endif
 };
 
 constexpr bool is_bam(const pdu1_header& id)
 {
     return id.destination_address() == addresses::global;
+}
+
+namespace internal {
+
+#if FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT == 0
+struct pdu_header
+{
+    // DEBT: Depends on type-punning which is not gaurunteed by c++ spec
+    // word on the street is GCC does gauruntee it (cite reference)
+    union
+    {
+        pdu1_header pdu1;
+        pdu2_header pdu2;
+        can_id id;
+    };
+
+    pdu_header() = default;
+    constexpr explicit pdu_header(can_id id) : id{id}   {}
+};
+#endif
+
 }
 
 }}

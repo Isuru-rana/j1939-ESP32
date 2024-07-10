@@ -15,9 +15,19 @@
 
 namespace embr { namespace j1939 {
 
+namespace internal {
+
+// Convenience class
+struct pdu_header;
+
+}
+
+
 // as per [1]
 class can_id
 {
+    friend class internal::pdu_header;
+
 protected:
     using desc = bits::descriptor;
     using address_type = addresses::type;

@@ -42,6 +42,8 @@ auto diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
 #if EXP_DIAGNOSTIC_OPT1
     return false;
 #else
+    //internal::pdu_header id2(frame_traits::id(f));
+
     pdu1_header id{frame_traits::id(f)};
     pdu2_header _id{frame_traits::id(f)};
 
