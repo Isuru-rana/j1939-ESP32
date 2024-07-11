@@ -4,7 +4,7 @@
 #include <estd/ostream.h>
 
 #include <j1939/pdu.h>
-#include <j1939/ca.hpp>
+#include <j1939/cs/base.h>
 #include <j1939/data_field/lighting_command.hpp>
 #include <j1939/data_field/lighting_data.hpp>
 
@@ -15,10 +15,16 @@
 // Nearly identical to "big boy" version, but doesn't interact with lighting_data
 // command
 
-struct ArduinoLightingCommandSink : embr::j1939::impl::controller_application_base
+struct ArduinoLightingCommandSink : embr::j1939::cs::v1::base
 {
-    template <class Transport, class PDU>
-    static constexpr bool process_incoming(Transport, PDU) { return false; }
+    using base_type = embr::j1939::cs::v1::base;
+
+    using base_type::process_incoming;
+
+    struct policy_type : base_type::policy_type
+    {
+        using whitelist = pgn_list<pgns::oel, pgns::ccvs>;
+    };
 
     using status = embr::j1939::spn::status;
     using measured = embr::j1939::spn::measured;

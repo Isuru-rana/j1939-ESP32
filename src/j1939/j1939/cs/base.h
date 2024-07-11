@@ -39,6 +39,7 @@ public:
     }
 
     // DEBT: Would like ...Args treatment, but compiler gets ornery about overload ambiguities
+    // almost definitely an artifact of v1::process_incoming, v2 probably not subject to the issue
     template <class Transport, pgns pgn>
     constexpr result process_incoming(const Transport&, pdu<pgn>) const
     {
@@ -51,8 +52,8 @@ public:
         return result::ignore();
     }
 
-    template <class Transport, class Context>
-    constexpr result process_outgoing(Transport&, Context = {}) const
+    template <class Transport, class ...Args>
+    constexpr result process_outgoing(Transport&, Args&&...) const
     {
         return result::ignore();
     }

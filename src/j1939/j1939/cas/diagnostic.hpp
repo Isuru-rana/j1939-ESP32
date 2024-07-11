@@ -4,6 +4,7 @@
 #include "../data_field/all.hpp"
 
 #include "diagnostic.h"
+#include "../cs/diagnostic.hpp"
 
 #include "../ostream.h"
 

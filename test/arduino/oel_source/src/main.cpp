@@ -12,7 +12,8 @@
 #include <j1939/pgn.h>
 
 #include <j1939/cas/diagnostic.hpp>
-#include <j1939/ca.hpp>
+#include <j1939/internal/dispatcher/incoming2.hpp>
+#include <j1939/state-machines/network.hpp>
 
 #include <j1939/ostream.h>
 
@@ -21,6 +22,7 @@
 #include "ca.h"
 #include "conf.h"
 
+#include "main.h"
 #include "transport.h"
 
 using namespace estd;
@@ -70,9 +72,10 @@ diagnostic_ca<transport, arduino_ostream> dca(cout);
 #endif
 
 ArduinoLightingCommandSink ca;
+// DEBT: passing in manager is clumsy, as is NAME
+app::network network(app::address_manager{}, app::proto_name::sparse(0, 0, 0));
 
 using States = embr::debounce::v1::States;
-using clock = estd::chrono::arduino_clock;
 
 
 // next scheduled debounce check
@@ -129,6 +132,8 @@ struct Visitor
 void loop()
 {
     using traits = transport_traits<transport>;
+    const clock::time_point now = clock::now();
+    const sm::v0::context<clock::time_point> context(now);
 
     pdu<pgns::oel> pdu;
 
@@ -140,7 +145,10 @@ void loop()
         process_incoming(dca, t, f);
 #endif
         process_incoming(ca, t, f);
+        process_incoming(network, t, f, context);
     }
+
+    network.process_outgoing(t, context);
 
     // if we haven't yet reached timeout to check debounce status, abort
     // and re-loop

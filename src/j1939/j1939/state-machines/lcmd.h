@@ -8,6 +8,7 @@
 namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 
 // DEBT: Consolidate with or displace ca::lighting command
+// DEBT: Bring in next_event_ supplying base class
 template <class TimePoint>
 class lighting_command : public cs::v1::base
 {
