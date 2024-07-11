@@ -5,6 +5,10 @@
 			"path": ".."
 		},
 		{
+			"name": "ex/lcmd",
+			"path": "../examples/esp32/lcmd"
+		}
+		{
 			"path": "../test/arduino/console"
 		}
 		{

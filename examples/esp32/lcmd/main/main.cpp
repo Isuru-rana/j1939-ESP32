@@ -33,12 +33,38 @@ static j1939::sm::v1::network<
 
 // NOTE: Not ready yet
 
+
+#define GPIO_OUTPUT_PIN_SEL  \
+(1ULL<<CONFIG_GPIO_BRAKE |  \
+ 1ULL<<CONFIG_GPIO_LEFT_BLINKER | \
+ 1ULL<<CONFIG_GPIO_RIGHT_BLINKER)
+
+static const char* TAG = "lcmd::main";
+
+
+void gpio_init()
+{
+    ESP_LOGD(TAG, "gpio_init: entry");
+
+    gpio_config_t io_conf = {};
+
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+
+    ESP_ERROR_CHECK(gpio_config(&io_conf));
+}
+
 extern "C" void app_main(void)
 {
     transport_type primary;
     loopback_type loopback;
 
-    transport_type::init();
+    primary.init();
+
+    gpio_init();
 
     using context = decltype(lcmd_source)::context;
 
@@ -66,6 +92,7 @@ extern "C" void app_main(void)
         }
 
         nca.process_outgoing(primary, context{now});
-        lcmd_source.process_outgoing(primary, context{now});
+        // Self-contained lcmd source + sink requires we "send to ourself"
+        lcmd_source.process_outgoing(loopback, context{now});
     }
 }
