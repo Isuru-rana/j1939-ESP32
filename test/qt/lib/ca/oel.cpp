@@ -24,7 +24,7 @@ OEL::OEL(QObject* parent) :
     network_.setTag("OEL");
 }
 
-bool OEL::process_incoming(can::qt_transport&, const pdu<pgns::lcmd>& p)
+auto OEL::process_incoming(can::qt_transport&, const pdu<pgns::lcmd>& p) -> result
 {
     // TODO: Do this with Generic QML emitter instead
 
@@ -41,7 +41,7 @@ bool OEL::process_incoming(can::qt_transport&, const pdu<pgns::lcmd>& p)
         default: break;
     }
 
-    return true;
+    return result::ok();
 }
 
 void OEL::frameReceived(QCanBusDevice* device, const QCanBusFrame& frame)

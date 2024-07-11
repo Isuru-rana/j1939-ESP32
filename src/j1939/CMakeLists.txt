@@ -14,7 +14,12 @@ if (NOT TARGET can)
     add_subdirectory(../can can)
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES})
+# Mainly for ease of navigation from Qt Creator
+set(INCLUDE_FILES
+    j1939/internal/feature.h
+    j1939/state-machines/tp/feature.h)
+
+add_library(${PROJECT_NAME} STATIC ${INCLUDE_FILES} ${SOURCE_FILES})
 add_library(embr::j1939 ALIAS ${PROJECT_NAME})
 add_library(malachi-iot::embr::j1939 ALIAS ${PROJECT_NAME})
 

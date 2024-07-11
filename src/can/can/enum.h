@@ -29,7 +29,7 @@ enum frame_flags : unsigned
 {
     FRAME_RTR = 0x01,
     FRAME_EXT = 0x02,
-    FRAME_SS = 0x04
+    FRAME_SS = 0x04         // NOTE: Not implemented yet / Single shot not always set at frame level
 };
 
 }

@@ -46,22 +46,14 @@ void out_pdu_helper(estd::detail::basic_ostream<Streambuf, Base>& out,
 }
 
 template <pgns pgn>
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
 struct pgn_put<pgn, estd::enable_if_t<pgn::traits<pgn>::is_specialized> > :
-#else
-struct pgn_put<pgn, void> :
-#endif
     estd::internal::ostream_functor_tag
 {
     const pdu<pgn>& pdu_;
 
     using container_type = typename pdu<pgn>::container_type;
 
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
     using traits = pgn::traits<pgn>;
-#else
-    using traits = traits_wrapper<pgn>;
-#endif
 
     constexpr pgn_put(const pdu<pgn>& p) : pdu_{p} {}
 
@@ -95,7 +87,6 @@ struct pgn_put<pgn, void> :
     }
 };
 
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
 // NOTE: Not well tested
 template <pgns pgn>
 struct pgn_put<pgn, estd::enable_if_t<!pgn::traits<pgn>::is_specialized> > :
@@ -113,7 +104,6 @@ struct pgn_put<pgn, estd::enable_if_t<!pgn::traits<pgn>::is_specialized> > :
         out_pdu_helper(out, (uint32_t)pgn, pdu_.can_id(), pdu_.payload());
     }
 };
-#endif
 
 
 }

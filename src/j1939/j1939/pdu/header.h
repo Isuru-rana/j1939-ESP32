@@ -66,11 +66,7 @@ struct pdu2_header : can_id
     template <pgns pgn>
     static constexpr pdu2_header create()
     {
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
         return pdu2_header(pgn::traits<pgn>::default_priority, pgn);
-#else
-        return pdu2_header(pgn::get_descriptor<pgn>().default_priority, pgn);
-#endif
     }
 
     // Full 18-bit PGN range

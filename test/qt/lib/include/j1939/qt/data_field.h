@@ -151,13 +151,8 @@ public:
         raw_.assign(v.begin(), v.end());
 #if __cpp_fold_expressions
 
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
         using traits = j1939::pgn::traits<pgn>;
         if constexpr(traits::is_specialized)   decompose(v, *this);
-#else
-        using traits = j1939::internal::traits_wrapper<pgn>;
-        if constexpr(traits::specialized)   decompose(v, *this);
-#endif
 
 #endif
     }

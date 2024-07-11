@@ -22,11 +22,7 @@ namespace embr { namespace j1939 {
 
 
 template<pgns pgn, class Container = estd::array<uint8_t,
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
     internal::pdu_traits<pgn>::length> >
-#else
-    pgn::get_descriptor<pgn>().length> >
-#endif
 struct data_field;
 
 
@@ -42,11 +38,7 @@ namespace layer2 {
 template<pgns pgn>
 using data_field = embr::j1939::data_field<pgn,
     estd::span<uint8_t,
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
     internal::pdu_traits<pgn>::length> >;
-#else
-    pgn::get_descriptor<pgn>().length> >;
-#endif
 
 }
 

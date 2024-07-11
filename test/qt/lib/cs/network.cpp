@@ -125,11 +125,11 @@ void ExternalAddressObserver::frameReceived(QCanBusDevice*, const QCanBusFrame& 
 }
 
 
-bool ExternalAddressObserver::process_incoming(can::qt_transport&, const pdu<pgns::address_claimed>& p)
+auto ExternalAddressObserver::process_incoming(can::qt_transport&, const pdu<pgns::address_claimed>& p) -> result
 {
     pdu_ = p;
 
-    return true;
+    return result::ok();
 }
 
 }}

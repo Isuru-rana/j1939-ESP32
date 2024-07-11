@@ -13,15 +13,15 @@ struct frame_traits<QCanBusFrame>
 {
     using frame = struct QCanBusFrame;
 
-    static frame create(uint32_t id, const uint8_t* payload, unsigned dlc)
+    static frame create(uint32_t id, const uint8_t* payload, unsigned dlc, frame_flags flags)
     {
         QCanBusFrame f;
 
         f.setFrameId(id);
         f.setPayload(QByteArray((const char*)payload, dlc));
 
-        // DEBT: Hard wired to extended id for j1939
-        f.setExtendedFrameFormat(true);
+        if(flags & FRAME_EXT)
+            f.setExtendedFrameFormat(true);
 
         return f;
     }

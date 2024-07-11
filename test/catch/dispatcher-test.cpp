@@ -28,16 +28,9 @@ struct dispatch_functor
     template <pgns pgn>
     int operator()(j1939::internal::in_place_pgn<pgn>) const
     {
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
         using traits = j1939::pgn::traits<pgn>;
 
         return traits::is_specialized;
-#else
-        using traits = j1939::internal::traits_wrapper<pgn>;
-
-        return traits::specialized;
-#endif
-
     }
 
     int operator()(pgns) { return 0; }

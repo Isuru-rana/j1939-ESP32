@@ -13,15 +13,11 @@ namespace internal {
 
 // DEBT: Eventually I want this to be just traits
 template <pgns pgn>
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
 // Requires too much specialization knowledge up front
 //using in_place_pgn = j1939::pgn::traits<pgn>;
 // This guy auto-converts to pgns value, which we don't want
 //using in_place_pgn = estd::integral_constant<pgns, pgn>;
 using in_place_pgn = j1939::internal::pdu_traits<pgn>;
-#else
-using in_place_pgn = j1939::internal::traits_wrapper<pgn>;
-#endif
 
 template <class Policy, pgns pgn, class Enabled = void>
 struct should_execute_pgn : estd::bool_constant<false> {};
