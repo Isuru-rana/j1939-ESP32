@@ -1,12 +1,15 @@
 #include <estd/chrono.h>
+#include <estd/sstream.h>
+#include <estd/thread.h>
 
 #include <j1939/cas/internal/prng_address_manager.h>
+#include <j1939/cas/diagnostic.hpp>
 
 #include <j1939/state-machines/lcmd.hpp>
 #include <j1939/state-machines/network/network.hpp>
 #include <j1939/NAME/name.h>
 
-#include <j1939/internal/dispatcher/incoming.hpp>
+#include <j1939/dispatcher.hpp>
 
 #include "lcmd_sink.hpp"
 #include "transport.h"
@@ -23,6 +26,7 @@ using NAME = j1939::layer0::NAME<
     j1939::function_fields::brakes_system_controller,
     0, j1939::manufacturer_codes::not_applicable>;
 
+using ostream_type = estd::layer1::ostringstream<256>;
 using address_manager = j1939::internal::prng_address_manager;
 
 static j1939::sm::v0::lighting_command<time_point> lcmd_source;
@@ -30,6 +34,10 @@ static app::lcmd_sink lcmd_sink;
 static j1939::sm::v1::network<
     address_manager,
     time_point> nca(address_manager{}, NAME::sparse(j1939::null_t{}));
+// DEBT: A true-blue serial/usb ostream is in the works.  See esp_idf::log_ostream
+// In the meantime, emit to and log local string will serve us.  
+static ostream_type diag_out;
+static j1939::v1::diagnostic_ca<transport_type, ostream_type> dca(diag_out);
 
 // NOTE: Not ready yet
 
@@ -76,8 +84,11 @@ extern "C" void app_main(void)
 
         while(loopback.receive(&frame))
         {
-            // sink receives directly from loopback, which only carries lcmd generates from lcmd_source
+#if CONFIG_LCMD_SINK
+            // sink receives directly from loopback, which only carries lcmd generated from lcmd_source
             j1939::process_incoming(lcmd_sink, loopback, frame);
+#endif
+            // retransmit loopback->physical bus
             primary.send(frame);
         }
 
@@ -85,14 +96,28 @@ extern "C" void app_main(void)
         {
             // DEBT: Probably prefer a direct cascade psuedo-transport which has an aggregated list of
             // cs/ca/sm's attached.  That would obviate the need for a full loopback w/ local queue
+#if CONFIG_LCMD_SOURCE
             j1939::process_incoming(lcmd_source, loopback, frame, context{now});
-            // sink receives from physical bus
+#endif
+            // sink receives here from physical bus (in addition to loopback above)
+#if CONFIG_LCMD_SINK
             j1939::process_incoming(lcmd_sink, loopback, frame);
+#endif
             j1939::process_incoming(nca, primary, frame, context{now});
+
+            diag_out.rdbuf()->clear();
+
+            j1939::process_incoming(dca, primary, frame);
+
+            // diagnostic_ca emits eol into 'out'
+            esp_log_write(ESP_LOG_INFO, TAG, diag_out.rdbuf()->str().data());
         }
 
         nca.process_outgoing(primary, context{now});
         // Self-contained lcmd source + sink requires we "send to ourself"
         lcmd_source.process_outgoing(loopback, context{now});
+
+        // Just to keep WDT off our backs and CPU from spinning like crazy
+        estd::this_thread::sleep_for(estd::chrono::milliseconds(50));
     }
 }

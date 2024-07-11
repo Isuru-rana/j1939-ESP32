@@ -4,6 +4,10 @@
 
 #include "fwd.h"
 
+// NOTE: Deprecated, v2 process_incoming now preferred.  Be very careful,
+// v1 will take precedence over v2 (I think) due to greedy Context consumption.
+// What I know for sure is v1 and v2 do NOT collide, even though I expected them to
+
 namespace embr { namespace j1939 { inline namespace v1 {
 
 // NOTE: Impl::context trick is EXPERIMENTAL to help with initializer-list style trivial init

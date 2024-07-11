@@ -27,7 +27,7 @@ template <class TTransport, class TOStream, class Policy>
 template <embr::j1939::pgns pgn>
 auto diagnostic_ca<TTransport, TOStream, Policy>::process_incoming(transport_type& t, const pdu<pgn>& p) -> result
 {
-    out << p << estd::endl;
+    out_ << p << estd::endl;
 
     return result::ok();
 }
@@ -52,19 +52,19 @@ auto diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
 
     //auto pgn = (long) (id.is_pdu1() ? id.range() : _id.range());
 
-    out << "PDU: " << estd::hex;
+    out_ << "PDU: " << estd::hex;
 
     if(id.is_pdu1())
-        out << id.range() << ' ' << id;
+        out_ << id.range() << ' ' << id;
     else
-        out << _id.range() << ' ' << _id;
+        out_ << _id.range() << ' ' << _id;
 
     const uint8_t* payload = frame_traits::payload(f);
 
     for(unsigned i = 0; i < frame_traits::length(f); i++)
-        out << ' ' << estd::setw(2) << payload[i];
+        out_ << ' ' << estd::setw(2) << payload[i];
 
-    out << estd::endl;
+    out_ << estd::endl;
 
     return result::ignore();
 #endif
