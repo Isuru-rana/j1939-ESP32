@@ -39,8 +39,6 @@ static j1939::sm::v1::network<
 static ostream_type diag_out;
 static j1939::v1::diagnostic_ca<transport_type, ostream_type> dca(diag_out);
 
-// NOTE: Not ready yet
-
 
 #define GPIO_OUTPUT_PIN_SEL  \
 (1ULL<<CONFIG_GPIO_BRAKE |  \

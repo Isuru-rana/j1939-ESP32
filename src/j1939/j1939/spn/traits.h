@@ -185,8 +185,8 @@ struct traits :
     type_traits<spn>,
     range_traits<typename type_traits<spn>::int_type>
 {
-    static constexpr descriptor d = spn::get_descriptor<spn>();
-    static constexpr descriptor get_descriptor() { return spn::get_descriptor<spn>(); }
+    static constexpr spn::descriptor d = spn::get_descriptor<spn>();
+    static constexpr spn::descriptor descriptor() { return spn::get_descriptor<spn>(); }
 
     /// Indicate whether specified value is the "no action" value, which is always
     /// all-bits-set.  Default behavior = pass in value *unshifted* from data stream
