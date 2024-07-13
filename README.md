@@ -35,24 +35,29 @@ compile-time traits are available for interrogation, or to ignore completely - "
 
 ## Quick Start
 
-* Initialize `estd` and `embr` via `git submodule update --init --recursive`
-* Naturally you'll need a [Can Transceiver](doc/Transceiver.md)
+Prerequisites:
+
+1. Initialize `estd` and `embr` via `git submodule update --init --recursive`
+2. Naturally you'll need a [Can Transceiver](doc/Transceiver.md)
 
 ### Quick Start: ESP-IDF
 
-An example lighting command (LCMD) controller application is here: [Example LCMD CA](examples/esp32/lcmd/README.md)
-
-It demonstrates a self-contained CA:
+[Example lighting command CA](examples/esp32/lcmd/README.md) has the following features:
 
 * GPIO control of brake light and turn signals
 * automatic network address acquisition
 * Responds to OEL, CCVS commands and emits LCMD commands
 
-Use `idf.py menuconfig` to specify CAN speed and TX/RX pins via `embr` config menu item
+Use `idf.py menuconfig` to specify CAN speed and TX/RX pins via `embr` config menu item.
+[Full docs here](ext/embr/doc/esp_helper/MenuConfig.md)
 
 ### Quick Start: CMake
 
-This is the easiest bringup approach.
+This is the easiest bringup approach.  Stock standard CMake `add_subdirectory` works here
+(TBD make a unified CMakeLists to pull in can + j1939 together)
+
+For new targets, the `can` library will need a `transport` and `frame_traits` implementation.
+See new target guide (TBD)
 
 ### Quick Start: PlatformIO
 

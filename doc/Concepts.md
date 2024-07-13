@@ -1,14 +1,30 @@
 # Library Specific Notions and Ideas and Architecture
 
-(((NOTE: We're not talking about c++20 concepts here)))
+> NOTE: We're not talking about c++20 concepts here
 
-## Dispatcher
+Document v0.1
 
-To translate a pgn into a compile time pdu<pgn>, we route through a big
+## 1. Dispatcher
+
+To translate a runtime pgn into a compile time pgn, we route through a big
 ol' switch statement referred to as a dispatcher.  Similar to a factory
 pattern.
 
-## Controller Service
+Functor is passed in requiring two signatures:
+
+* in_place_t<pgns>
+* pgns 
+
+### 1.1. Frame Resolution
+
+Aforementioned switch statement creates a compile-time specialized
+PDU associated with incoming PGN.
+
+### 1.2. Functor behavior
+
+## 2. Incoming Processor
+
+## 3. Controller Service
 
 J1939 has a strict definition of "Controller Application":
 
@@ -18,6 +34,11 @@ Things like network address acquisition, etc are thought of as constituent parts
 
 Fundamentally, a `cs` comes down to three methods:
 
-* `process_incoming_default`
+* `process_incoming_default` - fallback for frames not resolved to PDU
 * `process_incoming`
 * `process_outgoing`
+
+### 3.1. CS: policy
+
+Dispatcher's big switch statement can cause some serious bloat.  This is mitigated
+via policy whitelisting or blacklisting, one can filter which pgns flow into a CS.
