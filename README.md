@@ -49,7 +49,7 @@ Prerequisites:
 * Responds to OEL, CCVS commands and emits LCMD commands
 
 Use `idf.py menuconfig` to specify CAN speed and TX/RX pins via `embr` config menu item.
-[Full docs here](ext/embr/doc/esp_helper/MenuConfig.md)
+[Full docs here](https://github.com/malachi-iot/embr/blob/v0.3.1/doc/esp_helper/MenuConfig.md)
 
 ### Quick Start: CMake
 

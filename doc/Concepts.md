@@ -8,21 +8,22 @@ Document v0.1
 
 To translate a runtime pgn into a compile time pgn, we route through a big
 ol' switch statement referred to as a dispatcher.  Similar to a factory
-pattern.
+pattern, a functor is passed in requiring two signatures:
 
-Functor is passed in requiring two signatures:
+* PGN supported: `auto operator()(in_place_pgn&lt;pgns&gt;)`
+* PGN unsupported: `auto operator()(pgns)`
 
-* in_place_t<pgns>
-* pgns 
+PGN is supported if:
 
-### 1.1. Frame Resolution
-
-Aforementioned switch statement creates a compile-time specialized
-PDU associated with incoming PGN.
-
-### 1.2. Functor behavior
+1. It is part of the built-in switch statement
+2. It is not excluded by policy (See section 3.1.)
 
 ## 2. Incoming Processor
+
+This builds on aforemention dispatcher and does two additional things:
+
+1. Creates a specialized PDU associated with PGN
+2. Invokes `process_incoming` or `process_incoming_default`
 
 ## 3. Controller Service
 
