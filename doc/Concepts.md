@@ -1,5 +1,7 @@
 # Library Specific Notions and Ideas and Architecture
 
+(((NOTE: We're not talking about c++20 concepts here)))
+
 ## Dispatcher
 
 To translate a pgn into a compile time pdu<pgn>, we route through a big

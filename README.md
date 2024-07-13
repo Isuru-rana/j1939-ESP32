@@ -40,7 +40,13 @@ compile-time traits are available for interrogation, or to ignore completely - "
 
 ### Quick Start: ESP-IDF
 
-See `examples/esp32/lcmd_sink` (TBD, example not yet existing - make a simple GPIO blinker responder)
+An example lighting command (LCMD) controller application is here: [Example LCMD CA](examples/esp32/lcmd/README.md)
+
+It demonstrates a self-contained CA:
+
+* GPIO control of brake light and turn signals
+* automatic network address acquisition
+* Responds to OEL, CCVS commands and emits LCMD commands
 
 Use `idf.py menuconfig` to specify CAN speed and TX/RX pins via `embr` config menu item
 
@@ -51,9 +57,7 @@ This is the easiest bringup approach.
 ### Quick Start: PlatformIO
 
 I have yet to crack the nut to make platformio work smoothly with local libraries.  Therefore,
-usage in this context is complicated.  See `test/arduino/lcmd_sink`
-
-TBD create instructions for making a new project from scratch
+usage in this context is complicated.  See [test Arduino LCMD](test/arduino/lcmd_sink/README.md)
 
 ### Other Quick Snippets
 

@@ -55,7 +55,18 @@ else()
         )
 endif()
 
-add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES} ${ROOT_DIR}/README.md)
+set(EXTRA_FILES
+    doc/AddressResolution.md
+    doc/Implied.md
+    doc/Concepts.md
+    doc/Snippets.md
+    doc/Transceiver.md
+    README.md
+)
+
+list(TRANSFORM EXTRA_FILES PREPEND ${ROOT_DIR}/)
+
+add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES} ${EXTRA_FILES})
 
 target_compile_definitions(j1939 PUBLIC FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT=0)
 target_compile_definitions(${PROJECT_NAME} PUBLIC FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT=0)
