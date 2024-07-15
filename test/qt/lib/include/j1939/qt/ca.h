@@ -28,6 +28,8 @@ protected:
 
     }
 
+    Q_OBJECT
+
     Q_PROPERTY(cs::v1::Network* network READ network CONSTANT)
 
 public:
@@ -35,6 +37,11 @@ public:
         cs::v1::Base(parent),
         network_{parent}
     {}
+
+    cs::v1::Network* network()
+    {
+        return &network_;
+    }
 
     const cs::v1::Network* network() const
     {

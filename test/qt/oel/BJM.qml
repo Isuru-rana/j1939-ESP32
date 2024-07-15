@@ -7,15 +7,15 @@ import j1939.ca 1.0
 
 Item {
     property Generic generic
-    property CCVS ca
 
     RowLayout {
         anchors.fill: parent
 
         Button {
-            text: "brakes"
-            onPressed: ca.brakeSwitchPressed()
-            onReleased: ca.brakeSwitchReleased()
+            text: "bjm1.1"
+        }
+        Button {
+            text: "bjm1.2"
         }
     }
 }

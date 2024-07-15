@@ -9,7 +9,11 @@ Item {
     property Generic generic
     property OEL ca
 
+    // DEBT: Some kind of height hint still needed here
+
     RowLayout {
+        anchors.fill: parent
+
         Button {
             checkable: true
             id: btnLeft

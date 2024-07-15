@@ -7,8 +7,8 @@ import j1939.cs 1.0
 import j1939.ui 1.0
 
 Window {
-    width: 640
-    height: 480
+    width: 800
+    height: 600
     visible: true
     title: qsTr("Hello World")
 
@@ -41,7 +41,8 @@ Window {
             CAContainer {
                 Layout.fillWidth: true
                 //Layout.fillHeight: true
-                network: Session.network
+                // OEL (serviced by Debug1)
+                network: Session.clients[0].network
             }
 
             Button {
@@ -65,21 +66,31 @@ Window {
             generic: Session.generic
             ca: Session.clients[0]
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            //Layout.fillHeight: true
+            Layout.minimumHeight: 50
+        }
+
+        BJM {
+            generic: Session.generic
+            Layout.fillWidth: true
+            Layout.minimumHeight: 50
         }
 
         CCVS {
             generic: Session.generic
             ca: Session.clients[2]
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            //Layout.fillHeight: true
+            Layout.minimumHeight: 50
 
         }
 
+        // Log
         PDUList {
             Layout.fillWidth: true
-            Layout.minimumHeight: 200
-            Layout.maximumHeight: 200
+            Layout.minimumHeight: 250
+            Layout.maximumHeight: 300
+            Layout.fillHeight: true
             generic: Session.generic
         }
     }

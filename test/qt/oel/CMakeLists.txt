@@ -20,6 +20,7 @@ qt_add_qml_module(${TARGET_NAME}
     URI oel
     VERSION 1.0
     QML_FILES
+        BJM.qml
         CCVS.qml
         Dash.qml
         Debug1.qml

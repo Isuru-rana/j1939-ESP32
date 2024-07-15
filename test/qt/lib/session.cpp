@@ -5,8 +5,8 @@ namespace embr::j1939::qt { inline namespace v1 {
 
 Session::Session(QObject* parent) :
     QObject(parent),
-    generic_(parent),
-    network_(parent)
+    generic_(parent)//,
+    //network_(parent)
 {
     connect(&generic_, &cs::v1::Generic::pduReceived, this, [&](const v1::Pdu* pdu)
     {
@@ -38,7 +38,7 @@ void Session::setDevice(QCanBusDevice* device)
             //qDebug() << "Got frame:" << Qt::hex << frame.frameId();
 
             generic_.frameReceived(can_, frame);
-            network_.frameReceived(can_, frame);
+            //network_.frameReceived(can_, frame);
             tp_.frameReceived(can_, frame);
 
             for(cs_type cs : css_)
@@ -52,6 +52,7 @@ void Session::setDevice(QCanBusDevice* device)
     // 2. tp1 is still in the middle of rts sending and can't process received cts
     Qt::QueuedConnection);
 
+    /*
     QObject::connect(device, &QCanBusDevice::stateChanged, [&]
         (QCanBusDevice::CanBusDeviceState state)
     {
@@ -59,7 +60,7 @@ void Session::setDevice(QCanBusDevice* device)
         {
             network_.start(can_);
         }
-    });
+    }); */
 }
 
 }}
