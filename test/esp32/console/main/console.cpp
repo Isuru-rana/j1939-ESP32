@@ -8,14 +8,14 @@
 
 #include "nca.h"
 #include "streambuf.h"
+#include "tp.h"
 
 using namespace embr::j1939;
 
-static esp_idf::log_ostream clog;   // Coming along well, almost ready
+esp_idf::log_ostream clog;   // Coming along well, almost ready
 static uint8_t global_da = addresses::null;
 
 extern transport_type t;
-extern sm::transport_protocol tp;
 
 #define PROMPT_STR "j1939"
 
@@ -69,7 +69,7 @@ static int emit_rqst(int argc, char** argv)
 
     // DEBT: Check for da range validity
 
-    if(nca.state == impl::network_ca_base::states::claimed)
+    if(nca.state() == sm::v1::network_base::states::claimed)
         sa = nca.address().value();
     else
         sa = 0; // DEBT
@@ -78,7 +78,7 @@ static int emit_rqst(int argc, char** argv)
 
     traits::send(t, p);
 
-    if(tp.state() == sm::transport_protocol::IDLE)
+    if(tp.state() == tp_type::IDLE)
     {
         // Reserve transport protocol state machine, in case response is > 8 bytes
         // TODO: Still need to unreserve/release
@@ -121,7 +121,7 @@ static int addr(int argc, char** argv)
     {
         clog << "address: ";
 
-        if(nca.state == impl::network_ca_base::states::claimed)
+        if(nca.state() == sm::v1::network_base::states::claimed)
         {
             clog << estd::hex << (unsigned) nca.address().value();
             clog << " (claimed)";

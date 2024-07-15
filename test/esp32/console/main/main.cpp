@@ -4,9 +4,12 @@
 
 #include <j1939/ca.hpp>
 #include <j1939/state-machines/transport_protocol.hpp>
+#include <j1939/cas/diagnostic.hpp>
 
 #include "nca.h"
+#include "streambuf.h"
 #include "transport.h"
+#include "tp.h"
 
 using namespace estd::chrono_literals;
 
@@ -22,10 +25,16 @@ using proto_name = embr::j1939::layer0::NAME<true,
     vehicle_systems::ig5_not_available, // DEBT: Change to a better IG/Veh Sys,
     function_fields::ig5_not_available>;
 
-sm::transport_protocol tp;
+extern esp_idf::log_ostream clog;
+
+using dca_type = diagnostic_ca<transport_type, esp_idf::log_ostream>;
+
+tp_type tp;
 nca_type nca(proto_name::sparse{3, 2, 1}, scheduler);
 
 transport_type t;
+
+dca_type dca(clog);
 
 extern "C" void app_main(void)
 {
@@ -35,11 +44,12 @@ extern "C" void app_main(void)
     for(;;)
     {
         transport_type::frame frame;
-        sm::transport_protocol::context ctx{0, 0};
+        tp_type::context ctx{time_point::clock::now(), 0};
         
         while(t.receive(&frame))
         {
             process_incoming(tp, t, frame, ctx);
+            process_incoming(dca, t, frame);
         }
 
         tp.process_outgoing(t, ctx);

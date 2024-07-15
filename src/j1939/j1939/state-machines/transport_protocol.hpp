@@ -42,8 +42,8 @@ auto transport_protocol<TimePoint, Policy>::process_incoming(
     {
         case ANTICIPATING_RTS:
             if(idle().anticipated_address_ != p.source_address())   return result::ignore();
-            // "Fallthrough" attribute is only allowed on empty statements. Really...
-            //ATTR_FALLTHROUGH
+            // FIX: Got a complaint once "Fallthrough" attribute is only allowed on empty statements. Really...
+            ATTR_FALLTHROUGH;
 
         case IDLE:
         {
