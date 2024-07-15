@@ -601,6 +601,44 @@ void nca_report()
 
 embr::j1939::sm::v0::transport_protocol<time_point> tp;
 
+#if FEATURE_TP
+// DEBT: Do non-null terminated variety here
+estd::layer1::string<64> tp_incoming;
+
+void tp_eval()
+{
+    using states = embr::j1939::sm::tp::v0::base::states;
+    const auto& _tp = tp;
+    
+    switch(tp.state())
+    {
+        case states::RESPONDER_RECEIVING_DT:
+        {
+            estd::span<const uint8_t> payload = tp.payload();
+
+            if(tp_incoming.size() + payload.size() < tp_incoming.max_size())
+            {
+                // FIX: Incomplete, just fleshing out the append still
+                //tp_incoming += char(payload[0]);
+                tp_incoming.append((const char*)payload.data(), payload.size());
+            }
+
+            break;
+        }
+
+        case states::RESPONDER_RECEIVED_DT:
+        {
+            if(_tp.responder().last_one())
+            {
+                cout << F("TP:DT payload: ") << tp_incoming << estd::endl;
+            }
+        }
+            
+        default:    break;
+    }
+}
+#endif
+
 sm::v1::result on_frame_received(transport::frame& frame)
 {
 #if FEATURE_AGGREGATED_CA
@@ -682,6 +720,7 @@ void loop()
 
 #if FEATURE_TP
     tp.process_outgoing(t, decltype(tp)::context{time_point::clock::now(), 0});
+    tp_eval();
 #endif
 
     nca_report();
