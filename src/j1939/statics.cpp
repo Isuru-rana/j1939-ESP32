@@ -1,5 +1,6 @@
 #include "j1939/pdu/traits.h"
 #include "j1939/state-machines/transport_protocol.hpp"
+#include "j1939/state-machines/network/enum.h"
 
 // Clang 14 is sensitive to this:
 // https://stackoverflow.com/questions/8452952/c-linker-error-with-class-static-constexpr
@@ -29,6 +30,37 @@ mst base::timeouts::Th;
 }}}
 
 #endif
+
+const char* to_string(j1939::sm::v1::network_enum::states v)
+{
+    using s = j1939::sm::v1::network_enum::states;
+
+    switch(v)
+    {
+        case s::unstarted:      return "Unstarted";
+        case s::requesting:     return "Requesting";
+        case s::claiming:       return "Claiming";
+        case s::claimed:        return "Claimed";
+        case s::claim_failed:   return "Claim Failed";
+        default:                return "N/A";
+    }
+}
+
+
+const char* to_string(j1939::sm::v1::network_enum::substates v)
+{
+    using s = j1939::sm::v1::network_enum::substates;
+
+    switch(v)
+    {
+        case s::claim_waiting:      return "claim_waiting";
+        case s::contending:     return "contending";
+        case s::expired:       return "expired";
+        case s::waiting:        return "waiting";
+        case s::cannot_claim_waiting:   return "Claim cannot_claim_waiting";
+        default:                return "N/A";
+    }
+}
 
 }}
 

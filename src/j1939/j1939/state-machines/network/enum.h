@@ -103,3 +103,10 @@ public:
 }
 
 }}}
+
+namespace embr { namespace j1939 {
+
+const char* to_string(j1939::sm::v1::network_enum::states v);
+const char* to_string(j1939::sm::v1::network_enum::substates v);
+
+}}

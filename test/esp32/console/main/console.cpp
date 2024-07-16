@@ -13,6 +13,7 @@
 using namespace embr::j1939;
 
 esp_idf::log_ostream clog;   // Coming along well, almost ready
+bool dca_enabled = true;
 
 extern transport_type t;
 
@@ -45,6 +46,14 @@ static struct
     struct arg_end* end;
 
 }   addr_args;
+
+
+static struct
+{
+    struct arg_str* command;
+    struct arg_end* end;
+
+}   log_args;
 
 
 static int emit(int argc, char** argv)
@@ -141,6 +150,26 @@ static int addr(int argc, char** argv)
     return 0;
 }
 
+static int log(int argc, char** argv)
+{
+    int nerrors = arg_parse(argc, argv, (void**) &addr_args);
+
+    if(nerrors) return -1;
+
+    estd::layer2::const_string cmd = addr_args.command->sval[0];
+
+    if(cmd == "on")
+    {
+        dca_enabled = true;
+    }
+    else if(cmd == "off")
+    {
+        dca_enabled = false;
+    }
+
+    return 0;
+}
+
 static void register_emit()
 {
     const esp_console_cmd_t cmd = {
@@ -210,6 +239,24 @@ static void register_addr()
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
+
+static void register_log()
+{
+    const esp_console_cmd_t cmd = {
+        .command = "log",
+        .help = "logging on or off",
+        .hint = nullptr,
+        .func = &log,
+        .argtable = &log_args
+    };
+
+    log_args.command = arg_str1(nullptr, nullptr, "<on|off>", nullptr);
+    log_args.end = arg_end(2);
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+
 static esp_console_repl_t* init_repl()
 {
     esp_console_repl_t* repl = nullptr;
@@ -244,6 +291,7 @@ void init_console()
     register_emit_rqst();
     register_list();
     register_addr();
+    register_log();
 
     ESP_ERROR_CHECK(esp_console_start_repl(repl));
 }

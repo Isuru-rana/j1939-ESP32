@@ -26,6 +26,7 @@ using proto_name = embr::j1939::layer0::NAME<true,
     function_fields::ig5_not_available>;
 
 extern esp_idf::log_ostream clog;
+extern bool dca_enabled;
 
 using dca_type = diagnostic_ca<transport_type, esp_idf::log_ostream>;
 
@@ -50,12 +51,18 @@ extern "C" void app_main(void)
         while(t.receive(&frame))
         {
             process_incoming(tp, t, frame, ctx);
-            process_incoming(dca, t, frame);
+            
+            if(dca_enabled)
+                process_incoming(dca, t, frame);
         }
 
         tp.process_outgoing(t, ctx);
-        
-        network_cached.state(nca);
+
+        if(network_cached.state(nca))
+        {
+            clog << "nca:" << to_string(nca.state()) << ':';
+            clog << to_string(nca.substate()) << estd::endl;
+        }
 
         estd::this_thread::sleep_for(50ms);
         scheduler.process();
