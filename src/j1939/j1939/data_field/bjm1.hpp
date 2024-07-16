@@ -123,11 +123,11 @@ struct traits<pgns::basic_joystick_message_1> : internal::traits_base
 }
 
 
-template<class TContainer>
-struct data_field<pgns::basic_joystick_message_1, TContainer> :
-    internal::data_field_base<TContainer>
+template<class Container>
+struct data_field<pgns::basic_joystick_message_1, Container> :
+    internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
     ESTD_CPP_FORWARDING_CTOR(data_field)
 

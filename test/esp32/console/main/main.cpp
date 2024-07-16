@@ -41,6 +41,14 @@ dca_type dca(clog);
 extern "C" void app_main(void)
 {
     twai_init();
+
+    // Enable logging in addition to default ALL
+    // 16JUL24 NOTE: We don't get full send error status for some
+    // reason w/o logging (ESP32C6)
+    ESP_ERROR_CHECK(twai_reconfigure_alerts(
+        TWAI_ALERT_ALL | TWAI_ALERT_AND_LOG,
+        nullptr));
+
     init_console();
 
     for(;;)
