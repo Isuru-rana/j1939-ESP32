@@ -21,7 +21,7 @@ transport_traits::send(t, p);
 ```
 
 DBC files are useful, but don't always play well in constrained devices.  With `embr::j1939`,
-compile-time traits are available for interrogation, or to ignore completely - "only pay for what you use"
+compile-time PGN and SPN traits are available for interrogation, or to ignore completely - "only pay for what you use"
 
 ### Features include:
 
@@ -29,7 +29,8 @@ compile-time traits are available for interrogation, or to ignore completely - "
     * Network address negotiation
     * Transport Protocol (1785b data field size)
 * Compile-time optimized units such as percentages, volts, kilometers, etc. by way of `embr` lib
-* Compile-time metadata for SPNs, PGNs including name, type, ownership, more
+* Compile-time traits (metadata) for SPNs, PGNs including name, type, ownership, more
+* Accessors and mutators for SPN-defined payload fields
 * Lean and highly portable.  No dynamic allocation.
 * c++11 compliant
 
@@ -117,6 +118,8 @@ TBD
 [RejsaCAN](https://github.com/MagnusThome/RejsaCAN-ESP32/tree/main)
 [Jetbrains]
 [Seeed Xiao]
+
+![Jetbrains](doc/img/orig/JetBrains.png)
 
 ---
 *Document v0.1*

@@ -1,32 +1,53 @@
 # Traits
 
-## Traits: single
+> NOTE: These examples use embedded-friendly `estd::basic_ostream`.  Don't be afraid of
+> the `out` reference!
+
+## Traits: single PGN
 
 ```c++
 template <pgns pgn>
 void print_pgn_name()
 {
-    cout << embr::j1939::pgn::traits<pgn>::name() << endl;
+    out << embr::j1939::pgn::traits<pgn>::name() << endl;
 }
 
 ```
 
 
-## Traits: multiple (fold expression)
+## Traits: multiple SPNs (fold expression)
 
 
+```c++
+template <spns spn>
+void print_spn_name()
+{
+    out << embr::j1939::spn::traits<spn>::name() << endl;
+}
 ```
-```
 
-## Traits: multiple (estd::variadic)
+## Traits: multiple SPNs (estd::variadic)
 
 Since c++11 doesn't have fold expressions, a different approach is required
 to compile-time iterate.  Fortunately, `estd::variadic::values` helps with this.
 
-```
+```c++
+template <spns spn>
+void print_spn_name()
+{
+    out << embr::j1939::spn::traits<spn>::name() << endl;
+}
+
+template <pgns pgn>
+void print_spn_names()
+{
+    using pgn_spns = embr::j1939::pgn::traits<pgn>::spns;
+    
+    out << embr::j1939::spn::traits<spn>::name() << endl;
+}
 ```
 
-See TBD for estd documentation on the subbject
+See TBD for estd documentation on the subject
 
 # Dispatch
 
