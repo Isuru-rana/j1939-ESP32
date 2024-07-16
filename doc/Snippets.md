@@ -47,12 +47,17 @@ void print_spn_names()
 }
 ```
 
-See TBD for estd documentation on the subject
+See TBD for estd documentation on the subject (https://github.com/malachi-iot/estdlib/issues/44 )
 
 # Dispatch
 
 What amounts to a tuned switch statement, the dispatch mechanism is a convenient way to translate a run time PGN# into a compile time PDU.
 
-(((be careful, Dispatch can produce a lot of code spew)))
+> be careful, Dispatch can produce a lot of code spew
+
+See [Concepts](Concepts.md) for breakdown of internal Dispatch behavior
 
 ## Dispatch: to_string
+
+```c++
+```

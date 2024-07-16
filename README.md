@@ -90,7 +90,7 @@ Although this library is tuned for embedded use, it compiles under GCC and Clang
 
 ## Extras
 
-[Rough numbers](doc/Metrics.md)
+[Rough memory usage numbers](doc/Metrics.md)
 
 ### SLCAN firmware (USB-CAN bridge)
 
@@ -103,7 +103,7 @@ theoretically usable.  Works with all CAN, not just J1939
 * Tested OK with Wireshark and Qt `QCanDeviceBus` (TBD fix name)
 * Tested OK with ESP32C6 and ESP32S3
 
-Find this under `test/esp32/slcan`
+Find this under [ESP32 SLCAN](test/esp32/slcan/README.md)
 
 ### Interesting Hardware
 
@@ -118,6 +118,8 @@ TBD
 [RejsaCAN](https://github.com/MagnusThome/RejsaCAN-ESP32/tree/main)
 [Jetbrains]
 [Seeed Xiao]
+
+![<img src="doc/img/orig/CLion.jpeg" width="250"/>](doc/img/orig/CLion.jpeg)
 
 ![Jetbrains](doc/img/orig/JetBrains.png)
 
