@@ -1,3 +1,5 @@
+#include <esp_log.h>
+
 #include <estd/thread.h>
 
 #include <embr/scheduler.hpp>
@@ -40,6 +42,8 @@ dca_type dca(clog);
 
 extern "C" void app_main(void)
 {
+    static const char* TAG = "app_main";
+
     twai_init();
 
     // Enable logging in addition to default ALL
@@ -55,14 +59,22 @@ extern "C" void app_main(void)
     {
         transport_type::frame frame;
         tp_type::context ctx{time_point::clock::now(), 0};
+        unsigned guard = 0;
         
-        while(t.receive(&frame))
+        while(t.receive(&frame) && ++guard < 20)
         {
+            // 16JUL24 FIX: I suspect some kind of pointer/buffer glitch is happening,
+            // enabling nca here causes UART0 input from host to go offline when claim runs.
+            // Strangely, if we emit a message first, then UART0 stays online
+            process_incoming(nca, t, frame, ctx);
             process_incoming(tp, t, frame, ctx);
             
             if(dca_enabled)
                 process_incoming(dca, t, frame);
         }
+
+        if(guard >= 5)
+            ESP_LOGW(TAG, "Guard hit (more RX packets than expected): %u", guard);
 
         tp.process_outgoing(t, ctx);
 

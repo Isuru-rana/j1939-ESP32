@@ -5,6 +5,7 @@
 #include <argtable3/argtable3.h>
 
 #include <j1939/data_field/bjm1.hpp>
+#include <j1939/data_field/vep1.hpp>
 #include <j1939/state-machines/transport_protocol.hpp>
 
 #include "nca.h"
@@ -92,6 +93,12 @@ static int emit(int argc, char** argv)
     else if(abbrev == "ccvs")
     {
         pdu<pgns::ccvs> p(sa, null_t{});
+
+        success = traits::send(t, p);
+    }
+    else if(abbrev == "vep1")
+    {
+        pdu<pgns::vep1> p(sa, null_t{});
 
         success = traits::send(t, p);
     }
