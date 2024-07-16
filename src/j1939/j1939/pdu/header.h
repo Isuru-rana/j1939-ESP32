@@ -88,8 +88,9 @@ constexpr bool is_bam(const pdu1_header& id)
 namespace internal {
 
 #if FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT == 0
-struct pdu_header
+class pdu_header
 {
+public:
     // DEBT: Depends on type-punning which is not gaurunteed by c++ spec
     // word on the street is GCC does gauruntee it (cite reference)
     union

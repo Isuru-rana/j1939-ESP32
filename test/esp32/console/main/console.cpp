@@ -13,7 +13,6 @@
 using namespace embr::j1939;
 
 esp_idf::log_ostream clog;   // Coming along well, almost ready
-static uint8_t global_da = addresses::null;
 
 extern transport_type t;
 
@@ -63,7 +62,7 @@ static int emit_rqst(int argc, char** argv)
     if(nerrors) return -1;
 
     bool da_present = emit_rqst_args.da->count;
-    int da = da_present ? emit_rqst_args.da->ival[0] : global_da;
+    int da = da_present ? emit_rqst_args.da->ival[0] : addresses::null;
     uint8_t sa;
     uint32_t pgn = emit_rqst_args.pgn->ival[0];
 

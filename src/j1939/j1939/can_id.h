@@ -18,7 +18,7 @@ namespace embr { namespace j1939 {
 namespace internal {
 
 // Convenience class
-struct pdu_header;
+class pdu_header;
 
 }
 

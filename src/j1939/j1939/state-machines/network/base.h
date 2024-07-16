@@ -19,7 +19,7 @@
 
 namespace embr { namespace j1939 { namespace sm { inline namespace v1 {
 
-struct network_base : network_enum,
+struct network_base : v0::network_states,
     cs::v1::base
     //embr::Service   // Ready and waiting, premature to start migrating to this atm
 {
@@ -28,12 +28,9 @@ struct network_base : network_enum,
     template <class TimePoint>
     using context = sm::v0::context<TimePoint>;
 
-    states state_ = states::unstarted;
-    substates substate_ = substates::unstarted;
-
     using address_type = estd::layer1::optional<uint8_t, addresses::null>;
 
-    struct policy_type : internal::dispatch_default_policy
+    struct policy_type : j1939::internal::dispatch_default_policy
     {
         using whitelist = pgn_list<pgns::request, pgns::address_claimed>;
     };
@@ -75,15 +72,6 @@ public:
 
 public:
     const address_type& address() const { return address_; }
-
-    constexpr states state() const { return state_; }
-    constexpr substates substate() const { return substate_; }
-
-    void state(states s, substates ss)
-    {
-        state_ = s;
-        substate_ = ss;
-    }
 
     // DEBT: Would like this to work, though perhaps not specifically
     // preferred.  See layer2::NAME in fwd for more details as to

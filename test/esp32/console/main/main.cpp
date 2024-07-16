@@ -31,6 +31,7 @@ using dca_type = diagnostic_ca<transport_type, esp_idf::log_ostream>;
 
 tp_type tp;
 nca_type nca(proto_name::sparse{3, 2, 1}, scheduler);
+static sm::v0::network_cached network_cached;
 
 transport_type t;
 
@@ -53,6 +54,8 @@ extern "C" void app_main(void)
         }
 
         tp.process_outgoing(t, ctx);
+        
+        network_cached.state(nca);
 
         estd::this_thread::sleep_for(50ms);
         scheduler.process();
