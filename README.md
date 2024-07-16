@@ -119,7 +119,8 @@ TBD
 [Jetbrains]
 [Seeed Xiao]
 
-![<img src="doc/img/orig/CLion.jpeg" width="250"/>](doc/img/orig/CLion.jpeg)
+![<img src="doc/img/orig/CLion.jpeg" width="50"/>](doc/img/orig/CLion.jpeg)
+![<img src="doc/img/orig/JetBrains.png" width="50"/>](doc/img/orig/JetBrains.png)
 
 ![Jetbrains](doc/img/orig/JetBrains.png)
 
