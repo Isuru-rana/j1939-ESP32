@@ -13,6 +13,7 @@ GridLayout {
     // List of 'ControllerApplication'
     property var model
     required property Runtime runtime
+    property QmlFactory factory: runtime.caQmlFactory
 
     columns: 2
     flow: GridLayout.TopToBottom

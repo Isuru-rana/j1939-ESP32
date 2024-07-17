@@ -32,6 +32,8 @@ class Runtime : public QObject
 
     Q_OBJECT
 
+    Q_PROPERTY(QmlFactory* caQmlFactory READ caQmlFactory CONSTANT)
+
 public:
     // DEBT: Would be prudent to have a non QQmlEngine flavor also
     Runtime(QQmlEngine* parent = nullptr) :
