@@ -15,6 +15,7 @@ QQuickItem* QmlFactory::create(const QObject* o)
     if(i != mapping_.end())
     {
         QQmlContext* context = new QQmlContext(engine_);
+        // DEBT: Explore 'beginCreate' here
         QObject* created = i.value()->create(context);
         auto item = dynamic_cast<QQuickItem*>(created);
         return item;

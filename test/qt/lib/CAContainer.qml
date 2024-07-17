@@ -13,6 +13,7 @@ GridLayout {
     // List of 'ControllerApplication'
     property var model
     required property Runtime runtime
+    required property Generic generic
     property QmlFactory factory: runtime.caQmlFactory
 
     columns: 2
@@ -31,8 +32,22 @@ GridLayout {
     Repeater {
         model: root.model
 
+        /*
         Label {
             text: modelData.network.tag
+        }   */
+        Item {
+            id: item
+            Component.onCompleted: {
+                var o = factory.create(modelData)
+
+                if(o !== null)
+                {
+                    o.parent = item
+                    o.ca = modelData
+                    o.generic = generic
+                }
+            }
         }
     }
 }

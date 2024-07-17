@@ -25,6 +25,7 @@ qt_add_qml_module(${TARGET_NAME}
         Dash.qml
         Debug1.qml
         Main.qml
+        OEL.qml
         PDUList.qml
 )
 
