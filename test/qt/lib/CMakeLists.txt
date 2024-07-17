@@ -28,6 +28,7 @@ set(INCLUDES
     NAME.h
     pdu.h
     plugin.h
+    runtime.h
     session.h
     transport.h
 )
@@ -55,6 +56,7 @@ qt_add_qml_module(${PROJECT_NAME}
         cs/tp.cpp
         cs/tp-session.cpp
         plugin.cpp
+        runtime.cpp
         session.cpp
         j1939lib.cpp j1939lib.h
 )

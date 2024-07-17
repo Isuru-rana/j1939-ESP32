@@ -7,6 +7,8 @@
 #include "cs/network.h"
 #include "cs/tp.h"
 
+#include "runtime.h"
+
 namespace embr::j1939::qt { inline namespace v1 {
 
 // Represents one primary transport, one cs::Generic and a set of dynamic CS/CAs.
@@ -21,6 +23,7 @@ class Session : public QObject
     cs::v1::Generic generic_;
     //cs::v1::Network network_;
     cs::v1::TransportProtocol tp_;
+    Runtime* const runtime_;
 
     QList<cs_type> css_;
     QList<const QObject*> frameLog_;
@@ -32,9 +35,10 @@ class Session : public QObject
     Q_PROPERTY(cs::v1::TransportProtocol* tp READ tp CONSTANT)
     Q_PROPERTY(QList<cs_type> clients READ clients CONSTANT)
     Q_PROPERTY(QList<const QObject*> frameLog READ frameLog NOTIFY frameLogChanged)
+    Q_PROPERTY(Runtime* runtime MEMBER runtime_ CONSTANT)
 
 public:
-    Session(QObject* parent = nullptr);
+    Session(Runtime* runtime);
 
     void setDevice(QCanBusDevice*);
 

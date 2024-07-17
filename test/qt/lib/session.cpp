@@ -3,9 +3,10 @@
 
 namespace embr::j1939::qt { inline namespace v1 {
 
-Session::Session(QObject* parent) :
-    QObject(parent),
-    generic_(parent)//,
+Session::Session(Runtime* runtime) :
+    QObject(runtime->parent()),
+    generic_(runtime->parent()),
+    runtime_(runtime)
     //network_(parent)
 {
     connect(&generic_, &cs::v1::Generic::pduReceived, this, [&](const v1::Pdu* pdu)

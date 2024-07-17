@@ -30,7 +30,8 @@ int main(int argc, char *argv[])
 
     j1939::qt::Plugin::init();
 
-    auto session = new embr::j1939::qt::Session(&engine);
+    auto runtime = new j1939::qt::Runtime(&engine);
+    auto session = new j1939::qt::Session(runtime);
 
     auto oel = new j1939::qt::ca::OEL(session);
     auto lcmd = new j1939::qt::ca::LightingCommand(session);
