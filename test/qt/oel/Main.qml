@@ -35,6 +35,7 @@ Window {
 
         CAContainer {
             model: Session.clients
+            runtime: Session.runtime
         }
 
         RowLayout {

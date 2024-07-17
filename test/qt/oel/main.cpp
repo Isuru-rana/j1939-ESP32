@@ -28,9 +28,10 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection
     );
 
-    j1939::qt::Plugin::init();
-
     auto runtime = new j1939::qt::Runtime(&engine);
+
+    j1939::qt::Plugin::init(runtime);
+
     auto session = new j1939::qt::Session(runtime);
 
     auto oel = new j1939::qt::ca::OEL(session);
@@ -40,6 +41,10 @@ int main(int argc, char *argv[])
     session->clients().push_back(oel);
     session->clients().push_back(lcmd);
     session->clients().push_back(ccvs);
+
+
+    runtime->caQmlFactory()->map(
+        &j1939::qt::ca::v1::CCVS::staticMetaObject, "oel/CCVS.qml");
 
     qmlRegisterSingletonInstance("j1939", 1, 0, "Session", session);
 

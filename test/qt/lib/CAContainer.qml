@@ -12,6 +12,7 @@ GridLayout {
     id: root
     // List of 'ControllerApplication'
     property var model
+    required property Runtime runtime
 
     columns: 2
     flow: GridLayout.TopToBottom

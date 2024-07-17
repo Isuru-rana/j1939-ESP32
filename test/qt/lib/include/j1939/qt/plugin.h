@@ -8,12 +8,14 @@
 #include <j1939/NAME/industry_groups.h>
 #include <j1939/pgn/enum.h>
 
+#include "runtime.h"
+
 namespace embr::j1939::qt { inline namespace v1 {
 
 class Plugin
 {
 public:
-    static void init();
+    static void init(Runtime*);
 };
 
 // Guidance from

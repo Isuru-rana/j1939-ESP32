@@ -18,8 +18,9 @@
 
 namespace embr::j1939::qt { inline namespace v1 {
 
-void Plugin::init()
+void Plugin::init(Runtime* runtime)
 {
+    qmlRegisterType<embr::j1939::qt::v1::Runtime>("j1939", 1, 0, "Runtime");
     qmlRegisterType<embr::j1939::qt::DataField>("j1939", 1, 0, "DataField");
     qmlRegisterType<embr::j1939::qt::v1::Pdu>("j1939", 1, 0, "Pdu");
     // DEBT: Unclear what the major difference between this and qmlRegisterInterface is

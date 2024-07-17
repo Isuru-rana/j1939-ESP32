@@ -64,4 +64,10 @@ void Session::setDevice(QCanBusDevice* device)
     }); */
 }
 
+
+QQuickItem* Session::createQmlFromCa(QObject* o)
+{
+    return runtime_->caQmlFactory()->create(o);
+}
+
 }}

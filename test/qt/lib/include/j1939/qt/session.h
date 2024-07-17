@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QCanBusDevice>
+#include <QQuickItem>
 
 #include "cs/generic.h"
 #include "cs/network.h"
@@ -47,6 +48,8 @@ public:
     cs::v1::TransportProtocol* tp() { return &tp_; }
     QList<cs_type>& clients() { return css_; }
     QList<const QObject*> frameLog() const { return frameLog_; }
+
+    Q_INVOKABLE QQuickItem* createQmlFromCa(QObject*);
 
 signals:
     void frameLogChanged();
