@@ -21,7 +21,10 @@ namespace embr::j1939::qt { inline namespace v1 {
 void Plugin::init()
 {
     qmlRegisterType<embr::j1939::qt::DataField>("j1939", 1, 0, "DataField");
-    qmlRegisterType<embr::j1939::qt::Pdu>("j1939", 1, 0, "Pdu");
+    qmlRegisterType<embr::j1939::qt::v1::Pdu>("j1939", 1, 0, "Pdu");
+    // DEBT: Unclear what the major difference between this and qmlRegisterInterface is
+    qmlRegisterUncreatableType<embr::j1939::qt::v1::ControllerApplication>(
+        "j1939", 1, 0, "ControllerApplication", "Abstract Base Class");
     //qmlRegisterType<embr::j1939::qt::Session>("j1939", 1, 0, "Session");
     qmlRegisterType<embr::j1939::qt::cs::v1::Generic>("j1939.cs", 1, 0, "Generic");
     qmlRegisterType<embr::j1939::qt::cs::v1::Network>("j1939.cs", 1, 0, "Network");

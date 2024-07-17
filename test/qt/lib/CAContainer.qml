@@ -1,12 +1,36 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
+import j1939
 import j1939.cs
 
-Item {
-    property Network network
-    property int address: network != null ? network.address : 254
-    property bool hasAddress: network?.isClaimed
+// Guidance from
+// https://stackoverflow.com/questions/32969414/populate-gridlayout-with-repeater
 
-    Label { text: "Addr: " + (hasAddress ? address.toString(16) : "N/A") }
+GridLayout {
+    id: root
+    // List of 'ControllerApplication'
+    property var model
+
+    columns: 2
+    flow: GridLayout.TopToBottom
+    rows: repeater1.count
+
+    Repeater {
+        id: repeater1
+        model: root.model
+
+        CADesc {
+            network: modelData.network
+        }
+    }
+
+    Repeater {
+        model: root.model
+
+        Label {
+            text: modelData.network.tag
+        }
+    }
 }

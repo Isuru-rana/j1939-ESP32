@@ -33,12 +33,16 @@ Window {
 
         anchors.fill: parent
 
+        CAContainer {
+            model: Session.clients
+        }
+
         RowLayout {
             Layout.fillWidth: true
             //Layout.fillHeight: true
             Layout.maximumHeight: 50
 
-            CAContainer {
+            CADesc {
                 Layout.fillWidth: true
                 //Layout.fillHeight: true
                 // OEL (serviced by Debug1)
