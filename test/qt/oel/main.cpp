@@ -44,6 +44,8 @@ int main(int argc, char *argv[])
 
 
     runtime->caQmlFactory()->map(
+        &j1939::qt::ca::v1::LightingCommand::staticMetaObject, "oel/LCMD.qml");
+    runtime->caQmlFactory()->map(
         &j1939::qt::ca::v1::OEL::staticMetaObject, "oel/OEL.qml");
     runtime->caQmlFactory()->map(
         &j1939::qt::ca::v1::CCVS::staticMetaObject, "oel/CCVS.qml");

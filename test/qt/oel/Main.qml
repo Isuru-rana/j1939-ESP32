@@ -82,6 +82,7 @@ Window {
             Layout.minimumHeight: 50
         }
 
+        /*
         CCVS {
             generic: Session.generic
             ca: Session.clients[2]
@@ -89,7 +90,7 @@ Window {
             //Layout.fillHeight: true
             Layout.minimumHeight: 50
 
-        }
+        }   */
 
         // Log
         PDUList {

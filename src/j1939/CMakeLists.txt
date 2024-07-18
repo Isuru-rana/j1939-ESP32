@@ -18,6 +18,7 @@ endif()
 set(INCLUDE_FILES
     j1939/data_field/network.hpp
     j1939/internal/feature.h
+    j1939/state-machines/network/network.hpp
     j1939/state-machines/tp/feature.h)
 
 add_library(${PROJECT_NAME} STATIC ${INCLUDE_FILES} ${SOURCE_FILES})

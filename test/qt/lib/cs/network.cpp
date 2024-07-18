@@ -13,7 +13,8 @@ void Network::updateState()
         qDebug()
             << this << "state:"
             << to_string(sm_.state())
-            << to_string(sm_.substate());
+            << to_string(sm_.substate())
+            << "addr:" << Qt::hex << sm_.address().value();
 
         emit stateChanged(sm_.state(), sm_.substate());
     }
