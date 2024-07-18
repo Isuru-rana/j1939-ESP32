@@ -14,6 +14,7 @@ add_subdirectory(../../../src/j1939 j1939)
 
 set(INCLUDES
     ca.h
+    ca/bjm.h
     ca/ccvs.h
     ca/lighting_command.h
     ca/oel.h
@@ -48,6 +49,7 @@ qt_add_qml_module(${PROJECT_NAME}
         PDU.qml
     SOURCES
         ${INCLUDES}
+        ca/bjm.cpp
         ca/ccvs.cpp
         ca/lighting_command.cpp
         ca/oel.cpp

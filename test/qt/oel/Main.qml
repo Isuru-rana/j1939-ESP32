@@ -44,12 +44,13 @@ Window {
             //Layout.fillHeight: true
             Layout.maximumHeight: 50
 
+            /*
             CADesc {
                 Layout.fillWidth: true
                 //Layout.fillHeight: true
                 // OEL (serviced by Debug1)
                 network: Session.clients[0].network
-            }
+            }   */
 
             Button {
                 //Layout.fillWidth: true
@@ -75,22 +76,6 @@ Window {
             //Layout.fillHeight: true
             Layout.minimumHeight: 50
         }
-
-        BJM {
-            generic: Session.generic
-            Layout.fillWidth: true
-            Layout.minimumHeight: 50
-        }
-
-        /*
-        CCVS {
-            generic: Session.generic
-            ca: Session.clients[2]
-            Layout.fillWidth: true
-            //Layout.fillHeight: true
-            Layout.minimumHeight: 50
-
-        }   */
 
         // Log
         PDUList {

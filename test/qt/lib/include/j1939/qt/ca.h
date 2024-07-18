@@ -28,6 +28,8 @@ protected:
 
     }
 
+    using clock = std::chrono::system_clock;
+
     Q_OBJECT
 
     Q_PROPERTY(cs::v1::Network* network READ network CONSTANT)

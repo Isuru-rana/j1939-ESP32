@@ -16,6 +16,7 @@ struct type_traits<spns::joystick1_x_axis_position> :
     internal::slot_type_traits<slots::SAEpc02>
 {
     static constexpr const char* name() { return "x_axis_position"; }
+    static constexpr const char* short_name() { return "x_axis"; }
 };
 
 template <>
@@ -23,22 +24,32 @@ struct type_traits<spns::joystick1_y_axis_position> :
     internal::slot_type_traits<slots::SAEpc02>
 {
     static constexpr const char* name() { return "y_axis_position"; }
+    static constexpr const char* short_name() { return "y_axis"; }
 };
 
 template <>
 struct type_traits<spns::joystick1_button1_pressed_status> :
     internal::measured_type_traits
 {
-    static constexpr const char* name() { return "button1_pressed_status"; }    
+    static constexpr const char* name() { return "button1_pressed_status"; }
+    static constexpr const char* short_name() { return "b1"; }
 };
 
 template <>
 struct type_traits<spns::joystick1_button2_pressed_status> :
-    internal::measured_type_traits {};
+    internal::measured_type_traits
+{
+    static constexpr const char* name() { return "button2_pressed_status"; }
+    static constexpr const char* short_name() { return "b2"; }
+};
 
 template <>
 struct type_traits<spns::joystick1_button3_pressed_status> :
-    internal::measured_type_traits {};
+    internal::measured_type_traits
+{
+    static constexpr const char* name() { return "button3_pressed_status"; }
+    static constexpr const char* short_name() { return "b3"; }
+};
 
 template <>
 struct type_traits<spns::joystick1_button4_pressed_status> :

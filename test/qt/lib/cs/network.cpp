@@ -10,13 +10,19 @@ void Network::updateState()
 {
     if(cached_.state(sm_))
     {
+        const state_type state = sm_.state();
+
         qDebug()
             << this << "state:"
-            << to_string(sm_.state())
+            << to_string(state)
             << to_string(sm_.substate())
             << "addr:" << Qt::hex << sm_.address().value();
 
-        emit stateChanged(sm_.state(), sm_.substate());
+        emit stateChanged(state, sm_.substate());
+
+        if(state == state_type::claimed &&
+            sm_.substate() == substates::elapsed)
+            emit addressChanged(sm_.address().value());
     }
 }
 

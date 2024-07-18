@@ -67,6 +67,9 @@ enum traits_enum
     TRAITS_NAME     =   0x0003
 };
 
+// DEBT: Might be better off deducing these traits, and also we need to cite where in
+// documentation these general behaviors reside
+
 template <>
 struct numeric_traits<2>
 {
@@ -92,6 +95,14 @@ struct numeric_traits<8>
     static constexpr uint8_t err = 0xFE;
     static constexpr uint8_t noop = 0xFF;
 };
+
+template <>
+struct numeric_traits<10>
+{
+    static constexpr uint16_t err = 0x1FF;
+    static constexpr uint16_t noop = 0x200;
+};
+
 
 template <>
 struct numeric_traits<16>
