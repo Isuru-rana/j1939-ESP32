@@ -161,11 +161,12 @@ public:
         set("aa", unsigned(v.arbitrary_address_capable()));
         set("ig", v.industry_group().value());
         set("vsi", v.vehicle_system_instance().value());
-        set("vs", unsigned(v.vehicle_system()));
-        set("f", v.function().value());
-        set("fi", v.function_instance().value());
+        set("vs", QString::number(unsigned(v.vehicle_system()), 16));
+        set("f", QString::number(v.function().value(), 16));
+        set("fi", QString::number(v.function_instance().value(), 16));
         set("ecu", v.ecu_instance().value());
-        set("mfr", v.manufacturer_code().value());
+        set("mfr", QString::number(v.manufacturer_code().value(), 16));
+        set("id", QString::number(v.identity_number().value(), 16));
     }
 
     template <pgns pgn, class Container>

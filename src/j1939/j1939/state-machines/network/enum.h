@@ -90,6 +90,10 @@ public:
     void state(states v) { state_ = v; }
     void state(substates v) { substate_ = v; }
 
+    ///
+    /// @brief state
+    /// @param v
+    /// @return true if state has changed
     bool state(const network_states& v)
     {
         if(state_ == v.state() && substate_ == v.substate()) return false;

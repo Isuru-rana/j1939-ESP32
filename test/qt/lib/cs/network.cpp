@@ -8,23 +8,14 @@ namespace embr::j1939::qt::cs { inline namespace v1 {
 
 void Network::updateState()
 {
-    const state_type state = sm_.state();
-    if(state != last_state_)
+    if(cached_.state(sm_))
     {
-        qDebug() << this << "state" << to_string(state);
+        qDebug()
+            << this << "state:"
+            << to_string(sm_.state())
+            << to_string(sm_.substate());
 
-        emit stateChanged(state);
-
-        if(state == state_type::claimed)
-            emit addressChanged(address());
-
-        last_state_ = state;
-    }
-    else if(sm_.substate() != last_substate_)
-    {
-        qDebug() << this << "substate" << to_string(sm_.substate());
-        emit sm_.substate();
-        last_substate_ = sm_.substate();
+        emit stateChanged(sm_.state(), sm_.substate());
     }
 }
 
@@ -64,7 +55,7 @@ void Network::start(QCanBusDevice* device)
     transport_.device_ = device;
     sm_.start(transport_, clock::now());
     schedule();
-    emit stateChanged(sm_.state());
+    updateState();
 }
 
 
