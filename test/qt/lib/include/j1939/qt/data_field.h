@@ -7,6 +7,7 @@
 #include <j1939/pgn/traits.h>
 #include <j1939/data_field.h>
 #include <j1939/internal/decompose.h>
+#include <j1939/NAME/name.h>
 
 namespace embr::j1939::qt { inline namespace v0 {
 
@@ -22,6 +23,13 @@ class DataField : public QObject
     QQmlPropertyMap map_;
     QQmlPropertyMap name_to_short_name_;
     QQmlPropertyMap unit_name_;
+
+    template <typename T>
+    void set(const char* name, const T& v)
+    {
+        map_[name] = v;
+        name_to_short_name_[name] = name;
+    }
 
     // DEBT: Use c++20 concept for 'traits'
     template <class traits, typename T>
@@ -143,6 +151,21 @@ public:
             //setProperty(traits::name(), v);
             set<traits>(v);
         }
+    }
+
+    template <class Container>
+    void populate_name(const embr::j1939::NAME<Container>& v)
+    {
+        raw_.assign(v.begin(), v.end());
+
+        set("aa", unsigned(v.arbitrary_address_capable()));
+        set("ig", v.industry_group().value());
+        set("vsi", v.vehicle_system_instance().value());
+        set("vs", unsigned(v.vehicle_system()));
+        set("f", v.function().value());
+        set("fi", v.function_instance().value());
+        set("ecu", v.ecu_instance().value());
+        set("mfr", v.manufacturer_code().value());
     }
 
     template <pgns pgn, class Container>

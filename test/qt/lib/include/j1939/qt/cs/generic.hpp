@@ -21,9 +21,12 @@ auto Generic::process_incoming(can::qt_transport&, const pdu<pgn>& p) -> result
 
     auto p2 = new Pdu(p.can_id(), this);
 
-    if constexpr(pgn == pgns::address_claimed)
+    if constexpr(
+        pgn == pgns::address_claimed ||
+        pgn == pgns::commanded_address)
     {
-
+        // DEBT: A bit clumsy since NAME is parent of j1939::data_field,
+        p2->data_field().populate_name(p);
     }
     else
     {

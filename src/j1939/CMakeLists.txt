@@ -16,6 +16,7 @@ endif()
 
 # Mainly for ease of navigation from Qt Creator
 set(INCLUDE_FILES
+    j1939/data_field/network.hpp
     j1939/internal/feature.h
     j1939/state-machines/tp/feature.h)
 
