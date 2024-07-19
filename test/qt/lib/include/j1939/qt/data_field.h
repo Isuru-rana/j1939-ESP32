@@ -19,6 +19,7 @@ class DataField : public QObject
 {
     // EXPERIMENTAL Not relied upon
     QByteArray raw_;
+    pgns pgn_;
 
     QQmlPropertyMap map_;
     QQmlPropertyMap name_to_short_name_;
@@ -68,12 +69,15 @@ class DataField : public QObject
     using unit = estd::internal::units::unit_base<Rep, Period, Tag, F>;
 
     Q_PROPERTY(QQmlPropertyMap* map READ map CONSTANT)
-    Q_PROPERTY(QByteArray raw READ raw)
+    Q_PROPERTY(QByteArray raw READ raw CONSTANT)
 
 public:
     DataField(QObject* parent = nullptr) :
         QObject(parent)
-    {}
+    {
+        // DEBT: I read somewhere that connecting up like this in a ctor is frowned on
+        connect(&map_, &QQmlPropertyMap::valueChanged, this, &DataField::propertyChanged);
+    }
 
     QQmlPropertyMap* map() { return &map_; }
 
@@ -156,6 +160,8 @@ public:
     template <class Container>
     void populate_name(const embr::j1939::NAME<Container>& v)
     {
+        // DEBT: Might be a different NAME pgn, but may not matter
+        pgn_ = pgns::NAME_management_message;
         raw_.assign(v.begin(), v.end());
 
         set("aa", unsigned(v.arbitrary_address_capable()));
@@ -172,6 +178,7 @@ public:
     template <pgns pgn, class Container>
     void populate(const embr::j1939::data_field<pgn, Container>& v)
     {
+        pgn_ = pgn;
         raw_.assign(v.begin(), v.end());
 #if __cpp_fold_expressions
 
@@ -179,6 +186,12 @@ public:
         if constexpr(traits::is_specialized)   decompose(v, *this);
 
 #endif
+    }
+
+private slots:
+    void propertyChanged(const QString&, const QVariant&)
+    {
+
     }
 };
 
