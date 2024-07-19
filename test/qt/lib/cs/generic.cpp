@@ -3,7 +3,7 @@
 //#include <j1939/data_field/all.hpp>   // DEBT: Want to do this, missing a bunch of spn::traits<>::name() fields though
 #include <j1939/data_field/bjm1.hpp>
 #include <j1939/data_field/ccvs.hpp>
-//#include <j1939/data_field/cm1.hpp>
+#include <j1939/data_field/cm1.hpp>
 #include <j1939/data_field/oel.hpp>
 #include <j1939/data_field/lighting_command.hpp>
 #include <j1939/data_field/network.hpp>

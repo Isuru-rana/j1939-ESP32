@@ -25,7 +25,7 @@ CM1::CM1(QObject* parent) :
 
 void CM1::requestFanSpeed(float percent)
 {
-    pdu<pgns::cm1> p(network_.address(), 0, null_t{});
+    pdu<pgns::cm1> p(network_.address(), addresses::global, null_t{});
 
     //using m = j1939::spn::measured;
     auto pct = embr::units::percent<float>(percent);
