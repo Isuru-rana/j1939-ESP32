@@ -16,7 +16,7 @@ public:
 
     void frameReceived(QCanBusDevice*, const QCanBusFrame&) override;
 
-    Q_INVOKABLE void requestFanSpeed();
+    Q_INVOKABLE void requestFanSpeed(float percent);
 
     void start(QCanBusDevice*);
 };

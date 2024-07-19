@@ -11,6 +11,7 @@
 #include <j1939/qt/session.h>
 
 #include <j1939/qt/ca/bjm.h>
+#include <j1939/qt/ca/cm1.h>
 #include <j1939/qt/ca/ccvs.h>
 #include <j1939/qt/ca/oel.h>
 #include <j1939/qt/ca/lighting_command.h>
@@ -31,7 +32,9 @@ void Plugin::init(Runtime* runtime)
     //qmlRegisterType<embr::j1939::qt::Session>("j1939", 1, 0, "Session");
     qmlRegisterType<qt::cs::v1::Generic>("j1939.cs", 1, 0, "Generic");
     qmlRegisterType<qt::cs::v1::Network>("j1939.cs", 1, 0, "Network");
+
     qmlRegisterType<qt::ca::v1::BJM>("j1939.ca", 1, 0, "BJM");
+    qmlRegisterType<qt::ca::v1::CM1>("j1939.ca", 1, 0, "CM1");
     qmlRegisterType<qt::ca::v1::LightingCommand>("j1939.ca", 1, 0, "LCMD");
     qmlRegisterType<qt::ca::v1::OEL>("j1939.ca", 1, 0, "OEL");
     qmlRegisterType<qt::ca::v1::CCVS>("j1939.ca", 1, 0, "CCVS");

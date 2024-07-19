@@ -45,11 +45,16 @@ struct Transport
 {
     using frame = QCanBusFrame;
 
-    QCanBusDevice* device_;
+    QCanBusDevice* device_ = nullptr;
 
     inline bool send(const frame& f)
     {
         return device_->writeFrame(f);
+    }
+
+    bool good() const
+    {
+        return device_ != nullptr;
     }
 };
 

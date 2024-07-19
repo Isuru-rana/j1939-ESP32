@@ -58,6 +58,7 @@ class Network : public Base
     sm_type sm_;
     transport_type transport_;
 
+    // To retain last state so we can notify when state changes
     j1939::sm::v0::network_cached cached_;
 
     // Human readable indicator which CA is associated with this address
@@ -103,7 +104,14 @@ public:
     substates substate() const { return sm_.substate(); }
     bool isClaimed() const { return sm_.state() == state_type::claimed; }
     layer1::NAME& name() { return sm_.name(); }
-    can::qt_transport& transport() { return transport_; }
+    transport_type& transport() { return transport_; }
+
+    // NOTE: Awkwardness here, we almost never value-assign transport.  However, it's
+    // acceptable usage.
+    void setTransport(const transport_type& v)
+    {
+        transport_ = v;
+    }
 
     void setTag(const QString& v)
     {

@@ -20,15 +20,15 @@ CM1::CM1(QObject* parent) :
     network_.name().function_instance(0);
     network_.name().function((int)function_fields::cab_controller);
 
-    network_.setTag("BJM");
+    network_.setTag("CM1");
 }
 
-void CM1::requestFanSpeed()
+void CM1::requestFanSpeed(float percent)
 {
     pdu<pgns::cm1> p(network_.address(), 0, null_t{});
 
     //using m = j1939::spn::measured;
-    auto pct = embr::units::percent<unsigned>(50);
+    auto pct = embr::units::percent<float>(percent);
     p.requested_percent_fan_speed(pct);
 
     send(p);
@@ -36,7 +36,7 @@ void CM1::requestFanSpeed()
 
 void CM1::frameReceived(QCanBusDevice* device, const QCanBusFrame& frame)
 {
-    transport_type t{device};
+    //transport_type t{device};
     network_.frameReceived(device, frame);
 }
 
