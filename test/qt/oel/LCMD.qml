@@ -7,6 +7,6 @@ import j1939.ca 1.0
 
 Item {
     property Generic generic
-    //property LCMD ca
+    property LCMD ca
 
 }

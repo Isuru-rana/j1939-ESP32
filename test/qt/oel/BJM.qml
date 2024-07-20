@@ -23,5 +23,28 @@ Item {
             onPressed: ca.buttonPress(group, 1, true)
             onReleased: ca.buttonPress(group, 1, false)
         }
+
+        Rectangle {
+            Layout.fillHeight: true
+            //height: 50
+            width: height
+
+            border.color: "gray"
+            border.width: 1
+
+            MouseArea {
+                anchors.fill: parent
+                onPositionChanged: (mouse) => {
+                    //ca.updateAxis(group, 0, 0)
+                }
+
+                onPressed: (mouse) => {
+                    var x = 200 * (mouse.x / width) - 100
+                    var y = 200 * (mouse.y / height) - 100
+                    console.log("onPressed: ", x, y)
+                    ca.updateAxis(group, x, y)
+                }
+            }
+        }
     }
 }

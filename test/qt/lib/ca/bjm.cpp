@@ -72,12 +72,85 @@ void BJM::buttonPress(unsigned group, unsigned num, bool down)
     send(p);
 }
 
+template <class Rep, class Period, class F>
+void populateAxis(
+    pdu<pgns::bjm1>& p,
+    const embr::units::percent<Rep, Period, F>& x,
+    const embr::units::percent<Rep, Period, F>& y
+    )
+{
+    using pct = embr::units::percent<Rep, Period, F>;
+    using m = j1939::spn::measured;
 
+    if(x.count() < 0)
+    {
+        p.x_axis_lever_left(m::on);
+        p.x_axis_lever_right(m::off);
+        p.x_axis_position(pct(-x.count()));
+    }
+    else
+    {
+        p.x_axis_lever_left(m::off);
+        p.x_axis_lever_right(m::on);
+        p.x_axis_position(x);
+    }
+
+    if(y.count() < 0)
+    {
+        p.y_axis_lever_back(m::on);
+        p.y_axis_lever_forward(m::off);
+        // DEBT: Need a +/- standalone operator for units
+        p.y_axis_position(pct(-y.count()));
+    }
+    else
+    {
+        p.y_axis_lever_back(m::off);
+        p.y_axis_lever_forward(m::on);
+        p.y_axis_position(y);
+    }
+}
+
+// DEBT: Consider making a non-qt utility function to help with this
 void BJM::updateAxis(unsigned group, double x, double y)
 {
     pdu<pgns::bjm1> p(network_.address(), null_t{});
 
     adjust(p, group);
+
+    using m = j1939::spn::measured;
+    //using pct = unit_type<spns::joystick1_x_axis_position>;   // wants native units
+    using pct = embr::units::percent<double>;
+
+    populateAxis(p, pct(x), pct(y));
+
+    /*
+    if(x < 0)
+    {
+        p.x_axis_lever_left(m::off);
+        p.x_axis_lever_right(m::on);
+        p.x_axis_position(pct(-x));
+    }
+    else
+    {
+        p.x_axis_lever_left(m::on);
+        p.x_axis_lever_right(m::off);
+        p.x_axis_position(pct(x));
+    }
+
+    if(y < 0)
+    {
+        p.y_axis_lever_back(m::on);
+        p.y_axis_lever_forward(m::off);
+        p.y_axis_position(pct(-y));
+    }
+    else
+    {
+        p.y_axis_lever_back(m::off);
+        p.y_axis_lever_forward(m::on);
+        p.y_axis_position(pct(y));
+    }   */
+
+    send(p);
 }
 
 
