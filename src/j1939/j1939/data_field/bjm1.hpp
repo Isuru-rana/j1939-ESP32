@@ -55,6 +55,16 @@ template <>
 struct type_traits<spns::joystick1_button4_pressed_status> :
     internal::measured_type_traits {};
 
+/*
+// DEBT: Not quite measured type traits, has its own unique enum
+template <>
+struct type_traits<joystick1_x_axis_neutral_position_status> :
+   internal::measured_type_traits
+{
+    static constexpr const char* name() { return "x_axis_neutral_position_status"; }
+    static constexpr const char* short_name() { return "xstat"; }
+};*/
+
 
 template<>
 constexpr descriptor get_descriptor<spns::joystick1_x_axis_position>()
@@ -142,8 +152,8 @@ struct data_field<pgns::basic_joystick_message_1, Container> :
 
     ESTD_CPP_FORWARDING_CTOR(data_field)
 
-    EMBR_J1939_PROPERTY(joystick1_x_axis_position)
-    EMBR_J1939_PROPERTY(joystick1_y_axis_position)
+    EMBR_J1939_PROPERTY_ALIAS(joystick1_x_axis_position, x_axis_position)
+    EMBR_J1939_PROPERTY_ALIAS(joystick1_y_axis_position, y_axis_position)
 
     EMBR_J1939_PROPERTY_ALIAS(joystick1_button1_pressed_status, button1_pressed)
     EMBR_J1939_PROPERTY_ALIAS(joystick1_button2_pressed_status, button2_pressed)

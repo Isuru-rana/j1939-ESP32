@@ -157,20 +157,13 @@ concept PropertyType = UnitsType<T> || std::integral<T> || std::is_enum_v<T>;
 
 // DEBT: Accepting all inputs for name temporarily as we reduce overall
 // unit_type implicit behaviors
-#define EMBR_J1939_PROPERTY(name)   \
+#define EMBR_J1939_PROPERTY_ALIAS(name, alias)   \
 template <ESTD_CPP_CONCEPT(PropertyType) T>                  \
-void name(const T& v)               \
+void alias(const T& v)               \
 {   \
-    base_type::template set<spns::name>(unit_type<spns::name>(v));   \
+        base_type::template set<spns::name>(unit_type<spns::name>(v));   \
 }   \
     \
-unit_type<spns::name> name() const   \
-{   \
-    return base_type::template get<spns::name>(); \
-}
-
-
-#define EMBR_J1939_PROPERTY_ALIAS(name, alias)   \
 void alias(unit_type<spns::name> v)  \
 {   \
     base_type::template set<spns::name>(v);   \
@@ -180,6 +173,8 @@ unit_type<spns::name> alias() const   \
 {   \
     return base_type::template get<spns::name>(); \
 }
+
+#define EMBR_J1939_PROPERTY(name)   EMBR_J1939_PROPERTY_ALIAS(name, name)
 
 
 #define EMBR_J1939_PROPERTY_INLINE2(name)   \

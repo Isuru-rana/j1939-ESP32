@@ -57,7 +57,7 @@ TEST_CASE("spn")
                 data_field<pgns::bjm1> payload{null_t{}};
                 using traits = spn::traits<spns::joystick1_x_axis_position>;
 
-                auto v1 = payload.joystick1_x_axis_position();
+                auto v1 = payload.x_axis_position();
                 auto v = int(v1.root_count());
 
                 REQUIRE(v == 0x3FF);

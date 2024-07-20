@@ -22,6 +22,12 @@ public:
 
     // DEBT: Needs better variable names
     Q_INVOKABLE void buttonPress(unsigned group, unsigned num, bool down);
+    ///
+    /// @brief updateAxis
+    /// @param group
+    /// @param x -100 to 100
+    /// @param y -100 to 100
+    Q_INVOKABLE void updateAxis(unsigned group, double x, double y);
 
     void start(QCanBusDevice*);
 

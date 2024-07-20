@@ -23,6 +23,26 @@ BJM::BJM(QObject* parent) :
     network_.setTag("BJM");
 }
 
+static void adjust(pdu<pgns::bjm1>& p, unsigned group)
+{
+    switch(group)
+    {
+    case 0:
+        break;
+
+    case 1:
+        p.range(uint32_t(pgns::bjm2));
+        break;
+
+    case 2:
+        p.range(uint32_t(pgns::bjm3));
+        break;
+
+    default:
+        break;
+    }
+}
+
 void BJM::buttonPress(unsigned group, unsigned num, bool down)
 {
     pdu<pgns::bjm1> p(network_.address(), null_t{});
@@ -30,23 +50,7 @@ void BJM::buttonPress(unsigned group, unsigned num, bool down)
     using m = j1939::spn::measured;
 
     //p.range(p.range() + 1);
-
-    switch(group)
-    {
-        case 0:
-            break;
-
-        case 1:
-            p.range(uint32_t(pgns::bjm2));
-            break;
-
-        case 2:
-            p.range(uint32_t(pgns::bjm3));
-            break;
-
-        default:
-            break;
-    }
+    adjust(p, group);
 
     const m cmd = down ? m::enabled : m::disabled;
 
@@ -67,6 +71,15 @@ void BJM::buttonPress(unsigned group, unsigned num, bool down)
 
     send(p);
 }
+
+
+void BJM::updateAxis(unsigned group, double x, double y)
+{
+    pdu<pgns::bjm1> p(network_.address(), null_t{});
+
+    adjust(p, group);
+}
+
 
 void BJM::frameReceived(QCanBusDevice* device, const QCanBusFrame& frame)
 {
