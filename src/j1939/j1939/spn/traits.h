@@ -84,7 +84,7 @@ struct numeric_traits<4>
 {
     static constexpr uint8_t off = 0;
     static constexpr uint8_t err = 0b1110;
-    static constexpr uint8_t noop = 0x15;
+    static constexpr uint8_t noop = 15;
 };
 
 
@@ -99,8 +99,8 @@ struct numeric_traits<8>
 template <>
 struct numeric_traits<10>
 {
-    static constexpr uint16_t err = 0x1FF;
-    static constexpr uint16_t noop = 0x200;
+    static constexpr uint16_t err = 0x3FE;
+    static constexpr uint16_t noop = 0x3FF;
 };
 
 
@@ -111,10 +111,12 @@ struct numeric_traits<16>
     static constexpr uint16_t noop = 0xFFFF;
 };
 
-template <unsigned N, typename TInt>
-constexpr bool noop(TInt v, unsigned bitpos)
+// DEBT: Document why we like the option of an unshifted compare
+template <unsigned N, typename Int>
+constexpr bool noop(Int v, unsigned bitpos)
 {
-    return v == numeric_traits<N>::noop << (bitpos - 1);
+    return (v ^= numeric_traits<N>::noop << (bitpos - 1)) == 0;
+    //return v == numeric_traits<N>::noop << (bitpos - 1);
 }
 
 // Yields matching int_type and value_type

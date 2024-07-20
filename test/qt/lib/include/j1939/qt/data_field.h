@@ -105,7 +105,7 @@ public:
         }
 
         //if(value.count() <= valid_signal::max())
-        if(!traits::noop(value.count()))
+        if(!traits::noop(value.root_count(), false))
         {
             if constexpr(
                 estd::is_base_of_v<slot::v1::internal::slot_type_tag, traits> &&
@@ -132,16 +132,15 @@ public:
         set<traits>(v);
     }
 
-    // Decomposer for generic integers
+    // Decomposer for enums & integers
     template <class T, spns spn>
     void operator()(j1939::spn::traits<spn>, const T& value)
     {
         using traits = spn::traits<spn>;
+        using int_type = typename traits::int_type;
         //using valid_signal = spn::ranges::valid_signal<Rep>;
 
-        // Y U NO get found, noop?
-        //if(traits::noop(value))
-        if(0)
+        if(traits::noop(int_type(value), false))
         {
             set<traits>("noop");
         }
@@ -149,7 +148,7 @@ public:
         {
 
             // DEBT: Do a special enum variety
-            auto v2 = int(value);
+            auto v2 = int_type(value);
             QVariant v(v2);
 
             //setProperty(traits::name(), v);

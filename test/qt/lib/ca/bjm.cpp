@@ -29,15 +29,41 @@ void BJM::buttonPress(unsigned group, unsigned num, bool down)
 
     using m = j1939::spn::measured;
 
-    m cmd = down ? m::enabled : m::disabled;
+    //p.range(p.range() + 1);
 
-    /*
-    j1939::spn::control_commands cmd = down ?
-        j1939::spn::control_commands::enable :
-        j1939::spn::control_commands::disable;
-*/
+    switch(group)
+    {
+        case 0:
+            break;
 
-    p.button1_pressed(cmd);
+        case 1:
+            p.range(uint32_t(pgns::bjm2));
+            break;
+
+        case 2:
+            p.range(uint32_t(pgns::bjm3));
+            break;
+
+        default:
+            break;
+    }
+
+    const m cmd = down ? m::enabled : m::disabled;
+
+    switch(num)
+    {
+        case 0:
+            p.button1_pressed(cmd);
+            break;
+
+        case 1:
+            p.button2_pressed(cmd);
+            break;
+
+        default:
+            return;
+    }
+
 
     send(p);
 }

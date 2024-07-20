@@ -7,7 +7,9 @@
 
 #include <estd/ostream.h>       // for put_unit's use of estd::dec (supposed to be in ios and would be nice to fwd in iosfwd)
 #include "../units/ostream.h"   // for put_unit
+#include "../slots/enum.h"
 #include "../slots/units.h"
+#include "../slots/traits.h"
 
 #include "../slots/macro/push.h"
 

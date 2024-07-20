@@ -16,7 +16,7 @@ struct type_traits<spns::joystick1_x_axis_position> :
     internal::slot_type_traits<slots::SAEpc02>
 {
     static constexpr const char* name() { return "x_axis_position"; }
-    static constexpr const char* short_name() { return "x_axis"; }
+    static constexpr const char* short_name() { return "x"; }
 };
 
 template <>
@@ -24,7 +24,7 @@ struct type_traits<spns::joystick1_y_axis_position> :
     internal::slot_type_traits<slots::SAEpc02>
 {
     static constexpr const char* name() { return "y_axis_position"; }
-    static constexpr const char* short_name() { return "y_axis"; }
+    static constexpr const char* short_name() { return "y"; }
 };
 
 template <>
