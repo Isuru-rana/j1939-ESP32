@@ -105,24 +105,13 @@ theoretically usable.  Works with all CAN, not just J1939
 
 Find this under [ESP32 SLCAN](test/esp32/slcan/README.md)
 
-### Interesting Hardware
+### Interesting Links & Special Thanks
 
-* Rejsacan
+* [RejsaCAN](https://github.com/MagnusThome/RejsaCAN-ESP32/tree/main)
+* [Jetbrains CLion](https://www.jetbrains.com/clion/)
+* [Seeed Xiao ESP32C6](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)
 * ENGH-45 (TBD check name)
-* Adafruit Feather M4 CAN
-
-TBD
-
-### External Links & Special Thanks
-
-[RejsaCAN](https://github.com/MagnusThome/RejsaCAN-ESP32/tree/main)
-[Jetbrains]
-[Seeed Xiao]
-
-![<img src="doc/img/orig/CLion.jpeg" width="50"/>](doc/img/orig/CLion.jpeg)
-![<img src="doc/img/orig/JetBrains.png" width="50"/>](doc/img/orig/JetBrains.png)
-
-![Jetbrains](doc/img/orig/JetBrains.png)
+* [Adafruit Feather M4 CAN](https://www.adafruit.com/product/4759)
 
 ---
 *Document v0.1*
