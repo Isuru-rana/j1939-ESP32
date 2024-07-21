@@ -104,6 +104,7 @@ public:
     substates substate() const { return sm_.substate(); }
     bool isClaimed() const { return sm_.state() == state_type::claimed; }
     layer1::NAME& name() { return sm_.name(); }
+    const layer1::NAME& name() const { return sm_.name(); }
     transport_type& transport() { return transport_; }
 
     // NOTE: Awkwardness here, we almost never value-assign transport.  However, it's

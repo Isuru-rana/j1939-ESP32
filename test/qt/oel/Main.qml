@@ -89,7 +89,6 @@ Window {
 
             Debug1 {
                 generic: Session.generic
-                ca: Session.clients[0]
             }
         }
 

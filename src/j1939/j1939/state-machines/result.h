@@ -28,7 +28,7 @@ struct result
         // State machine has not received expected data from caller (data missing, not so much invalid format)
         CODE_UNDERFLOW = 1,
         // State machine accumulated data and caller did not retrieve it in time
-        CODE_OVERFLOW = 2
+        CODE_OVERFLOW = 2,
     };
 
     // EXPERIMENTAL

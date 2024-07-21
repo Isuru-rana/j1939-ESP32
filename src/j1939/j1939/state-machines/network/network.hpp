@@ -255,7 +255,9 @@ auto network<AddressManager, TimePoint>::process_incoming_internal(
             // equals, which is not a covered scenario that I know of
             // See [3] 1.1.1 and 1.1.1.2
             // That said, we MAY encounter this when responding to our own request for address
-            // as per [3] 1.2.1.1
+            // as per [3] 1.2.1.1 (loopback-style behavior)
+            // FIX: Whatever we do, registering an underflow is not quite accurate
+            return result::underflow();
         }
     }
     else

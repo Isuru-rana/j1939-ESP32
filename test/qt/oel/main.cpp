@@ -18,7 +18,7 @@
 using namespace embr;
 
 #define SOCKETCAN_ENABLED 0
-#define DIAGNOSTIC 1
+#define DIAGNOSTIC 0
 
 int main(int argc, char *argv[])
 {

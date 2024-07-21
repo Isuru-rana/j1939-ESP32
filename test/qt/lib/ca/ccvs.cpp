@@ -14,9 +14,10 @@ CCVS::CCVS(QObject* parent) :
     network_.setTag("CCVS");
 }
 
-void CCVS::frameReceived(QCanBusDevice*, const QCanBusFrame&)
+void CCVS::frameReceived(QCanBusDevice* device, const QCanBusFrame& frame)
 {
-    // Probably do this only in QML
+    //transport_type t{device};
+    network_.frameReceived(device, frame);
 }
 
 
