@@ -13,6 +13,7 @@ add_subdirectory(../lib lib)
 set(TARGET_NAME app${PROJECT_NAME})
 
 qt_add_executable(${TARGET_NAME}
+    init.cpp
     main.cpp
 )
 
@@ -45,6 +46,8 @@ set_target_properties(${TARGET_NAME} PROPERTIES
 target_link_libraries(${TARGET_NAME}
     PRIVATE Qt6::Quick Qt6::SerialBus j1939::qt
 )
+
+target_include_directories(${TARGET_NAME} PRIVATE include)
 
 include(GNUInstallDirs)
 install(TARGETS ${TARGET_NAME}

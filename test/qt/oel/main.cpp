@@ -13,9 +13,12 @@
 #include <j1939/qt/ca/lighting_command.h>
 #include <j1939/qt/cs/tp.h>
 
+#include "init.h"
+
 using namespace embr;
 
 #define SOCKETCAN_ENABLED 0
+#define DIAGNOSTIC 1
 
 int main(int argc, char *argv[])
 {
@@ -32,7 +35,7 @@ int main(int argc, char *argv[])
 
     auto runtime = new j1939::qt::Runtime(&engine);
 
-    j1939::qt::Plugin::init(runtime);
+    app_init(runtime);
 
     auto session = new j1939::qt::Session(runtime);
 
@@ -42,26 +45,17 @@ int main(int argc, char *argv[])
     auto lcmd = new j1939::qt::ca::LightingCommand(session);
     auto ccvs = new j1939::qt::ca::CCVS(session);
 
+#if DIAGNOSTIC == 0
     session->clients().push_back(oel);
     session->clients().push_back(cm1);
+#endif
     session->clients().push_back(lcmd);
     session->clients().push_back(ccvs);
+#if DIAGNOSTIC == 0
     session->clients().push_back(bjm);
-
-    runtime->caQmlFactory()->map(
-        &j1939::qt::ca::v1::BJM::staticMetaObject, "oel/BJM.qml");
-    runtime->caQmlFactory()->map(
-        &j1939::qt::ca::v1::CM1::staticMetaObject, "oel/CM1.qml");
-    runtime->caQmlFactory()->map(
-        &j1939::qt::ca::v1::LightingCommand::staticMetaObject, "oel/LCMD.qml");
-    runtime->caQmlFactory()->map(
-        &j1939::qt::ca::v1::OEL::staticMetaObject, "oel/OEL.qml");
-    runtime->caQmlFactory()->map(
-        &j1939::qt::ca::v1::CCVS::staticMetaObject, "oel/CCVS.qml");
+#endif
 
     qmlRegisterSingletonInstance("j1939", 1, 0, "Session", session);
-
-    engine.rootContext()->setContextObject(new embr::j1939::qt::v1::API(&app));
 
     engine.loadFromModule("oel", "Main");
 
@@ -84,9 +78,11 @@ int main(int argc, char *argv[])
         device->setConfigurationParameter(QCanBusDevice::ReceiveOwnKey, true);
 
         session->setDevice(device);
+#if DIAGNOSTIC == 0
         bjm->start(device);
         oel->start(device);
         cm1->start(device);
+#endif
         lcmd->start(device);
         ccvs->start(device);
 

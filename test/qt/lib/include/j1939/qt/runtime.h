@@ -24,6 +24,7 @@ public:
     Q_INVOKABLE QQuickItem* create(const QObject*);
 
     void map(const QMetaObject* key, const QString& qmlFile);
+    QQmlEngine* engine() { return engine_; }
 };
 
 class Runtime : public QObject
@@ -42,6 +43,7 @@ public:
     {}
 
     QmlFactory* caQmlFactory() { return &caQmlFactory_; }
+    QQmlEngine* engine() { return caQmlFactory_.engine(); }
 };
 
 }}
