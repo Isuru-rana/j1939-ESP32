@@ -25,8 +25,11 @@ Item {
         }
 
         Rectangle {
-            Layout.fillHeight: true
-            //height: 50
+            // DEBT: These layout things aren't working, presumable there's a glitch in
+            // CAContainer's anchor.fill procedure
+            //Layout.minimumHeight: 50
+            //Layout.fillHeight: true
+            height: 40
             width: height
 
             border.color: "gray"
@@ -44,6 +47,16 @@ Item {
                     console.log("onPressed: ", x, y)
                     ca.updateAxis(group, x, y)
                 }
+            }
+        }
+    }
+
+    Connections {
+        target: generic
+
+        function onPduReceived(pdu) {
+            if(pdu.pgn === 0xfdd6) {
+                // TODO: For axis, may be more intuitive to handle that at the C++ CA level
             }
         }
     }

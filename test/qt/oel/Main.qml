@@ -34,6 +34,7 @@ Window {
         anchors.fill: parent
 
         CAContainer {
+            Layout.fillWidth: true
             model: Session.clients
             runtime: Session.runtime
             generic: Session.generic

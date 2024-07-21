@@ -36,8 +36,14 @@ GridLayout {
         Label {
             text: modelData.network.tag
         }   */
-        Item {
+        Rectangle {
+            Layout.minimumWidth: 200
+            Layout.minimumHeight: 50
             id: item
+
+            //border.color: "gray"
+            //border.width: 1
+
             Component.onCompleted: {
                 var o = factory.create(modelData)
 
@@ -46,6 +52,7 @@ GridLayout {
                     o.parent = item
                     o.ca = modelData
                     o.generic = generic
+                    o.anchors.fill = item
                 }
             }
         }
