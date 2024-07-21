@@ -22,16 +22,20 @@ public:
 
     // DEBT: Needs better variable names
     Q_INVOKABLE void buttonPress(unsigned group, unsigned num, bool down);
+
     ///
     /// @brief updateAxis
-    /// @param group
+    /// @param group DEBT: Consder making this instance wide rather than a parameter
     /// @param x -100 to 100
     /// @param y -100 to 100
     Q_INVOKABLE void updateAxis(unsigned group, double x, double y);
 
     void start(QCanBusDevice*);
 
-    result process_incoming(can::qt_transport&, const pdu<pgns::lcmd>&);
+    result process_incoming(transport_type&, const pdu<pgns::bjm1>&);
+
+signals:
+    void axisObserved(unsigned group, const QPointF&);
 };
 
 }}

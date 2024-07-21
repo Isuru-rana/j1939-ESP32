@@ -14,12 +14,12 @@ Item {
         anchors.fill: parent
 
         Button {
-            text: "bjm1.1"
+            text: "1.1"
             onPressed: ca.buttonPress(group, 0, true)
             onReleased: ca.buttonPress(group, 0, false)
         }
         Button {
-            text: "bjm1.2"
+            text: "1.2"
             onPressed: ca.buttonPress(group, 1, true)
             onReleased: ca.buttonPress(group, 1, false)
         }
@@ -52,11 +52,21 @@ Item {
     }
 
     Connections {
+        target: ca
+
+        function onAxisObserved(group, point) {
+            // gets here just fine
+            // TODO: Draw/update a little dot in the virtual joystick box
+            console.log(point)
+        }
+    }
+
+    Connections {
         target: generic
 
         function onPduReceived(pdu) {
             if(pdu.pgn === 0xfdd6) {
-                // TODO: For axis, may be more intuitive to handle that at the C++ CA level
+                // TODO: Only do button presses, axis is handled with axisObserved signal
             }
         }
     }
