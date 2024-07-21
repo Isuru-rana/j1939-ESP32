@@ -108,9 +108,9 @@ Find this under [ESP32 SLCAN](test/esp32/slcan/README.md)
 ### Interesting Links & Special Thanks
 
 * [RejsaCAN](https://github.com/MagnusThome/RejsaCAN-ESP32/tree/main)
-* [Jetbrains CLion](https://www.jetbrains.com/clion/)
-* [Seeed Xiao ESP32C6](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)
-* ENGH-45 (TBD check name)
+* [JetBrains CLion](https://www.jetbrains.com/clion/) Thank you JetBrains for all the awesome things you do!
+* [Seeed Xiao ESP32C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)
+* [CAN Xiao Adapter](https://www.tindie.com/products/burke-science/can-fet-xiao-adapter/)
 * [Adafruit Feather M4 CAN](https://www.adafruit.com/product/4759)
 
 ---
