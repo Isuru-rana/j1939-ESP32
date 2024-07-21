@@ -40,10 +40,11 @@ Window {
             generic: Session.generic
         }
 
-        RowLayout {
+        TabBar {
+            id: bar
             Layout.fillWidth: true
             //Layout.fillHeight: true
-            Layout.maximumHeight: 50
+            //Layout.maximumHeight: 50
 
             /*
             CADesc {
@@ -53,29 +54,43 @@ Window {
                 network: Session.clients[0].network
             }   */
 
-            Button {
-                //Layout.fillWidth: true
-                //Layout.fillHeight: true
-                text: "software_id"
-                onClicked: {
-                    // software id
-                    var software_id = 0xFEDA;
-                    var payload = "0123456789ABCDEF";
-                    //Session.tp.broadcast(0, software_id, payload);
+            TabButton {
+                text: "1"
+            }
 
-                    // Coming along
-                    Session.tp.listen(0x78);
-                    Session.tp.send(0x77, 0x78, software_id, payload);
-                }
+            TabButton {
+                text: "2"
             }
         }
 
-        Debug1 {
-            generic: Session.generic
-            ca: Session.clients[0]
+        StackLayout {
+            currentIndex: bar.index
             Layout.fillWidth: true
             //Layout.fillHeight: true
             Layout.minimumHeight: 50
+
+            Item {
+                Button {
+                    //Layout.fillWidth: true
+                    //Layout.fillHeight: true
+                    text: "software_id"
+                    onClicked: {
+                        // software id
+                        var software_id = 0xFEDA;
+                        var payload = "0123456789ABCDEF";
+                        //Session.tp.broadcast(0, software_id, payload);
+
+                        // Coming along
+                        Session.tp.listen(0x78);
+                        Session.tp.send(0x77, 0x78, software_id, payload);
+                    }
+                }
+            }
+
+            Debug1 {
+                generic: Session.generic
+                ca: Session.clients[0]
+            }
         }
 
         // Log

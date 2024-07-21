@@ -13,6 +13,7 @@ LightingCommand::LightingCommand(QObject* parent) :
     ControllerApplication(parent),
     timer_(parent)
 {
+    network_.name().arbitrary_address_capable(true);
     network_.name().function(int(function_fields::body_controller));
     network_.name().industry_group(int(industry_groups::on_highway));
 
