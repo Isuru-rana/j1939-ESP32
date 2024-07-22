@@ -8,7 +8,7 @@ If you're new to CAN bus or J1939, [check this out](https://www.csselectronics.c
 
 ## Why?
 
-J1939 standard engenders compatibility and avoids re-inventing the wheel when creating CAN applications. 
+J1939 engenders compatibility and avoids re-inventing the wheel when using CAN bus. 
 
 What makes this particular library interesting?  In a word: specialization.
 
@@ -57,9 +57,9 @@ Use `idf.py menuconfig` to specify CAN speed and TX/RX pins via `embr` config me
 ### Quick Start: CMake
 
 Stock standard CMake `add_subdirectory` works here
-for `j1939` lib as well as the `can` HAL library.
+for `j1939` lib as well as depended-on `can` library.
 
-For new targets, the `can` library will need a `transport` and `frame_traits` implementation.
+For new targets, the `can` library needs `transport` and `frame_traits`.
 See [new target guide](doc/Targets.md)
 
 ### Quick Start: PlatformIO
@@ -102,7 +102,7 @@ theoretically usable.  Works with all CAN, not just J1939
 
 * Full read/write capability
 * Auto-poll (default) as well as legacy polled mode
-* Tested OK with Wireshark and Qt `QCanDeviceBus` (TBD fix name)
+* Tested OK with Wireshark and Qt `QCanBusDevice`
 * Tested OK with ESP32C6 and ESP32S3
 
 Find this under [ESP32 SLCAN](test/esp32/slcan/README.md)

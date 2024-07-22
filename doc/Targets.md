@@ -24,9 +24,9 @@ are specialiations pertaining to CAN bus:
 This class is a rudimentary HAL around CAN capabilities.  The following
 instance methods are *required*:
 
-1. send
-2. receive
-3. good
+1. `bool send(frame)`
+2. `receive`
+3. `bool good()`
 
 ## 2.2. frame_traits specialization
 
