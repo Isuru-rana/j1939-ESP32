@@ -159,6 +159,46 @@ TEST_CASE("j1939-81 NAME")
             REQUIRE(name.function_instance().value() == 1);
         }
     }
+    SECTION("compare")
+    {
+        using namespace j1939;
+
+        j1939::layer1::NAME name1, name2;
+
+        SECTION("1")
+        {
+            // LCMD-ish
+            name1.function(int(function_fields::body_controller));
+            name1.industry_group(int(industry_groups::on_highway));
+
+            name2.arbitrary_address_capable(true);
+            name2.function_instance(0);
+            name2.function((int)function_fields::lighting_operator_controls);
+
+            bool v = name1 < name2;
+
+            REQUIRE(v);
+        }
+        SECTION("2")
+        {
+            // LCMD-ish
+            name1.function(int(function_fields::body_controller));
+            name1.industry_group(int(industry_groups::on_highway));
+
+            // CCVS-ish
+            name2.arbitrary_address_capable(true);
+            name2.function_instance(0);
+            name2.function((int)function_fields::cab_controller);
+
+            bool v = name1 == name2;
+
+            REQUIRE(v == false);
+
+            v = name1 < name2;
+
+            REQUIRE(v);
+        }
+    }
     SECTION("layer2")
     {
         bool v = n == n;

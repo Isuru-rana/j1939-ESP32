@@ -60,13 +60,14 @@ struct frame_traits<struct can_frame>
 {
     using frame = struct can_frame;
 
-    static struct can_frame create(uint32_t id, const uint8_t* payload, unsigned dlc)
+    // 09JUL24 DEBT: Make 'flags' a default parameter once we test things a bit more
+    static struct can_frame create(uint32_t id, const uint8_t* payload, unsigned dlc, frame_flags flags)
     {
         can_frame f;
 
         // DEBT: Hard wired to extended id for j1939
 
-        f.can_id = id | CAN_EFF_FLAG;
+        f.can_id = id | ((flags & FRAME_EXT) ? CAN_EFF_FLAG : 0);
         f.can_dlc = dlc;
         memcpy(f.data, payload, dlc);
 
@@ -74,9 +75,9 @@ struct frame_traits<struct can_frame>
     }
 
     // EXPERIMENTAL
-    inline static can_frame create(uint32_t id, estd::span<uint8_t> payload)
+    inline static can_frame create(uint32_t id, estd::span<uint8_t> payload, frame_flags flags)
     {
-        return create(id, payload.data(), payload.size()); 
+        return create(id, payload.data(), payload.size(), flags); 
     }
 
     static constexpr uint32_t id(const frame& f)

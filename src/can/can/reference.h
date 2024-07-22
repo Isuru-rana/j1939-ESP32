@@ -19,18 +19,24 @@ struct transport
     struct frame
     {
         uint32_t id : 29;
-        uint32_t extended : 1;
+        bool extended : 1;
+        bool rtr : 1;
         uint8_t dlc;
         uint8_t payload[8];
 
         frame() = default;
 
         frame(uint32_t id) :
+            extended{false},
+            rtr{false},
             dlc(0)
         {}
 
-        frame(uint32_t id, uint8_t dlc, const uint8_t* p) :
-            id{id}, dlc{dlc}
+        frame(uint32_t id, uint8_t dlc, const uint8_t* p, frame_flags f) :
+            id{id},
+            extended{(f & FRAME_EXT) != 0},
+            rtr{(f & FRAME_RTR) != 0},
+            dlc{dlc}
         {
             assert(dlc <= 8);
 
@@ -64,9 +70,9 @@ struct frame_traits<reference::transport::frame>
         return frame(id);
     }
 
-    inline static frame create(uint32_t id, const uint8_t* payload, uint8_t length)
+    inline static frame create(uint32_t id, const uint8_t* payload, uint8_t length, frame_flags f)
     {
-        return frame(id, length, payload);
+        return frame(id, length, payload, f);
     }
 
     constexpr static uint32_t id(const frame& f) { return f.id; }

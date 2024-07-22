@@ -3,6 +3,7 @@
 #include <can/fwd.h>
 
 #include "dispatch.hpp"
+#include "../../cs/base.h"      // for cs::base::result
 
 namespace embr { namespace j1939 {
 
@@ -21,7 +22,7 @@ public:
         using traits = can::frame_traits<Frame>;
 
         return f(
-            pdu<pgn>(traits::id(frame), traits::payload(frame)),
+            pdu<pgn>(can_id(traits::id(frame)), traits::payload(frame)),
             std::forward<Args>(args)...);
     }
 
@@ -38,9 +39,11 @@ template <class Transport>
 class process_incoming_functor
 {
     using frame = typename Transport::frame;
+    using result = cs::v1::base::result;
+
 public:
     template <pgns pgn, class Impl, class ...Args>
-    constexpr bool operator()(j1939::internal::in_place_pgn<pgn>, Impl& impl, Transport& t, const frame& f, Args&&...args) const
+    constexpr result operator()(j1939::internal::in_place_pgn<pgn>, Impl& impl, Transport& t, const frame& f, Args&&...args) const
     {
         //using traits = j1939::frame_traits<frame>;
         using traits = can::frame_traits<frame>;
@@ -48,13 +51,14 @@ public:
 
         // DEBT: Ensure payload size is correct
 
-        return impl.process_incoming(t,
-            pdu_type(traits::id(f), traits::payload(f)),
+        return impl.process_incoming(
+            t,
+            pdu_type(can_id(traits::id(f)), traits::payload(f)),
             std::forward<Args>(args)...);
     }
 
     template <class Impl, class ...Args>
-    constexpr bool operator()(pgns p, Impl& impl, Transport& t, const frame& frame,
+    constexpr result operator()(pgns p, Impl& impl, Transport& t, const frame& frame,
         Args&&...args) const
     {
         return impl.process_incoming_default(t,
@@ -79,11 +83,15 @@ public:
     }
 };
 
+}}
+
+inline namespace v2 {
+
 template <class Transport, class Impl, class ...Args>
-constexpr bool process_incoming(Impl& impl,
+constexpr cs::v1::base::result process_incoming(Impl& impl,
     Transport& transport,
     const typename estd::remove_cvref_t<Transport>::frame& f,
-    Args&&...args)
+    Args&& ...args)
 {
     using transport_type = typename estd::remove_cvref_t<Transport>;
     using frame = typename transport_type::frame;
@@ -92,16 +100,14 @@ constexpr bool process_incoming(Impl& impl,
     using traits = embr::can::frame_traits<frame>;
     using policy_type = typename Impl::policy_type;
 
-    return internal::dispatch<policy_type>(
-        process_incoming_functor<transport_type>{},
+    return j1939::v1::dispatch<policy_type>(
+        internal::v2::process_incoming_functor<transport_type>{},
         //id,
-        get_pgn(traits::id(f)),
+        internal::get_pgn(can_id(traits::id(f))),
         impl,
         transport,
         f,
         std::forward<Args>(args)...);
-}
-
 }
 
 }

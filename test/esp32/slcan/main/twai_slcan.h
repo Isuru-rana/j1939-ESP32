@@ -12,22 +12,48 @@ struct twai_impl : embr::can::slcan::v0::impl::base
 {
     using transport_type = embr::can::esp_idf::twai_transport<true>;
 
+    transport_type transport_;
+
     // DEBT: Make this actual instance for TWAI v2 API
-    transport_type transport() { return {}; }
+    transport_type& transport() { return transport_; }
+    const transport_type& transport() const { return transport_; }
 
     static constexpr const char* TAG = "slcan::twai_impl";
 
     alerts_type alerts() const
     {
-        uint32_t v;
+        uint32_t v = 0;
+        uint8_t alerts = 0;
 
-        twai_read_alerts(&v, 0);
+        esp_err_t ret = twai_read_alerts(&v, 0);
 
-        return {};
+        // DEBT: Kind of a lie, likely twai driver isn't even online
+        if(ret != ESP_OK && ret != ESP_ERR_TIMEOUT)   return ALERT_BUS_ERROR;
+
+        if(v & TWAI_ALERT_BUS_ERROR)
+        {
+            alerts |= ALERT_BUS_ERROR;
+        }
+        if(v & TWAI_ALERT_ERR_PASS)
+        {
+            alerts |= ALERT_BUS_PASSIVE;
+        }
+        if(v & TWAI_ALERT_RX_FIFO_OVERRUN)
+        {
+            alerts |= ALERT_RX_FIFO_FULL;
+        }
+        if(v & TWAI_ALERT_ARB_LOST)
+        {
+            alerts |= ALERT_ARBITRATION_LOST;
+        }
+
+        return alerts_type(alerts);
     }
 
     static bool config_bitrate(bitrates_enum v, twai_timing_config_t* config)
     {
+        ESP_LOGD(TAG, "config_bitrate: %u", bitrates_[v]);
+
         switch(v)
         {
             case BITRATE_125K:

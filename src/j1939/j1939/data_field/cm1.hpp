@@ -7,7 +7,9 @@
 
 #include <estd/ostream.h>       // for put_unit's use of estd::dec (supposed to be in ios and would be nice to fwd in iosfwd)
 #include "../units/ostream.h"   // for put_unit
+#include "../slots/enum.h"
 #include "../slots/units.h"
+#include "../slots/traits.h"
 
 #include "../slots/macro/push.h"
 
@@ -20,6 +22,7 @@ struct type_traits<spns::requested_percent_fan_speed> :
     internal::slot_type_traits<slots::SAEpc03>
 {
     static constexpr const char* name() { return "requested_percent_fan_speed"; }
+    static constexpr const char* short_name() { return "fan%"; }
 };
 
 template <>
@@ -27,6 +30,7 @@ struct type_traits<spns::cab_interior_temperature_command> :
     internal::slot_type_traits<slots::SAEtp02>
 {
     static constexpr const char* name() { return "cab_interior_temperature_command"; }
+    static constexpr const char* short_name() { return "temp"; }
 };
 
 template <>
@@ -35,7 +39,11 @@ struct type_traits<spns::battery_main_switch_hold_request> :
 
 template <>
 struct type_traits<spns::request_cab_zone_heating> :
-    internal::status_type_traits {};
+    internal::status_type_traits
+{
+    static constexpr const char* name() { return "request_cab_zone_heating"; }
+    static constexpr const char* short_name() { return "zone"; }
+};
 
 template <>
 struct type_traits<spns::request_engine_zone_heating> :
@@ -92,12 +100,12 @@ struct traits<pgns::cab_message1> : internal::traits_base
     using spns = internal::spns_list<
         s::requested_percent_fan_speed,
         s::cab_interior_temperature_command,
-        s::battery_main_switch_hold_request,
-        s::operator_seat_direction_switch,
-        s::seat_belt_switch,
-        s::park_brake_command,
-        s::engine_automatic_start_enable_switch,
-        s::auxiliary_heater_mode_request,
+        //s::battery_main_switch_hold_request,
+        //s::operator_seat_direction_switch,
+        //s::seat_belt_switch,
+        //s::park_brake_command,
+        //s::engine_automatic_start_enable_switch,
+        //s::auxiliary_heater_mode_request,
         s::request_cab_zone_heating>;
 
     static constexpr const char* name()

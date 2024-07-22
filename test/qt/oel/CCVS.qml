@@ -10,6 +10,8 @@ Item {
     property CCVS ca
 
     RowLayout {
+        anchors.fill: parent
+
         Button {
             text: "brakes"
             onPressed: ca.brakeSwitchPressed()

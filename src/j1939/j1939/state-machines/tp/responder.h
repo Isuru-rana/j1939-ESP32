@@ -21,14 +21,19 @@ struct responder_state : enum_base
 
     explicit responder_state(const pdu<pgns::tp_cm>&);
 
+    ATTR_NODISCARD constexpr const pdu<pgns::tp_cm>& originator() const
+    {
+        return originator_;
+    }
+
     // Always represents last received sequence number
-    constexpr uint8_t seq() const
+    ATTR_NODISCARD constexpr uint8_t seq() const
     {
         return last_dt_.sequence_number();
     }
 
     // While in RESPONDER_RECEIVING_DT, this is your guy
-    constexpr uint16_t receiving_bytes() const
+    ATTR_NODISCARD constexpr uint16_t receiving_bytes() const
     {
         // Since seq is last received seq, and it's 1-index-based, we need to bump
         // down by one for position calculations
@@ -37,18 +42,18 @@ struct responder_state : enum_base
 
     // NOTE: Always on 7 byte boundaries, and not used directly by state machine
     // (only for benefit of external parties)
-    constexpr uint16_t received_bytes() const
+    ATTR_NODISCARD constexpr uint16_t received_bytes() const
     {
         return seq() * 7;
     }
 
-    bool last_one() const
+    ATTR_NODISCARD bool last_one() const
     {
         return last_dt_.sequence_number() == originator_.total_packets().value();
     }
 
     // DEBT: Need a better name - this indicates if maximum packets per CTS flow is reached
-    bool last_one_per_batch() const
+    ATTR_NODISCARD bool last_one_per_batch() const
     {
         return originator_.max_packets() == current_packet_per_cts_;
     }
@@ -65,9 +70,9 @@ struct responder_state : enum_base
             return total - received_bytes();
     }   */
 
-    bool bam() const
+    ATTR_NODISCARD constexpr bool bam() const
     {
-        return originator_.destination_address() == uint8_t(addresses::global);
+        return originator_.destination_address() == addresses::global;
     }
 
     // Requested/announced pgn

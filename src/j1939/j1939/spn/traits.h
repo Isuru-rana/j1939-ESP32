@@ -67,6 +67,9 @@ enum traits_enum
     TRAITS_NAME     =   0x0003
 };
 
+// DEBT: Might be better off deducing these traits, and also we need to cite where in
+// documentation these general behaviors reside
+
 template <>
 struct numeric_traits<2>
 {
@@ -81,7 +84,7 @@ struct numeric_traits<4>
 {
     static constexpr uint8_t off = 0;
     static constexpr uint8_t err = 0b1110;
-    static constexpr uint8_t noop = 0x15;
+    static constexpr uint8_t noop = 15;
 };
 
 
@@ -94,16 +97,26 @@ struct numeric_traits<8>
 };
 
 template <>
+struct numeric_traits<10>
+{
+    static constexpr uint16_t err = 0x3FE;
+    static constexpr uint16_t noop = 0x3FF;
+};
+
+
+template <>
 struct numeric_traits<16>
 {
     static constexpr uint16_t off = 0;
     static constexpr uint16_t noop = 0xFFFF;
 };
 
-template <unsigned N, typename TInt>
-constexpr bool noop(TInt v, unsigned bitpos)
+// DEBT: Document why we like the option of an unshifted compare
+template <unsigned N, typename Int>
+constexpr bool noop(Int v, unsigned bitpos)
 {
-    return v == numeric_traits<N>::noop << (bitpos - 1);
+    return (v ^= numeric_traits<N>::noop << (bitpos - 1)) == 0;
+    //return v == numeric_traits<N>::noop << (bitpos - 1);
 }
 
 // Yields matching int_type and value_type
@@ -185,8 +198,8 @@ struct traits :
     type_traits<spn>,
     range_traits<typename type_traits<spn>::int_type>
 {
-    static constexpr descriptor d = spn::get_descriptor<spn>();
-    static constexpr descriptor get_descriptor() { return spn::get_descriptor<spn>(); }
+    static constexpr spn::descriptor d = spn::get_descriptor<spn>();
+    static constexpr spn::descriptor descriptor() { return spn::get_descriptor<spn>(); }
 
     /// Indicate whether specified value is the "no action" value, which is always
     /// all-bits-set.  Default behavior = pass in value *unshifted* from data stream

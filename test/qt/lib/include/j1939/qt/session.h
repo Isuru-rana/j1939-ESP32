@@ -2,10 +2,13 @@
 
 #include <QObject>
 #include <QCanBusDevice>
+#include <QQuickItem>
 
 #include "cs/generic.h"
 #include "cs/network.h"
 #include "cs/tp.h"
+
+#include "runtime.h"
 
 namespace embr::j1939::qt { inline namespace v1 {
 
@@ -19,8 +22,9 @@ class Session : public QObject
     using cs_type = cs::v1::Base*;
 
     cs::v1::Generic generic_;
-    cs::v1::Network network_;
+    //cs::v1::Network network_;
     cs::v1::TransportProtocol tp_;
+    Runtime* const runtime_;
 
     QList<cs_type> css_;
     QList<const QObject*> frameLog_;
@@ -28,21 +32,24 @@ class Session : public QObject
     Q_OBJECT
 
     Q_PROPERTY(cs::v1::Generic* generic READ generic CONSTANT)
-    Q_PROPERTY(cs::v1::Network* network READ network CONSTANT)
+    //Q_PROPERTY(cs::v1::Network* network READ network CONSTANT)
     Q_PROPERTY(cs::v1::TransportProtocol* tp READ tp CONSTANT)
     Q_PROPERTY(QList<cs_type> clients READ clients CONSTANT)
     Q_PROPERTY(QList<const QObject*> frameLog READ frameLog NOTIFY frameLogChanged)
+    Q_PROPERTY(Runtime* runtime MEMBER runtime_ CONSTANT)
 
 public:
-    Session(QObject* parent = nullptr);
+    Session(Runtime* runtime);
 
     void setDevice(QCanBusDevice*);
 
     cs::v1::Generic* generic() { return &generic_; }
-    cs::v1::Network* network() { return &network_; }
+    //cs::v1::Network* network() { return &network_; }
     cs::v1::TransportProtocol* tp() { return &tp_; }
     QList<cs_type>& clients() { return css_; }
     QList<const QObject*> frameLog() const { return frameLog_; }
+
+    Q_INVOKABLE QQuickItem* createQmlFromCa(QObject*);
 
 signals:
     void frameLogChanged();

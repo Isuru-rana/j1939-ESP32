@@ -4,6 +4,8 @@
 
 #include <can/loopback.h>
 
+#include <j1939/cs/base.h>
+
 #include <j1939/ca.hpp>
 
 #include <j1939/cas/lighting_command.hpp>
@@ -64,6 +66,7 @@ TEST_CASE("Controller Applications")
     using frame = can::loopback_transport::frame;
     using frame_type = frame;
     using frame_traits = j1939::frame_traits<frame>;
+    using result = sm::v1::result;
 
     ostringstream out;
     const auto& out_s = out.rdbuf()->str();
@@ -89,7 +92,9 @@ TEST_CASE("Controller Applications")
 
         REQUIRE(ca.switch_bank_control_counter == 0);
 
-        REQUIRE(ca.process_incoming(t, f));
+        result r = ca.process_incoming(t, f);
+
+        REQUIRE(r.processed == true);
 
         REQUIRE(ca.switch_bank_control_counter == 1);
     }
@@ -103,7 +108,7 @@ TEST_CASE("Controller Applications")
         r.payload().control(controls::rts);
         r.payload().pgn((uint32_t)pgns::NAME_management_message);
 
-        process_incoming(impl_, t, frame_traits::create(r));
+        v2::process_incoming(impl_, t, frame_traits::create(r));
     }
     SECTION("lighting command (ca)")
     {
@@ -131,6 +136,8 @@ TEST_CASE("Controller Applications")
     }
     SECTION("diagnostic ca")
     {
+        out.setf(estd::ios_base::uppercase);
+
         SECTION("regular")
         {
             diagnostic_ca<can::loopback_transport, ostringstream> dca(out);
@@ -139,7 +146,7 @@ TEST_CASE("Controller Applications")
 
             frame f = frame_traits::create(p);
 
-            process_incoming(dca, t, f);
+            j1939::v2::process_incoming(dca, t, f);
 
             //REQUIRE(out_s == "OEL SA:0 ff ff ff ff ff ff ff ff \n");
             REQUIRE(out_s == "OEL SA:0 high beam=no change, turn signal=noop\n");
@@ -153,15 +160,30 @@ TEST_CASE("Controller Applications")
 
             diagnostic_ca<can::loopback_transport, ostringstream, policy> dca(out);
 
-            out.setf(estd::ios_base::uppercase);
-
             pdu<pgns::oel> p{null_t{}};
 
             frame f = frame_traits::create(p);
 
-            j1939::internal::v2::process_incoming(dca, t, f);
+            j1939::v2::process_incoming(dca, t, f);
 
             REQUIRE(out_s == "PDU: FDCC SA:0 FF FF FF FF FF FF FF FF\n");
+        }
+        SECTION("unhandled")
+        {
+            diagnostic_ca<can::loopback_transport, ostringstream> dca(out);
+
+            // As per https://github.com/malachi-iot/j1939/issues/3 it may be that
+            // truly unhandled PGNs are routed a little different than blacklisted ones.
+            // Issue seen on recipients when using esp32/slcan/test-smit script
+            // Not recreated here, however
+
+            pdu<pgns::heater_information> p{null_t{}};
+
+            frame f = frame_traits::create(p);
+
+            j1939::v2::process_incoming(dca, t, f);
+
+            REQUIRE(out_s == "PDU: FE6D SA:0 FF FF FF FF FF FF FF FF\n");
         }
     }
     SECTION("aggregated")

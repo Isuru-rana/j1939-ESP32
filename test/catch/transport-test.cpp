@@ -90,65 +90,6 @@ TEST_CASE("transport (can)")
         using frame_traits = embr::j1939::frame_traits<frame_type>;
         using address_traits = spn::internal::address_type_traits_base;
     }
-    SECTION("slcan")
-    {
-        using parser_type = embr::can::slcan::parser<>;
-        parser_type p;
-        parser_type::frame_type frame;
-        estd::layer1::stringstream<64> ss;
-        const auto& s = ss.rdbuf()->str();
-
-        SECTION("status")
-        {
-            p.status(ss);
-
-            REQUIRE(s == "fC---0\r");
-        }
-        SECTION("parse")
-        {
-            SECTION("open")
-            {
-
-            }
-            SECTION("close")
-            {
-                const char* cmd = "C";
-                p.parse(cmd, ss);
-
-                REQUIRE(s[0] == '\7');
-                REQUIRE(s.length() == 1);
-            }
-            SECTION("version")
-            {
-                p.parse("V", ss);
-
-                REQUIRE(s == "V0001\r");
-            }
-        }
-        SECTION("deserialize")
-        {
-            estd::errc ec = p.deserialize("0000000A412345678", &frame, true);
-
-            REQUIRE(ec == 0);
-
-            REQUIRE(frame.id == 10);
-            REQUIRE(frame.dlc == 4);
-            REQUIRE(frame.payload[0] == 0x12);
-            REQUIRE(frame.payload[3] == 0x78);
-        }
-        SECTION("serialize")
-        {
-            frame.id = 0x12345;
-            frame.extended = true;
-            frame.dlc = 3;
-            frame.payload[0] = 0x12;
-            frame.payload[1] = 0x34;
-            frame.payload[2] = 0x56;
-            //char s[64];
-            p.serialize(frame, ss);
-            REQUIRE(s == "T000123453123456\r");
-        }
-    }
 }
 
 #include "macro/pop.h"

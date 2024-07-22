@@ -15,27 +15,33 @@ struct emit_time_date_functor
     // to do in the short term
     const uint8_t& source_address;
 
-    using ft = embr::can::frame_traits<typename Transport::frame>;
+    using ft = embr::j1939::frame_traits<typename Transport::frame>;
 
     template <class TimePoint>
     void operator()(TimePoint* wake, TimePoint current)
     {
+        if(transport.good() == false) return;
+
         time_t timer = time(nullptr);
         struct tm* buf = gmtime(&timer);
 
-        pdu<pgns::time_date> message;
+        pdu<pgns::time_date> message(source_address);
+
+        // DEBT: Consolidate this time_date population into utility helper
+        // function
 
         message.hours(buf->tm_hour);
         message.minutes(buf->tm_min);
         message.seconds(buf->tm_sec);
         message.day(buf->tm_mday);
         message.month(buf->tm_mon);
+        // tm_year = years since 1900
+        // pdu.year = years since 1985
+        // NOTE: tm_year often returns 70 (1970 POSIX epoch), which results in
+        // wraparound date of 2226
+        message.year(buf->tm_year - 85);
 
-        message.source_address(source_address);
-
-        auto frame = ft::create(message.can_id(),
-            message.data(),
-            message.size());
+        auto frame = ft::create(message);
 
         // DEBT: Need to pay attention to send failures
         transport.send(frame);

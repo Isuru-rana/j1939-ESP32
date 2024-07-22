@@ -1,4 +1,5 @@
 #include <j1939/internal/dispatcher/incoming.hpp>
+#include <j1939/internal/dispatcher/incoming2.hpp>
 #include <j1939/state-machines/lcmd.hpp>
 
 #include <j1939/NAME/vehicle_systems.h>
@@ -19,9 +20,11 @@ OEL::OEL(QObject* parent) :
     network_.name().arbitrary_address_capable(true);
     network_.name().function_instance(0);
     network_.name().function((int)function_fields::lighting_operator_controls);
+
+    network_.setTag("OEL");
 }
 
-bool OEL::process_incoming(can::qt_transport&, const pdu<pgns::lcmd>& p)
+auto OEL::process_incoming(can::qt_transport&, const pdu<pgns::lcmd>& p) -> result
 {
     // TODO: Do this with Generic QML emitter instead
 
@@ -38,14 +41,14 @@ bool OEL::process_incoming(can::qt_transport&, const pdu<pgns::lcmd>& p)
         default: break;
     }
 
-    return true;
+    return result::ok();
 }
 
 void OEL::frameReceived(QCanBusDevice* device, const QCanBusFrame& frame)
 {
     transport_type t{device};
     network_.frameReceived(device, frame);
-    j1939::process_incoming(*this, t, frame);
+    j1939::v2::process_incoming(*this, t, frame);
 }
 
 void OEL::hazardPressed()

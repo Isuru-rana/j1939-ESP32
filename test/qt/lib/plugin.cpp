@@ -10,6 +10,8 @@
 #include <j1939/qt/transport.h>
 #include <j1939/qt/session.h>
 
+#include <j1939/qt/ca/bjm.h>
+#include <j1939/qt/ca/cm1.h>
 #include <j1939/qt/ca/ccvs.h>
 #include <j1939/qt/ca/oel.h>
 #include <j1939/qt/ca/lighting_command.h>
@@ -18,24 +20,51 @@
 
 namespace embr::j1939::qt { inline namespace v1 {
 
-void Plugin::init()
+void Plugin::init(Runtime* runtime)
 {
+    qmlRegisterType<embr::j1939::qt::v1::Runtime>("j1939", 1, 0, "Runtime");
+    qmlRegisterType<embr::j1939::qt::v1::QmlFactory>("j1939", 1, 0, "QmlFactory");
     qmlRegisterType<embr::j1939::qt::DataField>("j1939", 1, 0, "DataField");
-    qmlRegisterType<embr::j1939::qt::Pdu>("j1939", 1, 0, "Pdu");
+    qmlRegisterType<embr::j1939::qt::v1::Pdu>("j1939", 1, 0, "Pdu");
+    // DEBT: Unclear what the major difference between this and qmlRegisterInterface is
+    qmlRegisterUncreatableType<embr::j1939::qt::v1::ControllerApplication>(
+        "j1939", 1, 0, "ControllerApplication", "Abstract Base Class");
     //qmlRegisterType<embr::j1939::qt::Session>("j1939", 1, 0, "Session");
-    qmlRegisterType<embr::j1939::qt::cs::v1::Generic>("j1939.cs", 1, 0, "Generic");
-    qmlRegisterType<embr::j1939::qt::cs::v1::Network>("j1939.cs", 1, 0, "Network");
-    qmlRegisterType<embr::j1939::qt::ca::v1::LightingCommand>("j1939.ca", 1, 0, "LCMD");
-    qmlRegisterType<embr::j1939::qt::ca::v1::OEL>("j1939.ca", 1, 0, "OEL");
-    qmlRegisterType<embr::j1939::qt::ca::v1::CCVS>("j1939.ca", 1, 0, "CCVS");
+    qmlRegisterType<qt::cs::v1::Generic>("j1939.cs", 1, 0, "Generic");
+    qmlRegisterType<qt::cs::v1::Network>("j1939.cs", 1, 0, "Network");
+
+    qmlRegisterType<qt::ca::v1::BJM>("j1939.ca", 1, 0, "BJM");
+    qmlRegisterType<qt::ca::v1::CM1>("j1939.ca", 1, 0, "CM1");
+    qmlRegisterType<qt::ca::v1::LightingCommand>("j1939.ca", 1, 0, "LCMD");
+    qmlRegisterType<qt::ca::v1::OEL>("j1939.ca", 1, 0, "OEL");
+    qmlRegisterType<qt::ca::v1::CCVS>("j1939.ca", 1, 0, "CCVS");
 }
 
 QString API::to_string(pgns p, bool abbrev)
 {
     if(abbrev)
-        return internal::dispatch<internal::dispatch_default_policy>(pgn_to_string_functor<true>{}, p);
+        return j1939::v1::dispatch<internal::dispatch_default_policy>(pgn_to_string_functor<true>{}, p);
     else
         return j1939::to_string(p);
+}
+
+QString API::to_string_canid(CanId id)
+{
+    QString s = "pri=";
+    const bool pdu1 = id.raw().is_pdu1();
+
+    s += QString::number(id.priority());
+    s += " pgn=";
+    s += QString::number((unsigned)id.pgn(), 16).toUpper();
+    s += " sa=";
+    s += QString::number(id.source_address(), 16).toUpper();
+    if(id.is_pdu1())
+    {
+        s += " da=";
+        s += QString::number(id.pdu_specific(), 16).toUpper();
+    }
+
+    return s;
 }
 
 }}

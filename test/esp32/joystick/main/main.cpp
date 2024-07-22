@@ -239,6 +239,9 @@ extern "C" void app_main(void)
         app_domain::app.poll();     // Notice any ISR-sourced button presses
         app_domain::twai.poll(100 / portTICK_PERIOD_MS);
 
+        // DEBT: This ought to happen in above poll call
+        app_domain::twai.check_status();
+
         ++counter;
 
         if(counter % 50 == 0) ESP_LOGV(TAG, "counter: %u", counter);

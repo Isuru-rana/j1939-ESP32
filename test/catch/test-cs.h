@@ -24,19 +24,20 @@ struct SyntheticCA :
     using typename base_type::frame_type;
     using frame_traits = can::frame_traits<frame_type>;
     using cs::v1::base::process_incoming;
+    using typename cs::v1::base::result;
 
     typedef transport_traits<transport_type> _transport_traits;
 
     int switch_bank_control_counter = 0;
     int oel_counter = 0;
 
-    bool process_incoming(transport_type&, const pdu<pgns::switch_bank_control>&)
+    result process_incoming(transport_type&, const pdu<pgns::switch_bank_control>&)
     {
         ++switch_bank_control_counter;
-        return true;
+        return result::ok();
     }
 
-    bool process_incoming(transport_type& t, const pdu<pgns::oel>& p)
+    result process_incoming(transport_type& t, const pdu<pgns::oel>& p)
     {
         switch(p.turn_signal_switch())
         {
@@ -51,10 +52,10 @@ struct SyntheticCA :
             }
 
             default:
-                return false;
+                return result::ignore();
         }
 
-        return true;
+        return result::ok();
     }
 };
 
@@ -67,11 +68,11 @@ struct SyntheticCA2 :
 
     // Was experiencing inexplicable SIGTRAP here.  Turns out I forgot to
     // return a value and once again I was only warned (not error'd) about it
-    bool process_incoming_default(TTransport&,
+    result process_incoming_default(TTransport&,
         const typename TTransport::frame&)
     {
         ++unhandled_counter;
-        return false;
+        return result::ignore();
     }
 };
 

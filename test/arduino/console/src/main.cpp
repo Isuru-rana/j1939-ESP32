@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+#define FEATURE_EMBR_J1939_TP_ORIGINATOR 0
+
 #undef _abs     // ESP32 specifically has this additional annoying macro set
 
 // 24MAY24 DEBT: Now that chrono uses underlying units, an Arduino regression crept in.
@@ -22,6 +24,7 @@
 
 #include <j1939/data_field/all.hpp>
 #include <j1939/state-machines/transport_protocol.hpp>
+#include <j1939/dispatcher.hpp>
 
 #include <j1939/ostream.h>
 
@@ -32,11 +35,7 @@
 
 #define FEATURE_AGGREGATED_CA 0
 #define FEATURE_V2_DISPATCH 1
-
-#if FEATURE_V2_DISPATCH
-#include <j1939/internal/dispatcher/incoming2.hpp>
-#endif
-
+#define FEATURE_TP 1
 
 uint32_t start_ms;
 
@@ -256,7 +255,7 @@ void send(pdu<pgn>& p, our_arduino_ostream* out = nullptr)
 {
     p.source_address(source_address());
 
-    auto frame = ft::create(p.can_id(), p.data(), p.size());
+    auto frame = ft::create(p.can_id(), p.data(), p.size(), embr::can::FRAME_EXT);
 
     if(t.send(frame) == false && out != nullptr)
     {
@@ -600,18 +599,60 @@ void nca_report()
     }
 }
 
-embr::j1939::sm::v0::transport_protocol tp;
+embr::j1939::sm::v0::transport_protocol<time_point> tp;
 
-bool on_frame_received(transport::frame& frame)
+#if FEATURE_TP
+// DEBT: Do non-null terminated variety here
+estd::layer1::string<64> tp_incoming;
+
+void tp_eval()
 {
-    bool r;
+    using states = embr::j1939::sm::tp::v0::base::states;
+    const auto& _tp = tp;
+    
+    switch(tp.state())
+    {
+        case states::RESPONDER_RECEIVING_DT:
+        {
+            estd::span<const uint8_t> payload = tp.payload();
+
+            if(tp_incoming.size() + payload.size() < tp_incoming.max_size())
+            {
+                // FIX: Incomplete, just fleshing out the append still
+                //tp_incoming += char(payload[0]);
+                tp_incoming.append((const char*)payload.data(), payload.size());
+            }
+
+            break;
+        }
+
+        case states::RESPONDER_RECEIVED_DT:
+        {
+            if(_tp.responder().last_one())
+            {
+                cout << F("TP:DT payload: ") << tp_incoming << estd::endl;
+            }
+        }
+            
+        default:    break;
+    }
+}
+#endif
+
+sm::v1::result on_frame_received(transport::frame& frame)
+{
 #if FEATURE_AGGREGATED_CA
-    r = process_incoming(app_ca, t, frame);
+    sm::v1::result r = process_incoming(app_ca, t, frame);
 #elif FEATURE_V2_DISPATCH
-    r = embr::j1939::internal::v2::process_incoming(dca, t, frame);
-    embr::j1939::internal::v2::process_incoming(nca, t, frame);
+    time_point now = time_point::clock::now();
+
+    sm::v1::result r = v2::process_incoming(dca, t, frame);
+    v2::process_incoming(nca, t, frame);
+#if FEATURE_TP
+    v2::process_incoming(tp, t, frame, decltype(tp)::context{now, 0});
+#endif
 #else
-    r = process_incoming(dca, t, frame);
+    bool r = process_incoming(dca, t, frame);
     process_incoming(nca, t, frame);
     // Won't fit.  Bummer
     // Even with FEATURE_EMBR_J1939_OSTREAM_FULL_PAYLOAD=0.  Might be aggravated by all
@@ -625,7 +666,7 @@ bool on_frame_received(transport::frame& frame)
 
 void loop() 
 {
-    bool r = false;
+    sm::v1::result r = sm::v1::result::ignore();
     transport::frame frame;
 
 #ifdef AUTOWP_LIB
@@ -676,6 +717,11 @@ void loop()
     menu1(&nav, ios{cin, cout});
 
     scheduler.process();
+
+#if FEATURE_TP
+    tp.process_outgoing(t, decltype(tp)::context{time_point::clock::now(), 0});
+    tp_eval();
+#endif
 
     nca_report();
 }

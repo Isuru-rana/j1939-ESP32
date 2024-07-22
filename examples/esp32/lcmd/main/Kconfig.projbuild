@@ -1,3 +1,33 @@
 menu "J1939 Example: Lighting Command"
 
+    config LCMD_SOURCE
+        bool "Operate as LCMD source"
+        default y
+        help
+            J1939 LCMD CA is the middle of the signaling chain.  OEL and CCVS are
+            the typical initiators, then a CA in the middle repackages that into
+            LCMD (source).  From there, LCMD (sink) picks that up and illuminates
+            lights
+    
+    config LCMD_SINK
+        bool "Operate as LCMD sink"
+        default y
+        help
+            J1939 LCMD sink is technically NOT the LCMD CA but instead the end
+            nodes which truly turn on the lights
+
+    if LCMD_SINK
+        config GPIO_LEFT_BLINKER
+            int "GPIO for left blinker"
+            default 0
+
+        config GPIO_RIGHT_BLINKER
+            int "GPIO for right blinker"
+            default 0
+
+        config GPIO_BRAKE
+            int "GPIO for brake"
+            default 0
+    endif
+            
 endmenu

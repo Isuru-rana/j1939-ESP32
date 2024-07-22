@@ -33,18 +33,18 @@ TEST_CASE("pgn")
             const auto& raw = data.data_;
 
             // 35 = 0x23
-            data.joystick1_x_axis_position(35);
-            data.joystick1_y_axis_position(995);
+            data.x_axis_position(35);
+            data.y_axis_position(995);
             data.button1_pressed(spn::measured::on);
 
             REQUIRE(raw[2] == 0xFF);
             REQUIRE(raw[4] == 0xFF);
 
-            auto v = data.joystick1_x_axis_position();
+            auto v = data.x_axis_position();
 
             REQUIRE(v == 3.5_pct);
 
-            v = data.joystick1_y_axis_position();
+            v = data.y_axis_position();
 
             REQUIRE(v == 99.5_pct);
 

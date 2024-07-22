@@ -2,7 +2,16 @@
 
 #include "enum.h"
 
+#if __cpp_lib_concepts
+#include <concepts>
+#endif
+
+
 namespace embr { namespace can {
+
+#if __cpp_concepts
+// TODO: Enforce frame_traits (& transport_traits) signature here
+#endif
 
 template <class Frame>
 struct frame_traits;

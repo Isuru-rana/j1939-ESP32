@@ -28,6 +28,15 @@
 #define FEATURE_EMBR_J1939_TP_CONTEXT_NEXT 1
 #endif
 
+// Runtime selectable auto-advance through payload in originator role
 #ifndef FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
 #define FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD 1
+#endif
+
+// Intermediate feature:
+// 1: Track next event by absolute time, calculating beforehand (preferred)
+// 0: Track next event by last event time, calculating on request
+// Feature not ready yet
+#ifndef FEATURE_EMBR_J1939_TP_FUTURE
+#define FEATURE_EMBR_J1939_TP_FUTURE 1
 #endif

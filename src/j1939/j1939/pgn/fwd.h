@@ -14,8 +14,6 @@ enum class pgns : uint32_t;
 
 namespace pgn {
 
-#define FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER 1
-
 template <pgns>
 struct traits;
 

@@ -129,7 +129,7 @@ struct loopback_transport
 
         //const item& emplaced = queue.emplace(frame{id, data}, nullptr);
         const item& emplaced = queue.emplace(traits::create(
-            id, data.data(), data.size_bytes()), nullptr);
+            id, data.data(), data.size_bytes(), {}), nullptr);
         bool dequeue = true;
 
         if (static_cast<bool>(receive_callback))

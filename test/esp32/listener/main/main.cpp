@@ -83,8 +83,8 @@ extern "C" void app_main(void)
 
                 // Prefer not aggregating them since as a diagnostic app we prefer
                 // any glitches to be easier to diagnose
-                embr::j1939::process_incoming(dca, t, frame);
-                embr::j1939::process_incoming(nca, t, frame);
+                embr::j1939::v2::process_incoming(dca, t, frame);
+                embr::j1939::v2::process_incoming(nca, t, frame);
 
                 // TODO: Could be interesting to make an 'out' which uses esp-idf's low level
                 // log output facility and/or low level serial output

@@ -18,7 +18,7 @@ concept Functor = requires(F f)
 }
 #endif
 
-namespace internal {
+inline namespace v1 {
 
 template <class Key, Key key, class F>
 bool dispatch_one(F&& f, Key compare_to)
@@ -40,7 +40,7 @@ void dispatch_assist(estd::integer_sequence<Key, keys...>, F&& f, Key key)
 
 
 #define J1939_DISPATCH_TARGET(n)    \
-case pgns::n:   return exec_dispatch<Policy, pgns::n>{}(std::forward<F>(f), std::forward<Args>(args)...);
+case pgns::n:   return internal::exec_dispatch<Policy, pgns::n>{}(std::forward<F>(f), std::forward<Args>(args)...);
 //case pgns::n:   return f(in_place_pgn<pgns::n>{}, std::forward<Args>(args)...);
 
 // See if dispatcher uses more or less memory if we sort things.
@@ -157,19 +157,12 @@ auto dispatch(F&& f, pgns pgn_, Args&&...args) -> decltype(f(pgns{}, args...))
 
 #undef J1939_DISPATCH_TARGET
 
-constexpr pgns get_pgn(const can_id& id)
-{
-    return id.is_pdu1() ?
-        pgns(pdu1_header(id).range()) :
-        pgns(pdu2_header(id).range());
-}
-
 template <class F, class ...Args>
-auto dispatch(F&& f, can_id id, Args&&...args) -> decltype(f(pgns{}, args...))
+auto dispatch(F&& f, const can_id& id, Args&&...args) -> decltype(f(pgns{}, args...))
 {
-    return dispatch<dispatch_default_policy>(
+    return dispatch<internal::dispatch_default_policy>(
         std::forward<F>(f),
-        get_pgn(id),
+        internal::get_pgn(id),
         std::forward<Args>(args)...);
 }
 

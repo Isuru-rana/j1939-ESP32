@@ -31,19 +31,50 @@ namespace embr { namespace j1939 { namespace sm { inline namespace v0 {
 // DEBT: Probably we want a separate responder & originator state machine
 // "SENDING" states are a signal for external party to pick up a message from
 // state machine and send it
-template <class TimePoint>
-class transport_protocol : public tp::v0::base
+template <class TimePoint, class Policy = sm::tp::v0::policy>
+class transport_protocol :
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    // DEBT: Prefer this after base once feature is fully active
+    public sm::v0::to_schedule<TimePoint>,
+#endif
+    public tp::v0::base
 {
     using base_type = tp::v0::base;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    using ts_base_type = sm::v0::to_schedule<TimePoint>;
+#endif
 
 public:
     using base_type::process_incoming;
 
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    using typename ts_base_type::time_point;
+    using typename ts_base_type::duration;
+    using ts_base_type::next_event_;
+
+    using ts_base_type::elapsed;
+#else
     using time_point = TimePoint;
     using duration = typename time_point::duration;
+#endif
     using context = sm::v0::context<time_point>;
 
 private:
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    constexpr bool elapsed(const context& ctx, duration) const
+    {
+        return ctx.current >= next_event_;
+    }
+
+    // DEBT: make an estd::chrono overload for >= with std on lhs and estd on rhs
+    template <class Rep, class Period>
+    constexpr bool elapsed(const context& ctx, const estd::chrono::duration<Rep, Period>&) const
+    {
+        return ctx.current >= next_event_;
+    }
+#else
+    // TODO: Keep last_event & elapsed around as an internal diagnostic double checking our
+    // own timeouts against next_event_
     time_point last_event_;
 
     constexpr duration elapsed(const context& ctx) const
@@ -64,6 +95,7 @@ private:
             typename duration::rep,
             typename duration::period>(ctx.current - last_event_) >= d;
     }
+#endif
 
     // DEBT: Would prefer this to come in via transport or some pseudo global thing
     // or perhaps only pass in traffic matched to global or our address in the first place
@@ -114,12 +146,12 @@ public:
         storage_{estd::in_place_index_t<0>{}}
     {}
 
-    const responder_state& responder() const
+    ATTR_NODISCARD const responder_state& responder() const
     {
         return *storage_.template get<responder_state>();
     }
 
-    const originator_state& originator() const
+    ATTR_NODISCARD const originator_state& originator() const
     {
         return *storage_.template get<originator_state>();
     }
@@ -136,6 +168,13 @@ public:
 
         state_ = RESPONDER_RECEIVED_DT;
 
+#if FEATURE_EMBR_J1939_TP_FUTURE
+        if(responder().last_one())
+            // DEBT: A kludge, rewinding next_event_ to stoke an immediate process_outgoing
+            // DEBT: Need std <----> estd -= operator from estd
+            next_event_ += -timeouts::T1;
+#endif
+
         return responder().payload();
     }
 
@@ -151,17 +190,17 @@ public:
 
     // Using dispatcher methodology
     template <class Transport>
-    bool process_incoming(Transport&, const pdu<pgns::tp_cm>&, const context&);
+    result process_incoming(Transport&, const pdu<pgns::tp_cm>&, const context&);
 
 #if FEATURE_EMBR_J1939_TP_RESPONDER
     // Using dispatcher methodology
     template <class Transport>
-    bool process_incoming(Transport&, const pdu<pgns::tp_dt>&, const context&);
+    result process_incoming(Transport&, const pdu<pgns::tp_dt>&, const context&);
 #endif
 
     // Combining time-bound operations since they are likely send related anyway
     template <class Transport>
-    bool process_outgoing(Transport&, const context&);
+    result process_outgoing(Transport&, const context&);
 
     //bool process_time(time_point);
 

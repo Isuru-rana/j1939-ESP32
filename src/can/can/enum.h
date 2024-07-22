@@ -2,6 +2,8 @@
 
 namespace embr { namespace can {
 
+inline namespace v1 {
+
 // NOTE: Consider melding all this with service code
 enum class bus_state
 {
@@ -21,5 +23,15 @@ enum class status
     bad_driver,
     not_supported
 };
+
+// Used during frame_traits::create, otherwise favor granular mutators
+enum frame_flags : unsigned
+{
+    FRAME_RTR = 0x01,
+    FRAME_EXT = 0x02,
+    FRAME_SS = 0x04         // NOTE: Not implemented yet / Single shot not always set at frame level
+};
+
+}
 
 }}

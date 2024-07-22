@@ -18,25 +18,21 @@ protected:
 
     QTimer timer_;
 
-    void schedule(time_point next_event)
-    {
-        const time_point now = clock::now();
-
-        if(next_event < now)  return;
-
-        milliseconds interval(
-            std::chrono::duration_cast<milliseconds>(
-                next_event - now));
-        timer_.start(interval);
-    }
+    void schedule(time_point next_event);
 
     Q_OBJECT
 
 public:
+    // DEBT: Clumsy, but it will do
+    static time_point startup;
+
     Base(QObject* parent) :
         timer_{parent},
         QObject(parent)
     {
+        // DEBT: Would be nice to use coarse timer to save cycles.  However, it frequently wakes up a little early
+        // which causes a small loop when we try to reschedule, it wakes up early again, etc.
+        timer_.setTimerType(Qt::PreciseTimer);
         timer_.setSingleShot(true);
     }
 

@@ -75,8 +75,13 @@ protected:
 
     // DEBT: Make all this protected too
 public:
-    esp_log_level_t log_level_;
-    bool header_emitted_ = false;
+    esp_log_level_t log_level_ = ESP_LOG_INFO;
+    struct
+    {
+        bool header_emitted_ = false;
+        bool show_level_ = true;
+        bool show_tag_ = true;
+    };
 
     void write(const char* s)
     {
@@ -84,13 +89,19 @@ public:
         esp_log_write(log_level_, tp_type::TAG(), s);
     }
 
-    void emit_header()
+    void emit_level()
     {
-        if(header_emitted_) return;
-
         // DEBT: Look up LOG_FORMAT and steal its tricks
         switch(log_level_)
         {
+            case ESP_LOG_ERROR:
+                write("E ");
+                break;
+
+            case ESP_LOG_DEBUG:
+                write("D ");
+                break;
+
             case ESP_LOG_INFO:
                 write("I ");
                 break;
@@ -105,8 +116,16 @@ public:
 
             default:    break;
         }
+    }
 
-        write(tp_type::TAG());
+    void emit_header()
+    {
+        if(header_emitted_) return;
+
+        if(show_level_) emit_level();
+
+        if(show_tag_)   write(tp_type::TAG());
+        
         write(": ");
 
         header_emitted_ = true;

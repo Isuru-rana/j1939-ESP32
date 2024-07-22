@@ -70,7 +70,7 @@ protected:
 
 public:
     template <class Int>
-    inline Int get(spn::descriptor d) const
+    constexpr Int get(spn::descriptor d) const
     {
         return base_type::template get<Int>(d.bytepos - 1, bits::descriptor{d.bitpos-1, d.length});
     }
@@ -98,23 +98,24 @@ public:
 
     // Does not attempt to promote the type to enum_type
     template <spns spn_, class Traits = spn::traits<spn_> >
-    inline typename Traits::int_type get_raw() const
+    constexpr typename Traits::int_type get_raw() const
     {
-        return get<typename Traits::int_type>(Traits::get_descriptor());
+        return get<typename Traits::int_type>(Traits::descriptor());
     }
 
     template <spns spn_, class Traits = spn::traits<spn_>,
         estd::enable_if_t<estd::is_base_of<spn::intrinsic_tag, Traits>::value, bool> = true>
-    inline typename Traits::int_type get() const
+    constexpr typename Traits::int_type get() const
     {
         return get_raw<spn_, Traits>();
     }
 
     template <spns spn_, class Traits = spn::traits<spn_>,
         estd::enable_if_t<!estd::is_base_of<spn::intrinsic_tag, Traits>::value, bool> = true>
-    inline typename Traits::value_type get() const
+    constexpr typename Traits::value_type get() const
     {
-        return (typename Traits::value_type)get<typename Traits::int_type>(Traits::get_descriptor());
+        return typename Traits::value_type(get_raw<spn_, Traits>());
+        //return (typename Traits::value_type)get<typename Traits::int_type>(Traits::d);
     }
 
     template <spns spn_>
@@ -156,20 +157,13 @@ concept PropertyType = UnitsType<T> || std::integral<T> || std::is_enum_v<T>;
 
 // DEBT: Accepting all inputs for name temporarily as we reduce overall
 // unit_type implicit behaviors
-#define EMBR_J1939_PROPERTY(name)   \
+#define EMBR_J1939_PROPERTY_ALIAS(name, alias)   \
 template <ESTD_CPP_CONCEPT(PropertyType) T>                  \
-void name(const T& v)               \
+void alias(const T& v)               \
 {   \
-    base_type::template set<spns::name>(unit_type<spns::name>(v));   \
+        base_type::template set<spns::name>(unit_type<spns::name>(v));   \
 }   \
     \
-unit_type<spns::name> name() const   \
-{   \
-    return base_type::template get<spns::name>(); \
-}
-
-
-#define EMBR_J1939_PROPERTY_ALIAS(name, alias)   \
 void alias(unit_type<spns::name> v)  \
 {   \
     base_type::template set<spns::name>(v);   \
@@ -179,6 +173,8 @@ unit_type<spns::name> alias() const   \
 {   \
     return base_type::template get<spns::name>(); \
 }
+
+#define EMBR_J1939_PROPERTY(name)   EMBR_J1939_PROPERTY_ALIAS(name, name)
 
 
 #define EMBR_J1939_PROPERTY_INLINE2(name)   \

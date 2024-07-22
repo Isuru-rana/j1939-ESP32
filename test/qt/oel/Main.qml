@@ -7,8 +7,8 @@ import j1939.cs 1.0
 import j1939.ui 1.0
 
 Window {
-    width: 640
-    height: 480
+    width: 800
+    height: 600
     visible: true
     title: qsTr("Hello World")
 
@@ -25,7 +25,7 @@ Window {
         target: Session.tp
 
         function onPacketReceived(id, payload) {
-            console.log("tp recv: ", payload)
+            console.log("tp recv:", to_string_canid(id), payload)
         }
     }
 
@@ -33,47 +33,71 @@ Window {
 
         anchors.fill: parent
 
-        RowLayout {
+        CAContainer {
+            Layout.fillWidth: true
+            model: Session.clients
+            runtime: Session.runtime
+            generic: Session.generic
+        }
+
+        TabBar {
+            id: bar
             Layout.fillWidth: true
             //Layout.fillHeight: true
-            Layout.maximumHeight: 50
+            //Layout.maximumHeight: 50
 
-            CAContainer {
+            /*
+            CADesc {
                 Layout.fillWidth: true
                 //Layout.fillHeight: true
-                network: Session.network
+                // OEL (serviced by Debug1)
+                network: Session.clients[0].network
+            }   */
+
+            TabButton {
+                text: "1"
             }
 
-            Button {
-                //Layout.fillWidth: true
-                //Layout.fillHeight: true
-                text: "software_id"
-                onClicked: {
-                    // software id
-                    Session.tp.broadcast(0, 0xFEDA, "1234");
+            TabButton {
+                text: "2"
+            }
+        }
+
+        StackLayout {
+            currentIndex: bar.index
+            Layout.fillWidth: true
+            //Layout.fillHeight: true
+            Layout.minimumHeight: 50
+
+            Item {
+                Button {
+                    //Layout.fillWidth: true
+                    //Layout.fillHeight: true
+                    text: "software_id"
+                    onClicked: {
+                        // software id
+                        var software_id = 0xFEDA;
+                        var payload = "0123456789ABCDEF";
+                        //Session.tp.broadcast(0, software_id, payload);
+
+                        // Coming along
+                        Session.tp.listen(0x78);
+                        Session.tp.send(0x77, 0x78, software_id, payload);
+                    }
                 }
             }
+
+            Debug1 {
+                generic: Session.generic
+            }
         }
 
-        Debug1 {
-            generic: Session.generic
-            ca: Session.clients[0]
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-        }
-
-        CCVS {
-            generic: Session.generic
-            ca: Session.clients[2]
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-
-        }
-
+        // Log
         PDUList {
             Layout.fillWidth: true
-            Layout.minimumHeight: 200
-            Layout.maximumHeight: 200
+            Layout.minimumHeight: 250
+            Layout.maximumHeight: 300
+            Layout.fillHeight: true
             generic: Session.generic
         }
     }

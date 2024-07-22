@@ -14,9 +14,12 @@ add_subdirectory(../../../src/j1939 j1939)
 
 set(INCLUDES
     ca.h
+    ca/cm1.h
+    ca/bjm.h
     ca/ccvs.h
     ca/lighting_command.h
     ca/oel.h
+    can_id.h
     cs/base.h
     cs/generic.h
     cs/generic.hpp
@@ -27,6 +30,7 @@ set(INCLUDES
     NAME.h
     pdu.h
     plugin.h
+    runtime.h
     session.h
     transport.h
 )
@@ -41,17 +45,22 @@ qt_add_qml_module(${PROJECT_NAME}
     VERSION 1.0
     QML_FILES
         CAContainer.qml
+        CADesc.qml
         J1939LibControls.qml
         PDU.qml
     SOURCES
         ${INCLUDES}
+        ca/cm1.cpp
+        ca/bjm.cpp
         ca/ccvs.cpp
         ca/lighting_command.cpp
         ca/oel.cpp
         cs/generic.cpp
         cs/network.cpp
         cs/tp.cpp
+        cs/tp-session.cpp
         plugin.cpp
+        runtime.cpp
         session.cpp
         j1939lib.cpp j1939lib.h
 )

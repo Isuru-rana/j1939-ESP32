@@ -61,4 +61,56 @@ struct network_enum
     };
 };
 
-}}}}
+}
+
+inline namespace v0 {
+
+// DEBT: Doesn't play nice in an 'internal' namespace
+// Convenience class useful for those who externally want to track & compare states
+class network_states : public v1::network_enum
+{
+protected:
+    states state_ = states::unstarted;
+    substates substate_ = substates::unstarted;
+
+    void state(states s, substates ss)
+    {
+        state_ = s;
+        substate_ = ss;
+    }
+
+public:
+    constexpr states state() const { return state_; }
+    constexpr substates substate() const { return substate_; }
+};
+
+class network_cached : public network_states
+{
+public:
+    void state(states v) { state_ = v; }
+    void state(substates v) { substate_ = v; }
+
+    ///
+    /// @brief state
+    /// @param v
+    /// @return true if state has changed
+    bool state(const network_states& v)
+    {
+        if(state_ == v.state() && substate_ == v.substate()) return false;
+
+        state_ = v.state();
+        substate_ = v.substate();
+        return true;
+    }
+};
+
+}
+
+}}}
+
+namespace embr { namespace j1939 {
+
+const char* to_string(j1939::sm::v1::network_enum::states v);
+const char* to_string(j1939::sm::v1::network_enum::substates v);
+
+}}

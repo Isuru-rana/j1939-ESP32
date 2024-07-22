@@ -145,7 +145,7 @@ bool network_base::process_request_for_address_claimed(
 
 
 template <class Transport>
-bool network_base::process_incoming(Transport& t, const pdu<pgns::request>& p)
+auto network_base::process_incoming(Transport& t, const pdu<pgns::request>& p) -> result
 {
     switch((pgns)p.payload().pgn())
     {

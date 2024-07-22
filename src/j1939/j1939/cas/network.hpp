@@ -37,16 +37,16 @@ void network_ca<Transport, Scheduler, AddressManager>::scheduled_claiming(
 
 template <class Transport, class Scheduler,
     ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager>
-bool network_ca<Transport, Scheduler, AddressManager>::process_incoming(
+auto network_ca<Transport, Scheduler, AddressManager>::process_incoming(
     transport_type& t,
-    const pdu<pgns::address_claimed>& p)
+    const pdu<pgns::address_claimed>& p) -> result
 {
     const time_point current = scheduler.impl().now();
     time_point wake;
 
     bool do_schedule = false;
 
-    bool r = nca_base_type::process_incoming_internal(t, p, &wake, current, &do_schedule);
+    result r = nca_base_type::process_incoming_internal(t, p, &wake, current, &do_schedule);
 
     if(do_schedule)
         scheduler.schedule(next_event_, &wake_model);

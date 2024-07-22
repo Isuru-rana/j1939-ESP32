@@ -7,7 +7,8 @@
 #include "../../transport.h"
 
 #include "esp_log.h"
-#include "driver/twai.h"
+
+#include "transport.h"
 
 // NOTE: Keep this simple, because IIRC embr has its own flavor of can transport in a branch
 
@@ -16,7 +17,7 @@ namespace embr { namespace can { namespace esp_idf {
 // NOTE: Non blocking only partially supported,
 // we possibly need to denote a timeout occurred
 template <bool block_rx, bool block_tx = block_rx>
-struct twai_transport
+struct twai_transport : internal::twai_transport
 {
     using frame = twai_message_t;
 
@@ -134,14 +135,14 @@ struct frame_traits<twai_message_t>
 {
     using frame = twai_message_t;
 
-    inline static frame create(uint32_t id, const uint8_t* payload, uint8_t length)
+    // 09JUL24 DEBT: Make 'flags' a default parameter once we test things a bit more
+    inline static frame create(uint32_t id, const uint8_t* payload, uint8_t length, frame_flags flags)
     {
+        // DEBT: If it's not deprecated, initialize extd here
         frame f{.flags=0, .identifier=id, .data_length_code=length, .data={}};
 
-        // DEBT: This really needs to be specified either on the parameter line
-        // or similar - putting into 29-bit mode.
         //f.flags = TWAI_MSG_FLAG_EXTD; // Old deprecated way
-        f.extd = 1;
+        f.extd = (flags & FRAME_EXT) != 0;
 
         estd::copy_n(payload, length, f.data);
 
@@ -149,9 +150,9 @@ struct frame_traits<twai_message_t>
     }
 
     // EXPERIMENTAL
-    inline static frame create(uint32_t id, estd::span<uint8_t> payload)
+    inline static frame create(uint32_t id, estd::span<uint8_t> payload, frame_flags flags)
     {
-        return create(id, payload.data(), payload.size()); 
+        return create(id, payload.data(), payload.size(), flags); 
     }
 
     inline static const uint8_t* payload(const twai_message_t& message)

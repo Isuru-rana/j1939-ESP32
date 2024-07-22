@@ -5,11 +5,14 @@
 
 #include <can/loopback.h>
 
+#include <j1939/cs/aggregate.h>
 #include <j1939/cs/base.h>
+#include <j1939/cs/diagnostic.h>
 #include <j1939/state-machines/lcmd.hpp>
 #include <j1939/internal/dispatcher/dispatch.hpp>
 
 using namespace embr;
+using namespace j1939;
 
 // DEBT: State machine catch-all at the moment
 
@@ -18,8 +21,10 @@ estd::tuple<j1939::cs::v1::base, j1939::cs::v1::base> t1;
 
 TEST_CASE("controller subsystems")
 {
-    can::loopback_transport t;
-    can::loopback_transport::frame frame;
+    using transport_type = can::loopback_transport;
+    using frame_traits = j1939::frame_traits<transport_type::frame>;
+    transport_type t;
+    transport_type::frame frame;
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
     using milliseconds = std::chrono::milliseconds;
@@ -29,7 +34,6 @@ TEST_CASE("controller subsystems")
 #endif
     SECTION("lcmd state machine")
     {
-        using namespace j1939;
         using ctx = sm::v0::context<time_point>;
 
         sm::v0::lighting_command<time_point> lcmd;
@@ -81,5 +85,16 @@ TEST_CASE("controller subsystems")
 
             lcmd.process_incoming(t, ccvs, context);
         }
+    }
+    SECTION("aggregate")
+    {
+        estd::tuple<sm::v0::lighting_command<time_point> > aggregate;
+        pdu<pgns::oel> oel{null_t{}};
+        auto f = frame_traits::create(oel);
+
+        // DEBT: May be better suited in dispatcher area
+        using functor = j1939::cs::internal::v1::incoming_visitor<transport_type>;
+
+        aggregate.visit(functor{t}, f);
     }
 }

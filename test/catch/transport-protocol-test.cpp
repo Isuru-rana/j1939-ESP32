@@ -3,7 +3,6 @@
 #include <chrono>
 
 #include <j1939/state-machines/transport_protocol.hpp>
-#include <j1939/ca.hpp>
 
 #include <j1939/internal/dispatcher/incoming2.hpp>
 
@@ -29,6 +28,7 @@ struct helper
     using time_point = TimePoint;
     transport_protocol<time_point> tp_orig, tp_recv;
     using states = sm::tp::v0::base::states;
+    using result = cs::v1::base::result;
 
     // Theory being CA/state machine should not get confused by its own traffic,
     // plus we auto aggregate to both for convenience
@@ -40,9 +40,13 @@ struct helper
     {
         time_point c{ms_type{current_ms}};
         unsigned processed = 0;
+        result r = result::ignore();
 
-        processed += process_incoming(tp_orig, t, f, ctx{c, orig_sa});
-        processed += process_incoming(tp_recv, t, f, ctx{c, recv_sa});
+        r = v2::process_incoming(tp_orig, t, f, ctx{c, orig_sa});
+        processed += r.processed;
+
+        r = v2::process_incoming(tp_recv, t, f, ctx{c, recv_sa});
+        processed += r.processed;
 
         return processed;
     }
@@ -54,9 +58,21 @@ struct helper
         time_point c{ms_type(current_ms)};
 
         unsigned processed = 0;
+        result r = result::more();
 
-        processed += tp_orig.process_outgoing(t, ctx{c, orig_sa});
-        processed += tp_recv.process_outgoing(t, ctx{c, recv_sa});
+        while(r.immediate)
+        {
+            r = tp_orig.process_outgoing(t, ctx{c, orig_sa});
+            processed += r.processed;
+        }
+
+        r = result::more();
+
+        while(r.immediate)
+        {
+            r = tp_recv.process_outgoing(t, ctx{c, orig_sa});
+            processed += r.processed;
+        }
 
         return processed;
     }
@@ -240,28 +256,44 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
         h.cycle(t, 0);      // Send RTS, receive RTS
         h.cycle(t, 50);      // Send CTS, receive CTS
 
+        // NOTE: Above 50 demarcates beginning of CTS T2 timeout, only computed exactly right
+        // with 'next_event' flavor
+
         REQUIRE(t.peek() == nullptr);
+
+        time_point current(ms_type(50));
 
         h.tp_orig.payload((uint8_t*)test::test_str2);                   // mark payload as ready to send
-        h.tp_orig.process_outgoing(black_hole, { ms_type{100}, h.orig_sa });     // lose the DT
-        h.tp_recv.process_outgoing(t, { ms_type{100}, h.recv_sa });
+        h.tp_orig.process_outgoing(black_hole, { current, h.orig_sa });     // lose the DT
+        h.tp_recv.process_outgoing(t, { current, h.recv_sa });     // ensure state machine just sits there
 
         REQUIRE(t.peek() == nullptr);
+
+        // Wait long enough for CTS retry to kick in
+        current += tp_type::timeouts::T2;
+
+#if FEATURE_EMBR_J1939_TP_FUTURE
+        // DEBT: Put together to_string overloads
+        REQUIRE(current.time_since_epoch().count() ==
+            h.tp_recv.next_event().time_since_epoch().count());
+#endif
 
         // DEBT: Minor debt only, two consecutive process_outgoing are needed since one
         // detects the timeout and the next actually emits the resend
-        h.tp_recv.process_outgoing(t, { time_point{tp_type::timeouts::T2}, h.recv_sa });
-        h.tp_recv.process_outgoing(t, { time_point{tp_type::timeouts::T2}, h.recv_sa });
+        h.tp_recv.process_outgoing(t, { current, h.recv_sa });
+        h.tp_recv.process_outgoing(t, { current, h.recv_sa });
 
         REQUIRE(h.tp_recv.responder().retransmit_counter_ == 1);
 
         REQUIRE(t.receive(&frame));
 
-        internal::v2::
+        current += ms_type{50};
+
+        embr::j1939::v2::
             process_incoming(
                 h.tp_orig,
                 t, frame,
-                ctx{time_point{tp_type::timeouts::T2 + ms_type{50}}, h.orig_sa});
+                ctx{current, h.orig_sa});
 
         REQUIRE(h.tp_orig.originator().resequence_requested());
     }
@@ -285,7 +317,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             REQUIRE(t.receive(&frame));
 
-            process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
+            v2::process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
         }
         SECTION("auto-payload")
         {
@@ -308,7 +340,7 @@ TEST_CASE("transport protocol (J1939-21 Section 5.10)")
 
             REQUIRE(t.receive(&frame));
 
-            embr::j1939::internal::v2::process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
+            embr::j1939::v2::process_incoming(h.tp_recv, t, frame, ctx{ms_type{51}, h.recv_sa});
 
             // Remember, no auto-payload on receive, just on send
             estd::span<const uint8_t> payload(h.tp_recv.payload());

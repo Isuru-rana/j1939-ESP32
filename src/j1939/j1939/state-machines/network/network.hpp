@@ -106,6 +106,7 @@ bool network<AddressManager, TimePoint>::scheduled_claiming(Transport& t, time_p
             {
                 // got to timeout/next_event_ without contention means successful claim
                 state(states::claimed, substates::elapsed);
+                //next_event_ = {};
             }
             else
             {
@@ -179,8 +180,9 @@ bool network<AddressManager, TimePoint>::contended()
 
 template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager, class TimePoint>
 template <class Transport>
-bool network<AddressManager, TimePoint>::process_incoming_internal(
-    Transport& t, const pdu<pgns::address_claimed>& p, time_point* wake, time_point current, bool* do_schedule)
+auto network<AddressManager, TimePoint>::process_incoming_internal(
+    Transport& t, const pdu<pgns::address_claimed>& p,
+    time_point* wake, time_point current, bool* do_schedule) -> result
 {
     const addresses::type sa = p.can_id().source_address();
     // we expect all address_claimed messages to be BAM
@@ -193,9 +195,9 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
 
     bool result = evaluate_contenders(t, p);
 
-    if(result == false) return false;
+    if(result == false) return result::ignore();
 
-    if(state_ != states::claimed && state_ != states::claiming) return false;
+    if(state_ != states::claimed && state_ != states::claiming) return result::ignore();
 
     // Is our address in contest? [1] 4.4.3.3
     if(sa == address_)
@@ -253,7 +255,9 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
             // equals, which is not a covered scenario that I know of
             // See [3] 1.1.1 and 1.1.1.2
             // That said, we MAY encounter this when responding to our own request for address
-            // as per [3] 1.2.1.1
+            // as per [3] 1.2.1.1 (loopback-style behavior)
+            // FIX: Whatever we do, registering an underflow is not quite accurate
+            return result::underflow();
         }
     }
     else
@@ -264,7 +268,7 @@ bool network<AddressManager, TimePoint>::process_incoming_internal(
         address_manager().encountered(sa);
     }
 
-    return false;
+    return result::ignore();
 }
 
 // DEBT: Put this into estd itself - and useful because some compilers' __has_cpp_attribute doesn't

@@ -4,6 +4,7 @@
 #include "../data_field/all.hpp"
 
 #include "diagnostic.h"
+#include "../cs/diagnostic.hpp"
 
 #include "../ostream.h"
 
@@ -25,23 +26,25 @@ struct is_type_complete<T, estd::enable_if_t<(sizeof(T) > 0)> > : estd::true_typ
 
 template <class TTransport, class TOStream, class Policy>
 template <embr::j1939::pgns pgn>
-bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming(transport_type& t, const pdu<pgn>& p)
+auto diagnostic_ca<TTransport, TOStream, Policy>::process_incoming(transport_type& t, const pdu<pgn>& p) -> result
 {
-    out << p << estd::endl;
+    out_ << p << estd::endl;
 
-    return true;
+    return result::ok();
 }
 
 template <class TTransport, class TOStream, class Policy>
 #if EXP_DIAGNOSTIC_OPT1
 constexpr
 #endif
-bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
-    transport_type& t, const frame_type& f) const
+auto diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
+    transport_type& t, const frame_type& f) const -> result
 {
 #if EXP_DIAGNOSTIC_OPT1
     return false;
 #else
+    //internal::pdu_header id2(frame_traits::id(f));
+
     pdu1_header id{frame_traits::id(f)};
     pdu2_header _id{frame_traits::id(f)};
 
@@ -50,21 +53,21 @@ bool diagnostic_ca<TTransport, TOStream, Policy>::process_incoming_default(
 
     //auto pgn = (long) (id.is_pdu1() ? id.range() : _id.range());
 
-    out << "PDU: " << estd::hex;
+    out_ << "PDU: " << estd::hex;
 
     if(id.is_pdu1())
-        out << id.range() << ' ' << id;
+        out_ << id.range() << ' ' << id;
     else
-        out << _id.range() << ' ' << _id;
+        out_ << _id.range() << ' ' << _id;
 
     const uint8_t* payload = frame_traits::payload(f);
 
     for(unsigned i = 0; i < frame_traits::length(f); i++)
-        out << ' ' << estd::setw(2) << payload[i];
+        out_ << ' ' << estd::setw(2) << payload[i];
 
-    out << estd::endl;
+    out_ << estd::endl;
 
-    return false;
+    return result::ignore();
 #endif
 }
 

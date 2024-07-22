@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../state-machines/result.h"
+
 namespace embr { namespace j1939 {
 
 namespace internal {
@@ -12,9 +14,9 @@ struct app_state
     Context& context;
 
     template <pgns pgn>
-    constexpr bool invoker(uint32_t id, const uint8_t* payload) const
+    constexpr sm::v1::result invoker(uint32_t id, const uint8_t* payload) const
     {
-        return impl.process_incoming(t, pdu<pgn>(id, payload), context);
+        return impl.process_incoming(t, pdu<pgn>(can_id(id), payload), context);
     }
 };
 
@@ -26,9 +28,9 @@ struct app_state<Transport, Impl, estd::monostate>
     Impl& impl;
 
     template <pgns pgn>
-    constexpr bool invoker(uint32_t id, const uint8_t* payload) const
+    constexpr sm::v1::result invoker(uint32_t id, const uint8_t* payload) const
     {
-        return impl.process_incoming(t, pdu<pgn>(id, payload));
+        return impl.process_incoming(t, pdu<pgn>(can_id(id), payload));
     }
 };
 

@@ -1,4 +1,5 @@
 #include <j1939/internal/dispatcher/incoming.hpp>
+#include <j1939/internal/dispatcher/incoming2.hpp>
 #include <j1939/state-machines/lcmd.hpp>
 
 #include <j1939/NAME/function.h>
@@ -12,8 +13,11 @@ LightingCommand::LightingCommand(QObject* parent) :
     ControllerApplication(parent),
     timer_(parent)
 {
+    network_.name().arbitrary_address_capable(true);
     network_.name().function(int(function_fields::body_controller));
     network_.name().industry_group(int(industry_groups::on_highway));
+
+    network_.setTag("LCMD");
 
     connect(&timer_, &QTimer::timeout, this, &LightingCommand::handler);
     timer_.setSingleShot(true);
@@ -32,7 +36,7 @@ void LightingCommand::frameReceived(QCanBusDevice* device, const QCanBusFrame& f
     transport_type t{device};
     network_.frameReceived(device, frame);
     context c(clock::now(), network_.address());
-    process_incoming(lcmd_, t, frame, c);
+    v2::process_incoming(lcmd_, t, frame, c);
     if(lcmd_.state() == lcmd_.STATE_FLASH_ON && last_state_ != states::STATE_IDLE)
     {
         schedule();

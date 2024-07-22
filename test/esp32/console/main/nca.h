@@ -7,9 +7,9 @@
 
 #include "transport.h"
 
-
+using time_point = estd::chrono::freertos_clock::time_point;
 using scheduler_impl_type =
-    embr::internal::scheduler::impl::Function<estd::chrono::freertos_clock::time_point>;
+    embr::internal::scheduler::impl::Function<time_point>;
 
 using scheduler_type = embr::internal::layer1::Scheduler<10, scheduler_impl_type>;
 

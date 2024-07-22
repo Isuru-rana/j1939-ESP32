@@ -1,10 +1,12 @@
 #pragma once
 
+#include <QMutex>
 #include <QTimer>
 
 #include <j1939/cas/internal/prng_address_manager.h>
 #include <j1939/state-machines/transport_protocol.h>
 
+#include "../can_id.h"
 #include "../transport.h"
 #include "base.h"
 
@@ -21,31 +23,50 @@ class TransportProtocol : public Base
     // DEBT: Heavy debt, need context to fully support time_point
     using context_type = sm_type::context; //<clock::time_point>;
     using states = sm_type::states;
+    using result = j1939::cs::v1::base::result;
 
     // Tracked according to:
     // - source address when responder
     // - dest address when originator
     struct Session
     {
+        states last_state_ = states::IDLE;
+
         sm_type tp_;
         // Theoretically some kind of stream/pipe would be interesting here.
         // Practically, ~1.7k is the maximum size, so lots of in memory buffers are appropriate
         QByteArray buffer_;
 
         // If originating, we track sa here (since we're a pool & state machine doesn't track this)
-        uint8_t sa_;
+        uint8_t sa_ = addresses::null;
+
+        QMutex mutex_;
+
+        bool processing_ = false;
 
         // NOTE: Consider storing QCanBusDevice* here for multiple transport outs
 
-        void frameReceived(QCanBusDevice *, const QCanBusFrame &);
-        void processOutgoing(QCanBusDevice *);
+        // DEBT: returns whether entire buffer is received.  Would prefer to interrogate
+        // responder().last_one() once we work out forced process_outgoing DEBT seen in frameReceived
+        bool frameReceived(QCanBusDevice *, const QCanBusFrame &);
+        void processOutgoing(QCanBusDevice *, const context_type&, result = result::ignore());
         void send(addr_type sa, addr_type da, pgns pgn, const QByteArray& v);
     };
 
-    // DEBT: Use a priority queue here
+    using session_type = std::shared_ptr<Session>;
+
+    // DEBT: Consider this might be just a formality now since 'schedule' does the heavy lifting
     time_point next_event_;
 
-    std::vector<Session> sessions_;
+    // Protects 'sessions_'
+    QMutex mutex_;
+    // DEBT: Using pointers instead of values because surreptitiously ::send cascades out to
+    // frameReceived which in turn MT-changes vector and sometimes modifies Session values
+    std::vector<session_type> sessions_;
+    session_type offline_candidate_;
+    session_type idle_;
+
+    using iterator = std::vector<session_type>::iterator;
 
     QCanBusDevice* device_ = nullptr;
 
@@ -78,10 +99,18 @@ public:
     }
 
 
+    Q_INVOKABLE void send(addr_type sa, addr_type da, pgns pgn, const QString& v)
+    {
+        send(sa, da, pgn, v.toUtf8());
+    }
+
     Q_INVOKABLE void broadcast(uint8_t sa, pgns pgn, const QString& v)
     {
         broadcast(sa, pgn, v.toUtf8());
     }
+
+    // Listen for incoming tp:cm's on a particular address (think socket bind)
+    Q_INVOKABLE void listen(addr_type address);
 
 
     // TODO: This is only for the rare case of request whose payload is > 8 bytes
@@ -93,7 +122,7 @@ public:
     }
 
 signals:
-    void packetReceived(can_id, QByteArray);
+    void packetReceived(CanId, QByteArray);
 };
 
 }}

@@ -51,6 +51,7 @@ namespace pgn {
 template <>
 struct traits<pgns::address_claimed> : internal::traits_base
 {
+    // [3] 4.1.1
     using spns = internal::spns_list<s::NAME_of_controller_application>;
 
     static constexpr const char* name()

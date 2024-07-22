@@ -33,13 +33,21 @@ void App::on_notify(TWAI::event::autorx e)
 {
     ESP_LOGV(TAG, "on_notify: TWAI::event::autorx");
 
-    const transport_type::frame& frame = e.message;
+    const frame_type& frame = e.message;
+    const uint8_t* payload = frame_traits::payload(frame);
+    // Same results
+    //const uint8_t* payload = frame.data;
+
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG,
+        payload,
+        frame_traits::length(frame),
+        ESP_LOG_VERBOSE);
 
     out.rdbuf()->clear();
     const auto& out_s = out.rdbuf()->str();
 
-    embr::j1939::process_incoming(dca, transport(), frame);
-    embr::j1939::process_incoming(nca, transport(), frame);
+    j1939::v2::process_incoming(dca, transport(), frame);
+    j1939::v2::process_incoming(nca, transport(), frame);
 
     // diagnostic_ca emits eol into 'out'
     esp_log_write(ESP_LOG_INFO, TAG, out_s.data());
@@ -49,6 +57,12 @@ void App::on_notify(TWAI::event::autorx e)
 void App::on_notify(TWAI::event::alert e)
 {
     ESP_LOGV(TAG, "on_notify: TWAI::event:alert");
+
+    if(e.alerts & TWAI_ALERT_BUS_OFF)
+    {
+        // Done via higher level Online/Offline states
+        //ESP_ERROR_CHECK(twai_initiate_recovery());
+    }
 }
 
 // DEBT: Move nca & associated scheduler to self-contain inside of App
@@ -60,6 +74,14 @@ void App::on_notify(changed<Service::id::substate> e, const TWAI& svc)
     {
         case Service::Running:
             nca.start(transport());
+            break;
+
+        case Service::Online:
+            break;
+
+        case Service::Offline:
+            ESP_LOGI(TAG, "on_notify: bus-off - initiating recovery in 120s");
+            recovery_time_ = clock::now() + estd::chrono::seconds(120);
             break;
 
         default:
@@ -101,6 +123,8 @@ struct bjm_pgn_provider<4> : pgn_provider<j1939::pgns::basic_joystick_message_4>
 
 void App::poll()
 {
+    static constexpr time_point zero;
+
     Event event;
 
     if(q.receive(&event, 0s))
@@ -137,5 +161,14 @@ void App::poll()
         }
 
         transport_traits::send(transport(), pdu);
+    }
+
+    if(recovery_time_ != zero && clock::now() >= recovery_time_)
+    {
+        ESP_LOGD(TAG, "poll: initiating recovery");
+        
+        recovery_time_ = zero;
+        // DEBT: Do soft error check instead of hard one
+        ESP_ERROR_CHECK(twai_initiate_recovery());
     }
 }

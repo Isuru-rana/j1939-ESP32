@@ -32,14 +32,10 @@ class pdu1 : public pdu1_header,
 
 public:
     static constexpr pgns pgn = pgn_;
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
     using traits = pgn::traits<pgn_>;
 
     static constexpr pgn::descriptor descriptor()
     { return { traits::length, traits::default_priority }; }
-#else
-    static constexpr pgn::descriptor descriptor() { return pgn::get_descriptor<pgn>(); }
-#endif
 
 #if FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT
     constexpr explicit pdu1(null_t = {}) :
@@ -58,7 +54,7 @@ public:
     ///
     /// @param _id - undefined if 'range' does not match template pgn
     /// @param data
-    constexpr explicit pdu1(can_id _id, const uint8_t* data) :
+    constexpr explicit pdu1(const can_id& _id, const uint8_t* data) :
         id{_id},
         data_field_type{data}
     {}
@@ -89,14 +85,10 @@ class pdu2 : public pdu2_header,
 
 public:
     static constexpr pgns pgn = pgn_;
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
     using traits = pgn::traits<pgn_>;
 
     static constexpr pgn::descriptor descriptor()
     { return { traits::length, traits::default_priority }; }
-#else
-    static constexpr pgn::descriptor descriptor() { return pgn::get_descriptor<pgn>(); }
-#endif
 
 #if FEATURE_EMBR_J1939_DATAFIELD_AUTOINIT
     constexpr explicit pdu2(null_t = {}) :

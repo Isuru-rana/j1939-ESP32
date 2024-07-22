@@ -3,15 +3,19 @@
 #include <QObject>
 
 #include "fwd.h"
+#include "can_id.h"
+
 #include <j1939/NAME/industry_groups.h>
 #include <j1939/pgn/enum.h>
+
+#include "runtime.h"
 
 namespace embr::j1939::qt { inline namespace v1 {
 
 class Plugin
 {
 public:
-    static void init();
+    static void init(Runtime*);
 };
 
 // Guidance from
@@ -27,8 +31,14 @@ public:
 
     // Dummies just to test overloading
     Q_INVOKABLE QString to_string(industry_groups)  { return "ig N/A"; }
+
     // 'int' flavor seems to greedily consume everything
     //Q_INVOKABLE QString to_string(int)  { return "N/A!"; }
+
+    // DEBT: Explicitly naming this because can_id coverts to an int so easily
+    // we don't want the greedy consumer problem.  Pretty sure now with CanId gadget
+    // we are safe, but need to test to be sure
+    Q_INVOKABLE QString to_string_canid(CanId);
 };
 
 }}

@@ -15,29 +15,30 @@ namespace embr { namespace j1939 { namespace sm { inline namespace v1 {
 
 template <ESTD_CPP_CONCEPT(internal::concepts::AddressManager) AddressManager,
     class TimePoint>
-struct network : network_base
+struct network : network_base, v0::to_schedule<TimePoint>
 {
+protected:
 #ifdef ESP_PLATFORM
     static constexpr const char* TAG = "sm::network";
 #endif
 
     using base_type = network_base;
+    using tp_base_type = v0::to_schedule<TimePoint>;
     using address_manager_type = AddressManager;
-    using time_point = TimePoint;
 
-    using network_base::process_incoming;
+    using typename tp_base_type::time_point;
+    // Depending on whether we're claiming or request for claim we'll
+    // next_event_ 250ms or 1250ms.  Also expected but not yet implemented
+    // is a pre-send next_event_ with bus_collision_delay
+    // NOTE: We miss old 'last_claim' but this is more efficient
+    using tp_base_type::next_event_;
 
     // DEBT: Do some data hiding
 
     address_manager_type address_manager_;
 
-    // Depending on whether we're claiming or request for claim we'll
-    // next_event_ 250ms or 1250ms.  Also expected but not yet implemented
-    // is a pre-send next_event_ with bus_collision_delay
-    // NOTE: We miss old 'last_claim' but this is more efficient
-    time_point next_event_;
-
-    constexpr time_point next_event() const { return next_event_; }
+public:
+    using network_base::process_incoming;
 
     address_type find_new_address()
     {
@@ -132,13 +133,13 @@ struct network : network_base
     /// @param do_schedule
     /// @return
     template <class Transport>
-    bool process_incoming_internal(Transport&, const pdu<pgns::address_claimed>&,
+    result process_incoming_internal(Transport&, const pdu<pgns::address_claimed>&,
         time_point* wake,
         time_point current,
         bool* do_schedule);
 
     template <class Transport>
-    bool process_incoming(Transport& t, const pdu<pgns::address_claimed>& p,
+    result  process_incoming(Transport& t, const pdu<pgns::address_claimed>& p,
         const context<TimePoint>& c)
     {
         bool do_schedule = false;
@@ -149,7 +150,7 @@ struct network : network_base
         time_point* wake = &dummy;
 #endif
 
-        bool r = process_incoming_internal(t, p, wake, c.current, &do_schedule);
+        result r = process_incoming_internal(t, p, wake, c.current, &do_schedule);
 
         // EXPERIMENTAL
 #if FEATURE_EMBR_J1939_TP_CONTEXT_NEXT
@@ -162,7 +163,7 @@ struct network : network_base
 
 
     template <class Transport>
-    bool process_outgoing(Transport& t, const context<TimePoint>& c)
+    result process_outgoing(Transport& t, const context<TimePoint>& c)
     {
         //if(substate_ != substates::sending) return false;
 
@@ -174,7 +175,7 @@ struct network : network_base
         // expected.  scheduled_claiming returns a bool indicating whether a future event should be
         // scheduled.  At present, it NEVER requires further immediate processing
 
-        return false;
+        return result::ok();
     }
 
 };

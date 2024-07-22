@@ -21,6 +21,9 @@
 #include <embr/units/volts.h>
 #include <estd/internal/units/si.h>
 
+//#define CONFIG_DIAGNOSTIC_CA 1
+#define CONFIG_NCA_SCHEDULED 1  // flag not used yet, always on
+
 #include "ca.h"
 #include "conf.h"
 
@@ -128,9 +131,9 @@ void loop()
     if(t.receive(&f))
     {
 #if CONFIG_DIAGNOSTIC_CA
-        process_incoming(app::dca, t, f);
+        v2::process_incoming(app::dca, t, f);
 #endif
-        process_incoming(app::nca, t, f);
+        v2::process_incoming(app::nca, t, f);
     }
 
     // Does use about 6 bytes less memory on AVR...

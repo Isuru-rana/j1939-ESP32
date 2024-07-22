@@ -1,5 +1,16 @@
+/*
+ * References:
+ *
+ * 1. J1939-21 (DEC2006)
+ */
 #pragma once
 
+#include <estd/chrono.h>
+
+#include "../../cs/base.h"
+
+#include "../base.h"
+#include "fwd.h"
 #include "enum.h"
 #include "feature.h"
 #include "context.h"
@@ -18,6 +29,12 @@ inline void prep_abort(
     cm.control(enum_base::modes::abort);
     cm.abort_reason(r);
 }
+
+
+struct policy
+{
+    static constexpr bool time_check = true;
+};
 
 
 class base :
@@ -40,14 +57,19 @@ public:
     {
         using mst = estd::chrono::milliseconds;
 
+        // DEBT: bam and Tr are both somewhat variable.
+        // bam is between 50-200mS, at discretion of us
+        // Tr (seems to be) official upper limit of BAM
+        // Tr is upper limit of non-bam data sends, but there is no lower limit
+
         static constexpr mst bam = mst{50};         // DEBT: Would be better if this was configurable
 
-        static constexpr mst Tr = mst{200};
-        static constexpr mst Th = mst{500};
-        static constexpr mst T1 = mst{750};
-        static constexpr mst T2 = mst{1250};
-        static constexpr mst T3 = mst{1250};
-        static constexpr mst T4 = mst{1050};
+        static constexpr mst Tr = mst{200};         // "provide a response [...] within 0.2s" [1] 5.12.3
+        static constexpr mst Th = mst{500};         // max gap between hold messages [1] Figure C1
+        static constexpr mst T1 = mst{750};         // maximum gap between rx last packet & next packet [1] 5.10.2.4
+        static constexpr mst T2 = mst{1250};        // maximum gap between CTS tx and DT rx [1] 5.10.2.4
+        static constexpr mst T3 = mst{1250};        // "must wait at least 1.25s" for a response [1] 5.12.3 including ACK [1] 5.10.2.4
+        static constexpr mst T4 = mst{1050};        // "hold connection open" timeout [1] 5.10.2.4
     };
 
 
@@ -60,6 +82,7 @@ public:
 
     enum states
     {
+        // At the ready
         IDLE = ROLE_UNINITIALIZED << role_shift,
         // Invalid state observed, but occurred at a time which doesn't hurt us
         WARN,
@@ -68,6 +91,8 @@ public:
         RECEIVING,
         SENDING_ABORT,
         SENT_ABORT,
+
+        // Won't respond to anything
         OFFLINE,
 
         // Originator node states
@@ -94,8 +119,14 @@ public:
         RESPONDER_SENT_CTS,
         RESPONDER_SENDING_CTS_HOLD,
         RESPONDER_SENT_CTS_HOLD,
+
+        // Indicates DT appeared and now we're waiting for state machine consumer to pick it up
         RESPONDER_RECEIVING_DT,
         RESPONDER_RECEIVED_DT,
+
+        // Need this because BAM doesn't do EOM - though if we're clever we can use
+        // responder().last_one()
+        RESPONDER_RECEIVED_ALL_DT,
         RESPONDER_SENDING_EOM_ACK,
         RESPONDER_SENT_EOM_ACK,
         RESPONDER_SENDING_ABORT,
@@ -116,6 +147,9 @@ public:
 
 public:
     constexpr states state() const { return state_; }
+
+    // DEBT: Do state transitions if necessary
+    void take_offline() { state_ = OFFLINE; }
 
     roles role() const;
 
@@ -144,7 +178,7 @@ public:
     }
 
     // DEBT: Poor naming, only applies to originator mode
-    bool ready_for_payload() const
+    ATTR_NODISCARD constexpr bool ready_for_payload() const
     {
         return state_ == ORIGINATOR_SENT_DT ||
             state_ == ORIGINATOR_RECEIVED_CTS ||
@@ -152,6 +186,5 @@ public:
     }
 
 };
-
 
 }}}}}

@@ -52,6 +52,18 @@ TEST_CASE("spn")
         }
         SECTION("runtime compare")
         {
+            SECTION("bjm1")
+            {
+                data_field<pgns::bjm1> payload{null_t{}};
+                using traits = spn::traits<spns::joystick1_x_axis_position>;
+
+                auto v1 = payload.x_axis_position();
+                auto v = int(v1.root_count());
+
+                REQUIRE(v == 0x3FF);
+                bool b = traits::noop(v, false);
+                REQUIRE(b);
+            }
             SECTION("lighting")
             {
                 data_field<pgns::lighting_command> payload{null_t{}};

@@ -1,3 +1,5 @@
+#include <memory>
+
 #include <estd/charconv.h>
 #include <estd/string.h>
 
@@ -11,103 +13,176 @@ namespace embr::j1939::qt::cs { inline namespace v1 {
 TransportProtocol::TransportProtocol(QObject *parent) :
     Base(parent)
 {
+    // start with one idle
+    reserve();
     connect(&timer_, &QTimer::timeout, this, &TransportProtocol::processOutgoing2);
 }
 
-void TransportProtocol::Session::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
-{
-    // DEBT: process_incoming needs an lvalue
-    transport_type t{device};
-
-    context_type ctx(clock::now(), sa_);
-
-    internal::v2::process_incoming(tp_, t, f, ctx);
-
-    switch(tp_.state())
-    {
-        case states::RESPONDER_RECEIVING_DT:
-        {
-            const estd::span<const uint8_t> p(tp_.payload());
-            buffer_.append((const char*)p.data(), p.size());
-            break;
-        }
-
-        default:    break;
-    }
-}
-
-
 void TransportProtocol::frameReceived(QCanBusDevice* device, const QCanBusFrame& f)
 {
+    // DEBT: Not ideal that we do pool management in here, but pools being somewhat
+    // lazy in the first place, it's not bad.
+
+    const unsigned offline_threshold = 4;
+    unsigned offline_count = 0;
     unsigned idle_count = 0;
-    Session* first_idle = nullptr;
+    Session* new_sess = nullptr;
+    decltype(sessions_)::iterator it;
+    time_point next_event = time_point::max();
 
-    // DEBT: process_incoming needs an lvalue
-    transport_type t{device};
+    // Only place in which this mutex_ can lock for a long time.
+    mutex_.lock();
 
-    for(Session& sess : sessions_)
+    std::vector<session_type> sessions(sessions_);
+
+    mutex_.unlock();
+
+    for(it = sessions.begin(); it != sessions.end(); )
     {
-        sess.frameReceived(device, f);
+        session_type __sess = *it;
+        Session* _sess = it->get();
+        Session& sess = *_sess;
+        const Session& csess = sess;
+
+        sess.mutex_.lock();
+
+        if(sess.tp_.state() == states::IDLE)
+        {
+            ++idle_count;
+
+            if(idle_count == 1)
+            {
+                idle_ = __sess;
+            }
+            else if(idle_count > 1)
+            {
+                // We always want one and only one IDLE.  Flip others into
+                // offline mode to pool them
+                sess.tp_.take_offline();
+                sess.mutex_.unlock();
+                offline_candidate_ = *it;
+                continue;
+            }
+        }
+        else if(sess.tp_.state() == states::OFFLINE)
+        {
+            if(++offline_count > offline_threshold)
+            {
+                it = sessions.erase(it);
+            }
+            else
+                offline_candidate_ = *it;
+
+            sess.mutex_.unlock();
+
+            continue;
+        }
+
+        sess.mutex_.unlock();
+
+        ++it;
+
+        bool last_one = sess.frameReceived(device, f);
+
+        if(last_one)
+        {
+            qDebug() << "TransportProtocol::frameReceived" << sess.buffer_;
+            pgns pgn = csess.tp_.responder().pgn();
+            uint32_t id;
+            uint8_t sa = csess.tp_.responder().originator().source_address();
+            uint8_t priority = csess.tp_.responder().originator().priority().value();
+            if(internal::is_pdu1(pgn))
+            {
+                pdu1_header p(priority, pgn);
+                p.source_address(sa);
+                id = p;
+            }
+            else
+            {
+                pdu2_header p(priority, pgn);
+                p.source_address(sa);
+                id = p;
+            }
+
+            emit packetReceived(CanId(id), sess.buffer_);
+            // DEBT: Wait for this to go idle again
+            sess.buffer_.clear();
+        }
 
         switch(sess.tp_.state())
         {
-            case states::RESPONDER_SENT_EOM_ACK:
-            {
-                // DEBT: Send proper can_id
-                emit packetReceived(0, sess.buffer_);
-                // DEBT: Remove session
-                break;
-            }
-
-            case states::ORIGINATOR_RECEIVED_EOM_ACK:
-                // DEBT: Remove session
+            case states::RESPONDER_RECEIVED_RTS:
+            case states::RESPONDER_RECEIVED_BAM:
+                new_sess = &sess;
                 break;
 
-            case states::IDLE:
-                if(first_idle == nullptr)   first_idle = &sess;
-                ++idle_count;
+            default:
                 break;
-
-            default: break;
         }
 
         // TODO: IIRC we can and do have our own std lhs estd rhs + and - operators.
         // They either aren't quite right, or not existing as I recall them.  They definitely weren't build out
         // much
         //next_event_ = std::min(next_event_, sess.tp_.next_event());
+        /*
         time_point next_event = std::min(next_event_, sess.tp_.next_event());
 
         if(next_event != time_point::min())
-            next_event_ = next_event;
+            next_event_ = next_event;   */
+
+        constexpr const time_point none;
+        const time_point tp_next_event = sess.tp_.next_event();
+        if(tp_next_event != none)
+            next_event = std::min(next_event, tp_next_event);
     }
+
+    mutex_.lock();
+
+    sessions_ = sessions;
+
+    // NOTE: Beware, all this gets activated even when it's not tp traffic!  Therefore,
+    // may want to skip scheduling when next_event_ is already scheduled
+
+    next_event_ = next_event == time_point::max() ? time_point{} : next_event;  // DEBT
+
+    schedule(next_event_);
+
+    mutex_.unlock();
 
     // If no idle sessions are around to pick up potential new incoming connection,
     // set one up.
     if(idle_count == 0)
     {
-        Session& sess = reserve();
-
-        sess.frameReceived(device, f);
+        reserve();  // gauruntees 1 idle is present
     }
-    else if(idle_count > 1)
-    {
-        //sessions_.erase(first_idle);
-    }
-
-    schedule(next_event_);
 }
 
 
 auto TransportProtocol::reserve() -> Session&
 {
-    return sessions_.emplace_back();
+    qDebug() << "TransportProtocol::reserve: current count:" << sessions_.size();
+
+    session_type* session;
+
+    mutex_.lock();
+    // TODO: Grab an offline one if it's already present.  find_if not perfect since
+    // it unlocks session before completing
+    /*
+    if(offline_candidate_)
+    {
+        session = offline_candidate_.get();
+    }
+    else    */
+        session = &sessions_.emplace_back(new Session);
+    mutex_.unlock();
+
+    return *session->get();
 }
 
 
 void TransportProtocol::Session::send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray& v)
 {
     buffer_ = v;
-    // FIX: auto payload not working for BAM
     tp_.initiate_originator(
         da, uint32_t(pgn),
         buffer_.data(),
@@ -131,43 +206,54 @@ void TransportProtocol::send(uint8_t sa, uint8_t da, pgns pgn, const QByteArray&
 }
 
 
-void TransportProtocol::Session::processOutgoing(QCanBusDevice* device)
-{
-    transport_type t{device};
-    context_type ctx(clock::now(), sa_);
-    const time_point next_event = tp_.next_event();
-
-    if(tp_.state() == states::IDLE) return;
-
-    auto str = estd::to_string((int)tp_.state());
-
-    qDebug() << "TransportProtocol::Session::processOutgoing:" << j1939::to_string(tp_.state(), str.data());
-
-    if(ctx.current >= next_event)
-    {
-        // DEBT: state machine itself doesn't filter process_outgoing by next_event, but maybe
-        // it should.  Decision is because some consumers themselves are schedulers and only call
-        // SM when it's time.  Smells of premature optimization
-        tp_.process_outgoing(t, ctx);
-    }
-}
-
-
 void TransportProtocol::processOutgoing(QCanBusDevice* device)
 {
     //qDebug() << "TransportProtocol::processOutgoing";
 
-    for(Session& sess : sessions_)
+    // DEBT: Slight debt, it really would be better to do 'now' as close as possible
+    // to process_outgoing, but debugging is easier if we capture a 'now' point in time
+    time_point now = clock::now();
+    time_point next_event = time_point::max();
+
+    mutex_.lock();
+    std::vector<session_type> sessions(sessions_);
+    mutex_.unlock();
+
+    for(session_type& _sess : sessions)
     {
-        sess.processOutgoing(device);
+        Session& sess = *_sess;
+        context_type ctx(now, sess.sa_);
+        sess.processOutgoing(device, ctx);
 
-        time_point next_event = std::min(next_event_, sess.tp_.next_event());
+        // DEBT: 'none' value may be better served as 'max()'
+        constexpr time_point none;
 
-        if(next_event != time_point::min())
-            next_event_ = next_event;
+        time_point tp_next_event = sess.tp_.next_event();
+
+        if(tp_next_event != none)
+            next_event = std::min(tp_next_event, next_event);
+
+        /*
+        if(next_event_ != none)
+            next_event = std::min(next_event_, next_event);
+
+        if(next_event != none)
+            next_event_ = next_event;   */
     }
 
+    next_event_ = next_event == time_point::max() ? time_point{} : next_event;  // DEBT
+
     schedule(next_event_);
+}
+
+void TransportProtocol::listen(addr_type address)
+{
+    // DEBT: Can only listen for one address at this time
+
+    if(idle_)
+    {
+        idle_->sa_ = address;
+    }
 }
 
 

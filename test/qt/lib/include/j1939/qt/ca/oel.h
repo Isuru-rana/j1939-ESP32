@@ -28,7 +28,7 @@ public:
 
     void start(QCanBusDevice*);
 
-    bool process_incoming(can::qt_transport&, const pdu<pgns::lcmd>&);
+    result process_incoming(can::qt_transport&, const pdu<pgns::lcmd>&);
 };
 
 }}

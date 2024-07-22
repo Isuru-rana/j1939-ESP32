@@ -2,11 +2,28 @@
 
 Not a j1939 specific thing!
 
+USB-CAN bridge
+
+Document v0.1
 See LAWICEL / SLCAN linux support
 
 # 1. Design Goals
 
+This firmware is a USB-CAN bridge by way of SLCAN protocol.  Technically supported by Linux, macOS and Windows (See Section 2)
+
+## 1.1. SLCAN protocol implementation
+
+Also known as LAWICEL, this protocol is a USB implementation of the older UART-CAN protocol.  Supported:
+
+* RTR requests
+* Auto-polling on or off (default on)
+* Error/Alert interrogation
+
 # 2. Infrastructure
+
+* Linux (native)
+* macOS (https://www.mac-can.com/)
+* Windows (https://github.com/uv-software/SerialCAN)
 
 # 3. Observations & Opinions
 

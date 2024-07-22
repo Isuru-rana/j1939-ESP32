@@ -18,6 +18,10 @@ class App : transport_type
 {
     static constexpr const char* TAG = "App";
 
+    using clock = estd::chrono::freertos_clock;
+    using time_point = clock::time_point;
+
+    time_point recovery_time_;
     ostream_type out;
     dca_type dca;
     scheduler_type scheduler_;
@@ -40,6 +44,8 @@ class App : transport_type
     using Event = embr::debounce::v1::Event;
 
     using transport_traits = embr::j1939::transport_traits<transport_type>;
+    using frame_type = transport_type::frame;
+    using frame_traits = embr::can::frame_traits<frame_type>;
 
     estd::freertos::layer1::queue<Event, 10> q;
 

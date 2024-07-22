@@ -4,18 +4,20 @@
 #include <esp_log.h>
 #include <argtable3/argtable3.h>
 
+#include <j1939/data_field/bjm1.hpp>
+#include <j1939/data_field/vep1.hpp>
 #include <j1939/state-machines/transport_protocol.hpp>
 
 #include "nca.h"
 #include "streambuf.h"
+#include "tp.h"
 
 using namespace embr::j1939;
 
-static esp_idf::log_ostream clog;   // Coming along well, almost ready
-static uint8_t global_da = addresses::null;
+esp_idf::log_ostream clog;   // Coming along well, almost ready
+bool dca_enabled = true;
 
 extern transport_type t;
-extern sm::transport_protocol tp;
 
 #define PROMPT_STR "j1939"
 
@@ -23,8 +25,16 @@ const char* TAG = "j1939::console::pri";
 
 static struct
 {
-    struct arg_str* abbrev;
+    struct arg_str* command;
+    struct arg_end* end;
+
+}   bus_args;
+
+
+static struct
+{
     struct arg_int* da;
+    struct arg_str* abbrev;
     struct arg_end* end;
 
 }   emit_args;
@@ -48,9 +58,59 @@ static struct
 }   addr_args;
 
 
+static struct
+{
+    struct arg_str* command;
+    struct arg_end* end;
+
+}   log_args;
+
+
 static int emit(int argc, char** argv)
 {
-    return -1;
+    using traits = transport_traits<transport_type>;
+
+    int nerrors = arg_parse(argc, argv, (void**) &emit_args);
+
+    if(nerrors) return -1;
+
+    bool da_present = emit_rqst_args.da->count;
+    const uint8_t sa = nca.state() == sm::v1::network_base::states::claimed ?
+        nca.address().value() : 0;
+    const uint8_t da = da_present ? emit_args.da->ival[0] : addresses::null;
+    (void)da;
+
+    estd::layer2::const_string abbrev(emit_args.abbrev->sval[0]);
+
+    bool success;
+
+    if(abbrev == "bjm1")
+    {
+        pdu<pgns::bjm1> p(sa, null_t{});
+
+        success = traits::send(t, p);
+    }
+    else if(abbrev == "ccvs")
+    {
+        pdu<pgns::ccvs> p(sa, null_t{});
+
+        success = traits::send(t, p);
+    }
+    else if(abbrev == "vep1")
+    {
+        pdu<pgns::vep1> p(sa, null_t{});
+
+        success = traits::send(t, p);
+    }
+    else
+        return -1;
+
+    if(!success || t.good() == false)
+    {
+        ESP_LOGW(TAG, "Problem transmitting: %u %u", success, t.good());
+    }
+
+    return 0;
 }
 
 
@@ -63,13 +123,13 @@ static int emit_rqst(int argc, char** argv)
     if(nerrors) return -1;
 
     bool da_present = emit_rqst_args.da->count;
-    int da = da_present ? emit_rqst_args.da->ival[0] : global_da;
+    int da = da_present ? emit_rqst_args.da->ival[0] : addresses::null;
     uint8_t sa;
     uint32_t pgn = emit_rqst_args.pgn->ival[0];
 
     // DEBT: Check for da range validity
 
-    if(nca.state == impl::network_ca_base::states::claimed)
+    if(nca.state() == sm::v1::network_base::states::claimed)
         sa = nca.address().value();
     else
         sa = 0; // DEBT
@@ -78,7 +138,7 @@ static int emit_rqst(int argc, char** argv)
 
     traits::send(t, p);
 
-    if(tp.state() == sm::transport_protocol::IDLE)
+    if(tp.state() == tp_type::IDLE)
     {
         // Reserve transport protocol state machine, in case response is > 8 bytes
         // TODO: Still need to unreserve/release
@@ -121,7 +181,7 @@ static int addr(int argc, char** argv)
     {
         clog << "address: ";
 
-        if(nca.state == impl::network_ca_base::states::claimed)
+        if(nca.state() == sm::v1::network_base::states::claimed)
         {
             clog << estd::hex << (unsigned) nca.address().value();
             clog << " (claimed)";
@@ -138,9 +198,58 @@ static int addr(int argc, char** argv)
     {
         // default destination
     }
+    else
+        return -1;
 
     return 0;
 }
+
+static int log(int argc, char** argv)
+{
+    int nerrors = arg_parse(argc, argv, (void**) &addr_args);
+
+    if(nerrors) return -1;
+
+    estd::layer2::const_string cmd = addr_args.command->sval[0];
+
+    if(cmd == "on")
+    {
+        dca_enabled = true;
+    }
+    else if(cmd == "off")
+    {
+        dca_enabled = false;
+    }
+    else return -1;
+
+    return 0;
+}
+
+static int bus(int argc, char** argv)
+{
+    int nerrors = arg_parse(argc, argv, (void**) &addr_args);
+
+    if(nerrors) return -1;
+
+    estd::layer2::const_string cmd = addr_args.command->sval[0];
+
+    if(cmd == "init")
+    {
+
+    }
+    else if(cmd == "deinit")
+    {
+
+    }
+    else if(cmd == "recover")
+    {
+        ESP_ERROR_CHECK(twai_initiate_recovery());
+        return 0;
+    }
+
+    return -1;
+}
+
 
 static void register_emit()
 {
@@ -152,8 +261,8 @@ static void register_emit()
         .argtable = &emit_args
     };
 
+    emit_args.da = arg_int0(nullptr, nullptr, "<da>", "Destination Address");
     emit_args.abbrev = arg_str1(nullptr, nullptr, "<cmd>", "Abbreviated command name (i.e. CM1, BJM1, etc)");
-    emit_args.da = arg_int1(nullptr, nullptr, "<da>", "Destination Address");
     emit_args.end = arg_end(2);
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
@@ -211,6 +320,41 @@ static void register_addr()
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
+
+static void register_log()
+{
+    const esp_console_cmd_t cmd = {
+        .command = "log",
+        .help = "logging on or off",
+        .hint = nullptr,
+        .func = &log,
+        .argtable = &log_args
+    };
+
+    log_args.command = arg_str1(nullptr, nullptr, "<on|off>", nullptr);
+    log_args.end = arg_end(2);
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+
+static void register_bus()
+{
+    const esp_console_cmd_t cmd = {
+        .command = "bus",
+        .help = "transport control",
+        .hint = nullptr,
+        .func = &bus,
+        .argtable = &bus_args
+    };
+
+    bus_args.command = arg_str1(nullptr, nullptr, "<init|deinit|recover>", nullptr);
+    bus_args.end = arg_end(2);
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+
 static esp_console_repl_t* init_repl()
 {
     esp_console_repl_t* repl = nullptr;
@@ -241,10 +385,12 @@ void init_console()
 {
     esp_console_repl_t* repl = init_repl();
 
+    register_bus();
     register_emit();
     register_emit_rqst();
     register_list();
     register_addr();
+    register_log();
 
     ESP_ERROR_CHECK(esp_console_start_repl(repl));
 }

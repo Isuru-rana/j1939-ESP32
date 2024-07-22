@@ -29,25 +29,27 @@ inline responder_state::responder_state(const pdu<pgns::tp_cm>& p) :
 
 inline namespace v0 {
 
-template <class TimePoint>
+template <class TimePoint, class Policy>
 template <class Transport>
-bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns::tp_cm>& p, const context& ctx)
+auto transport_protocol<TimePoint, Policy>::process_incoming(
+    Transport&, const pdu<pgns::tp_cm>& p, const context& ctx) -> result
 {
     const uint8_t da = p.destination_address();
-    if(da != ctx.self_address &&
-        p.control() != modes::bam)
-        return false;
+    if(da != ctx.self_address && p.control() != modes::bam)
+        return result::ignore();
 
     switch(state_)
     {
         case ANTICIPATING_RTS:
-            if(idle().anticipated_address_ != p.source_address())   return false;
-            // "Fallthrough" attribute is only allowed on empty statements. Really...
-            //ATTR_FALLTHROUGH
+            if(idle().anticipated_address_ != p.source_address())   return result::ignore();
+            // FIX: Got a complaint once "Fallthrough" attribute is only allowed on empty statements. Really...
+            ATTR_FALLTHROUGH;
 
         case IDLE:
         {
+#if FEATURE_EMBR_J1939_TP_FUTURE == 0
             last_event_ = ctx.current;
+#endif
 
             switch(p.control())
             {
@@ -57,20 +59,26 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
                 {
                     state_ = RESPONDER_RECEIVED_BAM;
                     storage_.template emplace<responder_state>(p);
-                    return true;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = ctx.current + timeouts::T1;
+#endif
+                    return result::ok();
                 }
 
                 case modes::rts:
                 {
                     state_ = RESPONDER_RECEIVED_RTS;
                     storage_.template emplace<responder_state>(p);
-                    return true;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = ctx.current + timeouts::T1;
+#endif
+                    return result::more();
                 }
 #endif
 
                 // "If a CTS is received while a connection is not established, it shall be ignored."
                 case modes::cts:
-                    return false;
+                    return result::ignore();
 
                 // RTS & BAM and sorta CTS are the only valid message for this to receive when idle
                 default:
@@ -96,6 +104,7 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
                 // Handshake stuff, kind of an intermediate ack and occasionally re-requesting
                 // already-sent packets
                 case modes::cts:
+                {
                     if(p.to_send() != originator().last_sequence_ + 1)
                     {
                         // resend/retransmit time
@@ -106,16 +115,27 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
                     originator().current_packet_per_cts_ = 0;
                     originator().max_packets_per_cts_ = p.max_packets();
                     state_ = ORIGINATOR_RECEIVED_CTS;
-                    return true;
+                    // Auto payload can immediately send out a DT
+                    // Otherwise, external party must load payload to what amounts to SENDING_DT phase
+                    // which ORIGINATOR_RECEIVED_CTS currently sorta counts as
+                    const bool auto_payload = originator().auto_payload_;
+                    return auto_payload ? result::more() : result::ok();
+                }
 
                 case modes::ack:
                     // We could check here if we truly sent out everything we wanted to
                     state_ = ORIGINATOR_RECEIVED_EOM_ACK;
-                    return true;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = {};
+#endif
+                    return result::ok();
 
                 case modes::abort:
                     state_ = ORIGINATOR_RECEIVED_ABORT;
-                    return true;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = {};
+#endif
+                    return result::ok();
 
                 default:    break;
             }
@@ -125,10 +145,13 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
             switch(p.control())
             {
                 case modes::cts:
+                {
                     // DEBT: Probably want to handle timeouts here in addition to
                     // 'outgoing' section
                     state_ = ORIGINATOR_RECEIVED_CTS;
-                    return true;
+                    const bool auto_payload = originator().auto_payload_;
+                    return auto_payload ? result::more() : result::ok();
+                }
 
                 default:    break;
             }
@@ -138,14 +161,16 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
         default: break;
     }
 
-    return false;
+    return result::ignore();
 }
 
 #if FEATURE_EMBR_J1939_TP_RESPONDER
-template <class TimePoint>
+template <class TimePoint, class Policy>
 template <class Transport>
-bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns::tp_dt>& p,
-    const context& ctx)
+auto transport_protocol<TimePoint, Policy>::process_incoming(
+    Transport&,
+    const pdu<pgns::tp_dt>& p,
+    const context& ctx) -> result
 {
     bool bam = responder().bam() && role() == ROLE_RESPONDER;
 
@@ -167,6 +192,9 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
             // Not finding in spec what to do in this case.  I suppose we can go into WARN mode
             // and treat them as lost packets
             state_ = WARN;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            next_event_ = {};       // No further events expected
+#endif
             break;
 
         case RESPONDER_RECEIVED_BAM:
@@ -181,25 +209,36 @@ bool transport_protocol<TimePoint>::process_incoming(Transport&, const pdu<pgns:
                 state_ = RESPONDER_RECEIVING_DT;
                 responder().last_dt_ = p.payload();
                 ++responder().current_packet_per_cts_;
+
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                // If we hit this timeout with RECEIVING_DT, that's a kind of overflow on our side
+                // since we didn't empty out payload
+                next_event_ = ctx.current + timeouts::T1;
+#endif
+                // Not 'more' since we expect a pause for consumer to pick up payload
+                return result::ok();
             }
-            else
+            // No out-of-sequence flow control when in BAM mode
+            else if(!responder().bam())
             {
                 state_ = RESPONDER_SENDING_CTS;
             }
 
-            return true;
+            return result::ok();
         }
 
         default: break;
     }
 
-    return false;
+    return result::ignore();
 }
 #endif
 
-template <class TimePoint>
+template <class TimePoint, class Policy>
 template <class Transport>
-bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context& ctx)
+auto transport_protocol<TimePoint, Policy>::process_outgoing(
+    Transport& t,
+    const context& ctx) -> result
 {
     using traits = transport_traits<Transport>;
 
@@ -221,7 +260,12 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             traits::send(t, cm);
 
             state_ = ORIGINATOR_SENT_BAM;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            // A bit of lazy-ish init, could have done this at initiate_originator
+            next_event_ = ctx.current + timeouts::bam;
+#else
             last_event_ = ctx.current;
+#endif
             return true;
         }
 
@@ -231,7 +275,8 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             {
                 state_ = ORIGINATOR_SENDING_DT;
                 // DEBT: Fallthrough would be more elegant
-                process_outgoing(t, ctx);
+                //process_outgoing(t, ctx);
+                return result::more();
             }
             // else, underflow error
             break;
@@ -240,9 +285,10 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
         case ORIGINATOR_SENDING_DT:
         {
             pdu<pgns::tp_dt> dt{null_t{}};
+            const bool bam = originator().bam();
 
             // BAM emissions all delay for 50ms
-            if(originator().bam() && !elapsed(ctx, timeouts::bam))  return false;
+            if(bam && !elapsed(ctx, timeouts::bam))  return false;
 
             uint8_t& seq = originator().last_sequence_;
 
@@ -264,8 +310,15 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             traits::send(t, dt);
 
             state_ = ORIGINATOR_SENT_DT;
+
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            // There's a minimum time between DT transmissions
+            // DEBT: 25 is arbitrary lower limit below timeout::Tr - needs improvement
+            next_event_ = ctx.current + (bam ? timeouts::bam : timeouts::mst{25});
+#else
             last_event_ = ctx.current;
-            return true;
+#endif
+            return result::ok();
         }
 
         case ORIGINATOR_SENT_DT:
@@ -274,20 +327,33 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             if(originator().sent_everything())
                 state_ = ORIGINATOR_SENT_ALL_DT;
             else if(originator().current_packet_per_cts_ == originator().max_packets_per_cts_)
+            {
                 state_ = ORIGINATOR_WAITING_CTS;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                next_event_ = ctx.current + timeouts::T3;
+#endif
+            }
 #if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
             else if(originator().auto_payload_)
             {
                 originator().payload_ += 7;
                 state_ = ORIGINATOR_SENDING_DT;
+                return result::more();
             }
 #endif
+
+            // DEBT: This is likely an underflow, reaching here by Tr.  Should we abort?
 
             return true;
 
         case ORIGINATOR_SENT_ALL_DT:
             if(originator().bam())
+            {
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                next_event_ = {};
+#endif
                 state_ = IDLE;
+            }
             return true;
 
         case ORIGINATOR_SENDING_RTS:
@@ -305,10 +371,16 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             traits::send(t, cm);
 
             state_ = ORIGINATOR_SENT_RTS;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            // A bit of lazy-ish init, could have done this at initiate_originator
+            next_event_ = ctx.current + timeouts::T3;
+#else
             last_event_ = ctx.current;
+#endif
             return true;
         }
 
+        // FIX: Need to combine this with ORIGINATOR_WAITING_CTS
         case ORIGINATOR_SENT_RTS:
             // [1] Section 5.12.3
             if(elapsed(ctx, timeouts::T3))
@@ -316,6 +388,11 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
                 state_ = ORIGINATOR_TIMEOUT;
 
                 traits::send(t, originator().build_abort(ctx, abort_reasons::timeout));
+
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                // No further event processing expected
+                next_event_ = time_point{};
+#endif
             }
             break;
 
@@ -336,13 +413,25 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
             else if(originator().auto_payload_)
             {
                 state_ = ORIGINATOR_SENDING_DT;
-                return true;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                // DEBT: 25 is arbitrary lower limit below timeout::Tr - needs improvement
+                next_event_ = ctx.current;
+#endif
+                return result::ok();
             }
 #endif
 
             break;
 #endif
 #if FEATURE_EMBR_J1939_TP_RESPONDER
+        case RESPONDER_RECEIVED_BAM:
+            if(elapsed(ctx, timeouts::T1))
+            {
+                state_ = RESPONDER_SENDING_ABORT;
+                return true;
+            }
+            break;
+
         // Got RTS, send CTS
         case RESPONDER_RECEIVED_RTS:
         case RESPONDER_SENDING_CTS:
@@ -355,7 +444,10 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
 
             traits::send(t, p);
             state_ = RESPONDER_SENT_CTS;
-            return true;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            next_event_ = ctx.current + timeouts::T2;
+#endif
+            return result::ok();
         }
 
         case RESPONDER_SENDING_CTS_HOLD:
@@ -368,6 +460,9 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
 
             traits::send(t, p);
             state_ = RESPONDER_SENT_CTS_HOLD;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            next_event_ = ctx.current + timeouts::Th;
+#endif
             return true;
         }
 
@@ -377,16 +472,28 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
         case RESPONDER_RECEIVED_DT:
             if(responder().last_one())
             {
-                pdu<pgns::tp_cm> p = responder().originator_;
+                if(responder().bam())
+                {
+                    state_ = IDLE;
+                }
+                else
+                {
+                    pdu<pgns::tp_cm> p = responder().originator_;
 
-                p.control(modes::ack);
-                p.destination_address(responder().originator_.source_address());
-                p.source_address(ctx.self_address);
+                    p.control(modes::ack);
+                    p.destination_address(responder().originator_.source_address());
+                    p.source_address(ctx.self_address);
 
-                traits::send(t, p);
+                    traits::send(t, p);
 
-                state_ = RESPONDER_SENT_EOM_ACK;
-                return true;
+                    // DEBT: Should we do a true SENDING_EOM_ACK?
+                    state_ = RESPONDER_SENT_EOM_ACK;
+                }
+
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                next_event_ = {};
+#endif
+                return result::ok();
             }
             else if(responder().last_one_per_batch())
             {
@@ -402,12 +509,19 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
                 state_ = RESPONDER_TIMEOUT;
 
                 traits::send(t, responder().build_abort(ctx, abort_reasons::timeout));
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                next_event_ = {};
+#endif
             }
             // ---
             break;
 
-        //case RESPONDER_SENDING_EOM_ACK:
-        //    break;
+        case RESPONDER_SENT_EOM_ACK:
+            state_ = IDLE;
+#if FEATURE_EMBR_J1939_TP_FUTURE
+            next_event_ = {};
+#endif
+            break;
 
         // +++ Timeouts & other time-based activity
 
@@ -433,9 +547,14 @@ bool transport_protocol<TimePoint>::process_outgoing(Transport& t, const context
                     state_ = ORIGINATOR_TIMEOUT;
 
                     traits::send(t, responder().build_abort(ctx, abort_reasons::timeout));
+#if FEATURE_EMBR_J1939_TP_FUTURE
+                    next_event_ = {};
+#endif
                 }
                 else
                     state_ = RESPONDER_SENDING_CTS;
+
+                return result::ok();
             }
             break;
 #endif
@@ -455,8 +574,8 @@ inline bool transport_protocol::process_time(time_point)
 }
  */
 
-template <class TimePoint>
-inline void transport_protocol<TimePoint>::initiate_originator(
+template <class TimePoint, class Policy>
+inline void transport_protocol<TimePoint, Policy>::initiate_originator(
     uint16_t sz,
     const context&,
     uint8_t dest_address,
@@ -479,8 +598,8 @@ inline void transport_protocol<TimePoint>::initiate_originator(
 }
 
 #if FEATURE_EMBR_J1939_TP_AUTO_PAYLOAD
-template <class TimePoint>
-inline void transport_protocol<TimePoint>::initiate_originator(
+template <class TimePoint, class Policy>
+inline void transport_protocol<TimePoint, Policy>::initiate_originator(
     uint8_t dest_address,
     uint32_t pgn,
     const void* payload,
@@ -493,9 +612,13 @@ inline void transport_protocol<TimePoint>::initiate_originator(
 }
 #endif
 
-template <class TimePoint>
-inline auto transport_protocol<TimePoint>::next_event() const -> time_point
+template <class TimePoint, class Policy>
+inline auto transport_protocol<TimePoint, Policy>::next_event() const -> time_point
 {
+#if FEATURE_EMBR_J1939_TP_FUTURE
+    // DEBT: In this case, parent class will do.  Only doing this during transition
+    return next_event_;
+#else
     switch(state_)
     {
         case ORIGINATOR_SENT_RTS:
@@ -519,10 +642,11 @@ inline auto transport_protocol<TimePoint>::next_event() const -> time_point
 
         default: return time_point{};
     }
+#endif
 }
 
-template <class TimePoint>
-inline void transport_protocol<TimePoint>::initiate_responder(uint8_t originator_address)
+template <class TimePoint, class Policy>
+inline void transport_protocol<TimePoint, Policy>::initiate_responder(uint8_t originator_address)
 {
 #if FEATURE_EMBR_J1939_STRICT_STATES
     assert(state_ == IDLE);

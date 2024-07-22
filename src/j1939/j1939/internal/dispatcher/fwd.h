@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../state-machines/result.h"
+
 namespace embr { namespace j1939 {
 
 namespace internal {
@@ -13,7 +15,7 @@ struct app_state;
 inline namespace v1 {
 
 template <class Transport, class Impl, class Context>
-bool process_incoming(internal::app_state<Transport, Impl, Context> state, const typename Transport::frame& f);
+sm::v1::result process_incoming(internal::app_state<Transport, Impl, Context> state, const typename Transport::frame& f);
 
 }
 

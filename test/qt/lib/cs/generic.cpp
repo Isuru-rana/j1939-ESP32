@@ -1,14 +1,16 @@
 #include "j1939/qt/cs/generic.h"
 
 //#include <j1939/data_field/all.hpp>   // DEBT: Want to do this, missing a bunch of spn::traits<>::name() fields though
+#include <j1939/data_field/bjm1.hpp>
 #include <j1939/data_field/ccvs.hpp>
-//#include <j1939/data_field/cm1.hpp>
+#include <j1939/data_field/cm1.hpp>
 #include <j1939/data_field/oel.hpp>
 #include <j1939/data_field/lighting_command.hpp>
 #include <j1939/data_field/network.hpp>
 #include <j1939/data_field/vep1.hpp>
 
 #include <j1939/internal/dispatcher/incoming.hpp>
+#include <j1939/internal/dispatcher/incoming2.hpp>
 
 #include "j1939/qt/cs/generic.hpp"
 
@@ -18,8 +20,8 @@ void Generic::frameReceived(QCanBusDevice*, const QCanBusFrame& frame)
 {
     embr::can::qt_transport t;
 
-    bool processed = j1939::process_incoming(*this, t, frame);
-    if(!processed)
+    sm::v1::result r = j1939::v2::process_incoming(*this, t, frame);
+    if(!r.processed)
     {
         // unrecognized PGN
         j1939::can_id can_id(frame.frameId());
@@ -38,6 +40,32 @@ void Generic::frameReceived(QCanBusDevice*, const QCanBusFrame& frame)
 void Generic::send(const Pdu*)
 {
     // TBD
+}
+
+
+Base::time_point Base::startup = Base::clock::now();
+
+void Base::schedule(time_point next_event)
+{
+    constexpr time_point none;
+
+    if(next_event == none) return;
+
+    next_event += std::chrono::microseconds(500);   // DEBT: Kludge
+
+    const time_point now = clock::now();
+
+    if(next_event <= now)  return;
+
+    auto interval = std::chrono::duration_cast<milliseconds>(next_event - now);
+
+    qDebug()
+        << "Base::schedule" << this
+        << "interval:" << interval
+        << "now:" << std::chrono::duration_cast<milliseconds>(now - startup)
+        << "next:" << std::chrono::duration_cast<milliseconds>(next_event - startup);
+
+    timer_.start(interval);
 }
 
 }}

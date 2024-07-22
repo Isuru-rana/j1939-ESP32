@@ -7,19 +7,30 @@
 #include <j1939/pgn/traits.h>
 #include <j1939/data_field.h>
 #include <j1939/internal/decompose.h>
+#include <j1939/NAME/name.h>
 
 namespace embr::j1939::qt { inline namespace v0 {
 
-// EXPERIMENTAL
 // Auto population of PGN data field
 // TODO: setProperty & friends aren't visible from QML (wow)
 // See https://stackoverflow.com/questions/34379524/how-to-dynamically-add-remove-qml-properties-inside-c
 // Need https://doc.qt.io/qt-6.5/qqmlpropertymap.html
 class DataField : public QObject
 {
+    // EXPERIMENTAL Not relied upon
+    QByteArray raw_;
+    pgns pgn_;
+
     QQmlPropertyMap map_;
     QQmlPropertyMap name_to_short_name_;
     QQmlPropertyMap unit_name_;
+
+    template <typename T>
+    void set(const char* name, const T& v)
+    {
+        map_[name] = v;
+        name_to_short_name_[name] = name;
+    }
 
     // DEBT: Use c++20 concept for 'traits'
     template <class traits, typename T>
@@ -58,13 +69,19 @@ class DataField : public QObject
     using unit = estd::internal::units::unit_base<Rep, Period, Tag, F>;
 
     Q_PROPERTY(QQmlPropertyMap* map READ map CONSTANT)
+    Q_PROPERTY(QByteArray raw READ raw CONSTANT)
 
 public:
     DataField(QObject* parent = nullptr) :
         QObject(parent)
-    {}
+    {
+        // DEBT: I read somewhere that connecting up like this in a ctor is frowned on
+        connect(&map_, &QQmlPropertyMap::valueChanged, this, &DataField::propertyChanged);
+    }
 
     QQmlPropertyMap* map() { return &map_; }
+
+    const QByteArray& raw() const { return raw_; }
 
     QString short_name(const QString& s) const
     {
@@ -88,7 +105,7 @@ public:
         }
 
         //if(value.count() <= valid_signal::max())
-        if(!traits::noop(value.count()))
+        if(!traits::noop(value.root_count(), false))
         {
             if constexpr(
                 estd::is_base_of_v<slot::v1::internal::slot_type_tag, traits> &&
@@ -115,16 +132,15 @@ public:
         set<traits>(v);
     }
 
-    // Decomposer for generic integers
+    // Decomposer for enums & integers
     template <class T, spns spn>
     void operator()(j1939::spn::traits<spn>, const T& value)
     {
         using traits = spn::traits<spn>;
+        using int_type = typename traits::int_type;
         //using valid_signal = spn::ranges::valid_signal<Rep>;
 
-        // Y U NO get found, noop?
-        //if(traits::noop(value))
-        if(0)
+        if(traits::noop(int_type(value), false))
         {
             set<traits>("noop");
         }
@@ -132,7 +148,7 @@ public:
         {
 
             // DEBT: Do a special enum variety
-            auto v2 = int(value);
+            auto v2 = int_type(value);
             QVariant v(v2);
 
             //setProperty(traits::name(), v);
@@ -140,20 +156,41 @@ public:
         }
     }
 
+    template <class Container>
+    void populate_name(const embr::j1939::NAME<Container>& v)
+    {
+        // DEBT: Might be a different NAME pgn, but may not matter
+        pgn_ = pgns::NAME_management_message;
+        raw_.assign(v.begin(), v.end());
+
+        set("aa", unsigned(v.arbitrary_address_capable()));
+        set("ig", v.industry_group().value());
+        set("vsi", v.vehicle_system_instance().value());
+        set("vs", QString::number(unsigned(v.vehicle_system()), 16));
+        set("f", QString::number(v.function().value(), 16));
+        set("fi", QString::number(v.function_instance().value(), 16));
+        set("ecu", v.ecu_instance().value());
+        set("mfr", QString::number(v.manufacturer_code().value(), 16));
+        set("id", QString::number(v.identity_number().value(), 16));
+    }
+
     template <pgns pgn, class Container>
     void populate(const embr::j1939::data_field<pgn, Container>& v)
     {
+        pgn_ = pgn;
+        raw_.assign(v.begin(), v.end());
 #if __cpp_fold_expressions
 
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
         using traits = j1939::pgn::traits<pgn>;
         if constexpr(traits::is_specialized)   decompose(v, *this);
-#else
-        using traits = j1939::internal::traits_wrapper<pgn>;
-        if constexpr(traits::specialized)   decompose(v, *this);
-#endif
 
 #endif
+    }
+
+private slots:
+    void propertyChanged(const QString&, const QVariant&)
+    {
+
     }
 };
 

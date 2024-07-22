@@ -16,6 +16,7 @@ struct type_traits<spns::joystick1_x_axis_position> :
     internal::slot_type_traits<slots::SAEpc02>
 {
     static constexpr const char* name() { return "x_axis_position"; }
+    static constexpr const char* short_name() { return "x"; }
 };
 
 template <>
@@ -23,27 +24,104 @@ struct type_traits<spns::joystick1_y_axis_position> :
     internal::slot_type_traits<slots::SAEpc02>
 {
     static constexpr const char* name() { return "y_axis_position"; }
+    static constexpr const char* short_name() { return "y"; }
 };
 
 template <>
 struct type_traits<spns::joystick1_button1_pressed_status> :
     internal::measured_type_traits
 {
-    static constexpr const char* name() { return "button1_pressed_status"; }    
+    static constexpr const char* name() { return "button1_pressed_status"; }
+    static constexpr const char* short_name() { return "b1"; }
 };
 
 template <>
 struct type_traits<spns::joystick1_button2_pressed_status> :
-    internal::measured_type_traits {};
+    internal::measured_type_traits
+{
+    static constexpr const char* name() { return "button2_pressed_status"; }
+    static constexpr const char* short_name() { return "b2"; }
+};
 
 template <>
 struct type_traits<spns::joystick1_button3_pressed_status> :
-    internal::measured_type_traits {};
+    internal::measured_type_traits
+{
+    static constexpr const char* name() { return "button3_pressed_status"; }
+    static constexpr const char* short_name() { return "b3"; }
+};
 
 template <>
 struct type_traits<spns::joystick1_button4_pressed_status> :
     internal::measured_type_traits {};
 
+/*
+// DEBT: Not quite measured type traits, has its own unique enum
+template <>
+struct type_traits<joystick1_x_axis_neutral_position_status> :
+   internal::measured_type_traits
+{
+    static constexpr const char* name() { return "x_axis_neutral_position_status"; }
+    static constexpr const char* short_name() { return "xstat"; }
+};*/
+
+template <>
+struct type_traits<spns::joystick1_x_axis_lever_left_negative_position_status> :
+    internal::measured_type_traits
+{
+    static constexpr const char* name() { return "x_axis_lever_left_negative_position_status"; }
+    static constexpr const char* short_name() { return "x-"; }
+};
+
+template <>
+struct type_traits<spns::joystick1_x_axis_lever_right_positive_position_status> :
+    internal::measured_type_traits
+{
+    static constexpr const char* name() { return "x_axis_lever_right_positive_position_status"; }
+    static constexpr const char* short_name() { return "x+"; }
+};
+
+
+template <>
+struct type_traits<spns::joystick1_y_axis_lever_forward_positive_position_status> :
+    internal::measured_type_traits
+{
+    static constexpr const char* name() { return "y_axis_lever_forward_positive_position_status"; }
+    static constexpr const char* short_name() { return "y+"; }
+};
+
+template <>
+struct type_traits<spns::joystick1_y_axis_lever_back_negative_position_status> :
+    internal::measured_type_traits
+{
+    static constexpr const char* name() { return "y_axis_lever_back_negative_position_status"; }
+    static constexpr const char* short_name() { return "y-"; }
+};
+
+
+template<>
+constexpr descriptor get_descriptor<spns::joystick1_x_axis_lever_left_negative_position_status>()
+{
+    return { 1, 3, 2 };
+}
+
+template<>
+constexpr descriptor get_descriptor<spns::joystick1_x_axis_lever_right_positive_position_status>()
+{
+    return { 1, 5, 2 };
+}
+
+template<>
+constexpr descriptor get_descriptor<spns::joystick1_y_axis_lever_back_negative_position_status>()
+{
+    return { 3, 3, 2 };
+}
+
+template<>
+constexpr descriptor get_descriptor<spns::joystick1_y_axis_lever_forward_positive_position_status>()
+{
+    return { 3, 5, 2 };
+}
 
 template<>
 constexpr descriptor get_descriptor<spns::joystick1_x_axis_position>()
@@ -100,9 +178,12 @@ struct traits<pgns::basic_joystick_message_1> : internal::traits_base
     // sometimes spn::traits gets mad
     using spns = internal::spns_list<
         /*
-        s::joystick1_x_axis_neutral_position_status,
-        s::joystick1_x_lever_left_neg_pos_status,   */
+        s::joystick1_x_axis_neutral_position_status,    */
+        s::joystick1_x_lever_left_neg_pos_status,
+        s::joystick1_x_axis_lever_right_positive_position_status,
         s::joystick1_x_axis_position,
+        s::joystick1_y_axis_lever_back_negative_position_status,
+        s::joystick1_y_axis_lever_forward_positive_position_status,
         s::joystick1_y_axis_position,
         s::joystick1_button4_pressed_status,
         s::joystick1_button3_pressed_status,
@@ -123,16 +204,22 @@ struct traits<pgns::basic_joystick_message_1> : internal::traits_base
 }
 
 
-template<class TContainer>
-struct data_field<pgns::basic_joystick_message_1, TContainer> :
-    internal::data_field_base<TContainer>
+template<class Container>
+struct data_field<pgns::basic_joystick_message_1, Container> :
+    internal::data_field_base<Container>
 {
-    typedef internal::data_field_base<TContainer> base_type;
+    typedef internal::data_field_base<Container> base_type;
 
     ESTD_CPP_FORWARDING_CTOR(data_field)
 
-    EMBR_J1939_PROPERTY(joystick1_x_axis_position)
-    EMBR_J1939_PROPERTY(joystick1_y_axis_position)
+    EMBR_J1939_PROPERTY_ALIAS(joystick1_x_axis_lever_left_negative_position_status, x_axis_lever_left)
+    EMBR_J1939_PROPERTY_ALIAS(joystick1_x_axis_lever_right_positive_position_status, x_axis_lever_right)
+
+    EMBR_J1939_PROPERTY_ALIAS(joystick1_y_axis_lever_back_negative_position_status, y_axis_lever_back)
+    EMBR_J1939_PROPERTY_ALIAS(joystick1_y_axis_lever_forward_positive_position_status, y_axis_lever_forward)
+
+    EMBR_J1939_PROPERTY_ALIAS(joystick1_x_axis_position, x_axis_position)
+    EMBR_J1939_PROPERTY_ALIAS(joystick1_y_axis_position, y_axis_position)
 
     EMBR_J1939_PROPERTY_ALIAS(joystick1_button1_pressed_status, button1_pressed)
     EMBR_J1939_PROPERTY_ALIAS(joystick1_button2_pressed_status, button2_pressed)

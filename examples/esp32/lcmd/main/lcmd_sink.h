@@ -4,6 +4,8 @@
 
 namespace app {
 
+void set_level(unsigned gpio, embr::j1939::spn::control_commands cmd);
+
 class lcmd_sink : public embr::j1939::cs::v1::base
 {
     using base_type = embr::j1939::cs::v1::base;

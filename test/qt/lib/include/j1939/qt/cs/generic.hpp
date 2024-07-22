@@ -12,25 +12,21 @@ namespace embr::j1939::qt::cs { inline namespace v1 {
 // DEBT: Emit messages even if they aren't specialized.  Wait for final throws of NO_TRAITS_WRAPPER
 // to settle down (it's nearly there)
 template <pgns pgn>
-bool Generic::process_incoming(can::qt_transport&, const pdu<pgn>& p)
+auto Generic::process_incoming(can::qt_transport&, const pdu<pgn>& p) -> result
 {
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
     using traits = j1939::pgn::traits<pgn>;
 
     if constexpr(traits::is_specialized == false)
         return false;
-#else
-    using traits = j1939::internal::traits_wrapper<pgn>;
-
-    if constexpr(traits::specialized == false)
-        return false;
-#endif
 
     auto p2 = new Pdu(p.can_id(), this);
 
-    if constexpr(pgn == pgns::address_claimed)
+    if constexpr(
+        pgn == pgns::address_claimed ||
+        pgn == pgns::commanded_address)
     {
-
+        // DEBT: A bit clumsy since NAME is parent of j1939::data_field,
+        p2->data_field().populate_name(p);
     }
     else
     {
@@ -43,7 +39,7 @@ bool Generic::process_incoming(can::qt_transport&, const pdu<pgn>& p)
 
     emit pduReceived(p2);
 
-    return true;
+    return result::ok();
 }
 
 }}

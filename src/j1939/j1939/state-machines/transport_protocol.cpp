@@ -4,6 +4,8 @@
 
 namespace embr { namespace j1939 {
 
+// DEBT: Apply 'pgm' sensibility... somehow
+
 const char* to_string(sm::tp::v0::base::states v, const char* unknown)
 {
     using states = sm::tp::v0::base::states;
@@ -11,6 +13,8 @@ const char* to_string(sm::tp::v0::base::states v, const char* unknown)
     switch(v)
     {
         case states::IDLE:                      return "Idle";
+        case states::OFFLINE:                   return "Offline";
+
         case states::ORIGINATOR_RECEIVED_CTS:   return "Received CTS";
         case states::ORIGINATOR_RECEIVED_EOM_ACK:   return "Received EOM ACK";
         case states::ORIGINATOR_RECEIVED_ABORT: return "Received Abort";
@@ -21,6 +25,7 @@ const char* to_string(sm::tp::v0::base::states v, const char* unknown)
         case states::ORIGINATOR_SENT_DT:        return "Sent DT";
         case states::ORIGINATOR_SENDING_RTS:    return "Sending RTS";
         case states::ORIGINATOR_SENT_RTS:       return "Sent RTS";
+        case states::ORIGINATOR_TIMEOUT:        return "Timeout (originator)";
         case states::ORIGINATOR_WAITING_CTS:    return "Waiting CTS";
 
         case states::RESPONDER_RECEIVED_BAM:    return "Received BAM";
@@ -33,6 +38,7 @@ const char* to_string(sm::tp::v0::base::states v, const char* unknown)
         case states::RESPONDER_SENT_ABORT:      return "Sent Abort";
         case states::RESPONDER_SENT_CTS:        return "Sent CTS";
         case states::RESPONDER_SENT_EOM_ACK:    return "Sent EOM ACK";
+        case states::RESPONDER_TIMEOUT:         return "Timeout (responder)";
 
         default:    return unknown;
     }

@@ -68,12 +68,10 @@ struct traits_base
 
 }
 
-#if FEATURE_EMBR_J1939_NO_TRAITS_WRAPPER
 template <pgns>
 struct traits : internal::traits_base
 {
     static constexpr bool is_specialized = false;
 };
-#endif
 
 }}}

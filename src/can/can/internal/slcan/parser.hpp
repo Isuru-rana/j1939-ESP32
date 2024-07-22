@@ -1,5 +1,13 @@
 #pragma once
 
+#include <estd/iomanip.h>
+
+// DEBT: Potentially prefer subject/observer or deeper impl participation to avoid platform specifity
+// here, even in a diagnostic sense
+#if ESP_PLATFORM
+#include <esp_log.h>
+#endif
+
 #include "parser.h"
 
 namespace embr { namespace can { namespace slcan { inline namespace v0 {
@@ -130,11 +138,9 @@ auto parser<Impl>::serialize(const frame_type& in, ostream<S, B>& out) -> ostrea
 
     out.put('0' + length);
 
-    out.width(2);
-
     const uint8_t* payload = frame_traits::payload(in);
 
-    while(length--) out << *payload++;
+    while(length--) out << estd::setw(2) << *payload++;
 
     if(timestamps_)
     {
@@ -198,5 +204,46 @@ estd::errc parser<Impl>::deserialize(CharIt in, frame_type* out, bool extended)
 
     return estd::errc{};
 }
+
+template <ESTD_CPP_CONCEPT(concepts::Impl) Impl>
+const char* parser<Impl>::transmit(view v, bool extended, bool rtr)
+{
+    if(!impl().opened())    return ERROR;
+
+    // Not supported yet, but almost
+    if(rtr) return  ERROR;
+
+    frame_type frame;
+
+    frame_traits::rtr(frame, rtr);
+    frame_traits::extended(frame, extended);
+
+    estd::errc r = deserialize(v.begin(), &frame, extended);
+
+#if ESP_PLATFORM
+    static const char* TAG = "parser::transmit";
+
+    // 08JUL24 - suspect side effects/pointer issues with frame payload.  Logging enabled during VERBOSE
+    // raises chance of correct data received at console side.
+    // TODO: Try this in DEBUG mode (VMware USB went offline again during testing)
+    const uint8_t* payload = frame_traits::payload(frame);
+    //const uint8_t* payload = frame.data;
+
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG,
+        payload,
+        frame_traits::length(frame),
+        ESP_LOG_DEBUG);
+#endif
+
+    if(r == 0)
+        return impl().transport().send(frame) ?
+            (autopoll() ? OK_AUTOPOLL : OK) : ERROR;
+    else
+    {
+        alerts_ |= ALERT_DATA_STREAM;
+        return ERROR;
+    }
+}
+
 
 }}}}

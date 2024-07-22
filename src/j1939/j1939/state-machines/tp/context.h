@@ -1,5 +1,8 @@
 #pragma once
 
+#if UNIT_TESTING
+#include <estd/chrono.h>
+#endif
 #include <estd/cstdint.h>
 
 #include "../../addresses.h"
@@ -13,7 +16,7 @@ template <class TimePoint>
 struct context
 {
     using time_point = TimePoint;
-    using duration = typename time_point::duration;
+    //using duration = typename time_point::duration;
 
     const time_point current;
     const uint8_t self_address = addresses::null;
