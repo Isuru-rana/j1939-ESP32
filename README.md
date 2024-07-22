@@ -8,6 +8,8 @@ If you're new to CAN bus or J1939, [check this out](https://www.csselectronics.c
 
 ## Why?
 
+J1939 standard engenders compatibility and avoids re-inventing the wheel when creating CAN applications. 
+
 What makes this particular library interesting?  In a word: specialization.
 
 We've gone all-in with C++ specialization to bring you a robust, intuitive & lean implementation.  For example, setting up and sending a `cab message 1` PDU is as easy as:
@@ -54,11 +56,11 @@ Use `idf.py menuconfig` to specify CAN speed and TX/RX pins via `embr` config me
 
 ### Quick Start: CMake
 
-This is the easiest bringup approach.  Stock standard CMake `add_subdirectory` works here
-(TBD make a unified CMakeLists to pull in can + j1939 together)
+Stock standard CMake `add_subdirectory` works here
+for `j1939` lib as well as the `can` HAL library.
 
 For new targets, the `can` library will need a `transport` and `frame_traits` implementation.
-See new target guide (TBD)
+See [new target guide](doc/Targets.md)
 
 ### Quick Start: PlatformIO
 
@@ -77,8 +79,8 @@ Supported:
 
 | Platform | MCU            | Board 
 | -------- | -------------- | -----
-| Arduino  | AVR            | Promicro
-| Arduino  | M4 SAMC (TBD)  | Adafruit Feather CAN M4
+| Arduino  | AVR            | Promicro (via external MCP2515)
+| Arduino  | M4 SAM         | Adafruit Feather CAN M4
 | ESP-IDF  | ESP32          | Many
 
 ### Secondary Targets

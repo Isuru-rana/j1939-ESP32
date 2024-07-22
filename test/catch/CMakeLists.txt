@@ -59,10 +59,12 @@ set(EXTRA_FILES
     doc/AddressResolution.md
     doc/Implied.md
     doc/Concepts.md
+    doc/Policy.md
     doc/Markdown.md
     doc/Metrics.md
     doc/REFERENCES.md
     doc/Snippets.md
+    doc/Targets.md
     doc/Transceiver.md
     README.md
 )
