@@ -1,4 +1,0 @@
-#!/bin/sh
-
-slcand $1 can0 $2 $3 $4 $5
-ip link set can0 up

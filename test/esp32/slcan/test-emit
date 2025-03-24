@@ -1,5 +1,0 @@
-#!/bin/sh
-
-# Guidance from https://github.com/linux-can/can-utils/blob/v2023.03/can-j1939-kickstart.md
-
-testj1939 -B -s can0:0x80 can0:,0x3ffff

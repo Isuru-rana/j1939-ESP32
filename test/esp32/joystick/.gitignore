@@ -1,3 +1,0 @@
-# favor copying sdkconfig.template into this so we can keep
-# WiFi credentials, button settings, etc
-sdkconfig.defaults

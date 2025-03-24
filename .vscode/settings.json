@@ -1,11 +1,13 @@
 {
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.espIdfPathWin": "C:\\Users\\isuru\\esp\\v5.4\\esp-idf",
+    "idf.pythonInstallPath": "C:\\Espressif\\tools\\idf-python\\3.11.2\\python.exe",
+    "idf.openOcdConfigs": [
+        "board/esp32-wrover-kit-3.3v.cfg"
+    ],
+    "idf.portWin": "COM3",
+    "idf.toolsPathWin": "C:\\Espressif",
     "files.associations": {
-        "*.ipp": "cpp",
-        "any": "cpp",
-        "bitset": "cpp",
-        "memory": "cpp",
-        "random": "cpp",
-        "future": "cpp",
-        "optional": "cpp"
+        "*.yaml": "home-assistant"
     }
 }

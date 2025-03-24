@@ -1,3 +1,0 @@
-[submodule "ext/embr"]
-	path = ext/embr
-	url = git@github.com:malachi-iot/embr.git

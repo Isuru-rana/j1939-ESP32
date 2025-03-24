@@ -1,1 +1,0 @@
-../../../esp32/cm_dt/main/component_id.h
